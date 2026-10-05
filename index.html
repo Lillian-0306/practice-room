@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>彈唱練習室 — 吉他與歌唱互動學習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1EFF6; --surface:#FFFFFF; --ink:#1F1B2D; --muted:#5E5A72; --line:#D9D5E6;
+  --gtr:#A8650A; --gtr-soft:#FBEBCF; --gtr-on:#FFFFFF;
+  --voc:#3454D1; --voc-soft:#E0E6FB; --voc-on:#FFFFFF;
+  --ok:#1E8E5A; --warn:#C2410C;
+  --accent:var(--gtr); --accent-soft:var(--gtr-soft); --accent-on:var(--gtr-on);
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#15131F; --surface:#1F1C2E; --ink:#EDEAF7; --muted:#A7A2BD; --line:#352F4A;
+    --gtr:#F0A93A; --gtr-soft:#3A2C12; --gtr-on:#1F1400;
+    --voc:#8AA2FF; --voc-soft:#232C57; --voc-on:#0E1536;
+    --ok:#4FD08F; --warn:#FB923C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15131F; --surface:#1F1C2E; --ink:#EDEAF7; --muted:#A7A2BD; --line:#352F4A;
+  --gtr:#F0A93A; --gtr-soft:#3A2C12; --gtr-on:#1F1400;
+  --voc:#8AA2FF; --voc-soft:#232C57; --voc-on:#0E1536;
+  --ok:#4FD08F; --warn:#FB923C;
+}
+body[data-mode="singing"]{--accent:var(--voc);--accent-soft:var(--voc-soft);--accent-on:var(--voc-on)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:880px;margin:0 auto;padding:20px 16px 56px}
+h1,h2,h3{font-family:var(--serif);line-height:1.25;margin:0}
+h1{font-size:clamp(1.9rem,6vw,2.6rem);font-weight:900;letter-spacing:.02em}
+h2{font-size:1.35rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+.lead{color:var(--muted);margin-top:8px;max-width:34em}
+
+/* mode switch */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 0 28px}
+.mode{border:2px solid var(--line);background:var(--surface);border-radius:18px;padding:16px 14px;text-align:left;display:flex;flex-direction:column;gap:2px;transition:background .2s,border-color .2s}
+.mode b{font-family:var(--serif);font-size:1.7rem;line-height:1.2}
+.mode span{font-size:.88rem;color:var(--muted)}
+.mode[data-for="guitar"][aria-selected="true"]{background:var(--gtr);border-color:var(--gtr);color:var(--gtr-on)}
+.mode[data-for="singing"][aria-selected="true"]{background:var(--voc);border-color:var(--voc);color:var(--voc-on)}
+.mode[aria-selected="true"] span{color:inherit;opacity:.9}
+
+section.panel[hidden]{display:none}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+.block>header{margin-bottom:12px}
+.block>header p{color:var(--muted);font-size:.93rem;margin-top:4px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;min-height:40px;font-weight:500}
+.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+.btn{border:0;background:var(--accent);color:var(--accent-on);border-radius:10px;padding:10px 18px;min-height:44px;font-weight:700}
+.btn.ghost{background:var(--accent-soft);color:var(--ink)}
+.btn:active{transform:translateY(1px)}
+.note{font-size:.88rem;color:var(--muted)}
+
+/* chord */
+.chord-grid{display:grid;grid-template-columns:minmax(0,250px) 1fr;gap:18px;align-items:start;margin-top:14px}
+@media (max-width:560px){.chord-grid{grid-template-columns:1fr}}
+.chord-name{font-family:var(--serif);font-size:2.6rem;font-weight:900;color:var(--accent);line-height:1}
+.chord-svg{width:100%;max-width:250px;height:auto;display:block}
+.string-line{transition:stroke .1s}
+.string-line.ring{stroke:var(--accent)!important}
+.tips{margin:10px 0 0;padding-left:1.1em;color:var(--muted);font-size:.93rem}
+.tips li{margin-bottom:3px}
+
+/* tuning */
+.tuning{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.string-btn{border:1.5px solid var(--line);border-radius:10px;background:transparent;padding:10px 0;display:flex;flex-direction:column;align-items:center;min-height:64px}
+.string-btn b{font-size:1.3rem;font-family:var(--serif)}
+.string-btn small{color:var(--muted);font-size:.72rem}
+.string-btn:active,.string-btn.on{background:var(--accent-soft);border-color:var(--accent)}
+
+/* player */
+.now{display:flex;align-items:baseline;gap:10px;margin:12px 0}
+.now .cur{font-family:var(--serif);font-size:2.2rem;font-weight:900;color:var(--accent);min-width:3.2em}
+.prog{display:flex;gap:6px;margin:6px 0 12px}
+.prog span{flex:1;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);font-weight:700}
+.prog span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+.pattern{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px}
+.pattern span{text-align:center;padding:6px 0;border-radius:6px;background:var(--accent-soft);font-weight:700;font-size:1.05rem;min-height:36px;color:var(--ink)}
+.pattern span.rest{opacity:.35}
+.pattern span.on{background:var(--accent);color:var(--accent-on)}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
+
+/* checklist */
+.check{list-style:none;margin:0;padding:0}
+.check li{border-top:1px solid var(--line)}
+.check li:first-child{border-top:0}
+.check label{display:flex;gap:12px;padding:12px 2px;cursor:pointer;align-items:flex-start}
+.check input{width:22px;height:22px;margin-top:2px;accent-color:var(--accent);flex:none}
+.check input:checked+span{text-decoration:line-through;color:var(--muted)}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+
+/* pitch */
+.pitch-out{text-align:center;padding:10px 0}
+.pitch-note{font-family:var(--serif);font-size:4.2rem;font-weight:900;line-height:1;min-height:1em;color:var(--accent)}
+.pitch-sub{color:var(--muted);min-height:1.6em}
+.meter{position:relative;height:14px;border-radius:99px;background:var(--line);margin:16px 6px 6px}
+.meter .zone{position:absolute;left:35%;width:30%;top:0;bottom:0;background:var(--accent-soft);border-radius:99px;border:1px solid var(--accent)}
+.meter .dot{position:absolute;top:-5px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:var(--ink);left:50%;transition:left .08s,background .1s}
+.meter .dot.good{background:var(--ok)}
+.meter-labels{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);padding:0 4px}
+
+/* breathing */
+.breath{display:grid;place-items:center;height:230px}
+.orb{width:200px;height:200px;border-radius:50%;background:var(--accent-soft);border:3px solid var(--accent);display:grid;place-items:center;transform:scale(.5);transition-property:transform;transition-timing-function:ease-in-out;text-align:center}
+.orb b{font-family:var(--serif);font-size:1.5rem;display:block}
+.orb span{font-size:1.9rem;font-weight:700;color:var(--accent)}
+
+/* keyboard */
+.keys{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.key{border:1.5px solid var(--line);border-radius:6px 6px 12px 12px;background:var(--surface);height:150px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:10px;gap:2px;transition:background .1s}
+.key b{font-family:var(--serif);font-size:1.1rem}
+.key small{color:var(--muted);font-size:.72rem}
+.key.on{background:var(--accent-soft);border-color:var(--accent)}
+.key.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.key.right small{color:#fff}
+.key.wrong{background:var(--warn);border-color:var(--warn);color:#fff}
+.key.wrong small{color:#fff}
+.score{font-weight:700}
+.msg{min-height:1.7em;margin-top:8px}
+footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body data-mode="guitar">
+<div class="wrap">
+  <h1>彈唱練習室</h1>
+  <p class="lead">選一邊開始。每個練習都能直接發出聲音、跟著做，不用另外裝東西。</p>
+
+  <div class="modes" role="tablist" aria-label="學習板塊">
+    <button class="mode" role="tab" id="tab-guitar" data-for="guitar" aria-selected="true" aria-controls="guitar"><b>吉他</b><span>和弦・調音・刷弦節奏</span></button>
+    <button class="mode" role="tab" id="tab-singing" data-for="singing" aria-selected="false" aria-controls="singing"><b>歌唱</b><span>呼吸・音準・聽音</span></button>
+  </div>
+
+  <!-- ============ GUITAR ============ -->
+  <section class="panel" id="guitar" role="tabpanel" aria-labelledby="tab-guitar">
+
+    <div class="block">
+      <header><h2>和弦圖與試聽</h2><p>點選和弦，看按法，再聽聽正確的聲音是什麼樣子。</p></header>
+      <div class="row" id="chordPicker" role="group" aria-label="選擇和弦"></div>
+      <div class="chord-grid">
+        <svg id="chordSvg" class="chord-svg" viewBox="0 0 240 270" role="img" aria-label="和弦指法圖"></svg>
+        <div>
+          <div class="chord-name" id="chordName">C</div>
+          <p class="note" id="chordNote" style="margin:6px 0 12px"></p>
+          <div class="row">
+            <button class="btn" id="strumDown">刷下</button>
+            <button class="btn ghost" id="strumUp">刷上</button>
+            <button class="btn ghost" id="arpeggio">逐弦彈</button>
+          </div>
+          <ul class="tips">
+            <li>圖中數字是左手手指：1 食指、2 中指、3 無名指、4 小指。</li>
+            <li>X 代表不彈，O 代表空弦。</li>
+            <li>每條弦逐一彈，有悶音就調整手指位置。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <header><h2>標準調音</h2><p>點每條弦聽標準音，轉旋鈕讓自己的吉他對上它。</p></header>
+      <div class="tuning" id="tuning"></div>
+      <p class="note" style="margin-top:10px">由粗到細：6 弦 E、5 弦 A、4 弦 D、3 弦 G、2 弦 B、1 弦 E。</p>
+    </div>
+
+    <div class="block">
+      <header><h2>跟著節拍換和弦</h2><p>每小節換一個和弦，節奏圖亮起時刷弦。</p></header>
+      <div class="row" id="progPicker" role="group" aria-label="和弦進行"></div>
+      <div class="now"><div class="cur" id="curChord">—</div><div class="note" id="beatInfo">按開始</div></div>
+      <div class="prog" id="progBar"></div>
+      <div class="pattern" id="pattern"></div>
+      <label for="bpm" class="row" style="justify-content:space-between"><span>速度</span><b id="bpmVal">80 BPM</b></label>
+      <input type="range" id="bpm" min="50" max="140" value="80">
+      <div class="row" style="margin-top:12px"><button class="btn" id="playBtn">開始</button><span class="note">建議從 60–70 BPM 開始，穩了再加速。</span></div>
+    </div>
+
+    <div class="block">
+      <header><h2>吉他入門路線</h2><p>完成就打勾，進度會存在這個瀏覽器。</p></header>
+      <div class="bar"><i id="gBar"></i></div><p class="note" id="gCount"></p>
+      <ul class="check" id="gCheck"></ul>
+    </div>
+  </section>
+
+  <!-- ============ SINGING ============ -->
+  <section class="panel" id="singing" role="tabpanel" aria-labelledby="tab-singing" hidden>
+
+    <div class="block">
+      <header><h2>呼吸練習</h2><p>跟著圓圈吸氣、停住、吐氣。吸氣時肚子往外推，肩膀保持放鬆。</p></header>
+      <div class="row" id="breathPicker" role="group" aria-label="呼吸節奏"></div>
+      <div class="breath"><div class="orb" id="orb"><div><b id="phaseName">準備</b><span id="phaseCount">—</span></div></div></div>
+      <div class="row" style="justify-content:space-between"><button class="btn" id="breathBtn">開始</button><span class="score" id="breathCycles">已完成 0 輪</span></div>
+    </div>
+
+    <div class="block">
+      <header><h2>音高偵測器</h2><p>用麥克風聽你唱的音，顯示音名和偏高偏低多少。</p></header>
+      <div class="pitch-out">
+        <div class="pitch-note" id="pNote">—</div>
+        <div class="pitch-sub" id="pSub">按下開始，唱一個長音「啊」</div>
+      </div>
+      <div class="meter" aria-hidden="true"><div class="zone"></div><div class="dot" id="pDot"></div></div>
+      <div class="meter-labels"><span>偏低</span><span>準</span><span>偏高</span></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="micBtn">開始偵測</button></div>
+      <p class="msg note" id="micMsg"></p>
+      <h3 style="margin-top:14px">參考音跟唱（不需要麥克風）</h3>
+      <p class="note" style="margin:4px 0 10px">點一個音，用「啊」唱出來，再和它比對是否一致。</p>
+      <div class="row" id="refTones"></div>
+    </div>
+
+    <div class="block">
+      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音。按「出題」會先給你 Do，再播一個音，請選出它是哪一個唱名。</p></header>
+      <div class="keys" id="keys"></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="quizBtn">出題</button><button class="btn ghost" id="replayBtn">再聽一次</button><span class="score" id="score">答對 0 / 0</span></div>
+      <p class="msg" id="quizMsg"></p>
+    </div>
+
+    <div class="block">
+      <header><h2>每日暖聲清單</h2><p>由簡到難，每天花 10–15 分鐘。</p></header>
+      <div class="bar"><i id="sBar"></i></div><p class="note" id="sCount"></p>
+      <ul class="check" id="sCheck"></ul>
+      <ul class="tips">
+        <li>感覺喉嚨緊或痛就停下來喝水休息。</li>
+        <li>先唱小聲、音域中間的位置，再慢慢擴大。</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>聲音皆由瀏覽器即時合成。戴耳機效果更好。</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
+
+/* ---------- storage ---------- */
+function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+/* ---------- audio ---------- */
+let ctx=null;
+function audio(){
+  if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();}
+  if(ctx.state==="suspended")ctx.resume();
+  return ctx;
+}
+function pluck(freq,when,vol){
+  const c=audio(),sr=c.sampleRate,dur=2.2,n=Math.floor(sr*dur);
+  const buf=c.createBuffer(1,n,sr),d=buf.getChannelData(0);
+  const p=Math.max(2,Math.round(sr/freq));
+  for(let i=0;i<p;i++)d[i]=Math.random()*2-1;
+  for(let i=p;i<n;i++)d[i]=0.4985*(d[i-p]+d[i-p+1]);
+  const src=c.createBufferSource();src.buffer=buf;
+  const g=c.createGain();g.gain.value=vol||0.35;
+  src.connect(g).connect(c.destination);
+  src.start(when||c.currentTime);
+}
+function tone(freq,dur,type,vol){
+  const c=audio(),t=c.currentTime;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type||"triangle";o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol||0.3,t+0.03);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g).connect(c.destination);
+  o.start(t);o.stop(t+dur+0.05);
+}
+function click(when,accent){
+  const c=audio(),o=c.createOscillator(),g=c.createGain();
+  o.type="square";o.frequency.value=accent?1500:1000;
+  g.gain.setValueAtTime(0.08,when);
+  g.gain.exponentialRampToValueAtTime(0.001,when+0.04);
+  o.connect(g).connect(c.destination);o.start(when);o.stop(when+0.05);
+}
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+
+/* ---------- tabs ---------- */
+document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
+  const m=b.dataset.for;
+  document.body.dataset.mode=m;
+  document.querySelectorAll(".mode").forEach(x=>x.setAttribute("aria-selected",x===b));
+  $("#guitar").hidden=m!=="guitar";
+  $("#singing").hidden=m!=="singing";
+  if(m!=="guitar")stopPlayer();
+  else{stopMic();stopBreath();}
+  window.scrollTo({top:0});
+}));
+
+/* ---------- checklist ---------- */
+function checklist(listId,barId,countId,key,items){
+  const saved=load(key,[]);const ul=$(listId);
+  function update(){
+    const n=ul.querySelectorAll("input:checked").length;
+    $(barId).style.width=(n/items.length*100)+"%";
+    $(countId).textContent="已完成 "+n+" / "+items.length;
+  }
+  items.forEach((t,i)=>{
+    const li=el("li"),lab=el("label"),cb=el("input");
+    cb.type="checkbox";cb.checked=!!saved[i];
+    const sp=el("span","",t);
+    cb.addEventListener("change",()=>{
+      const arr=[...ul.querySelectorAll("input")].map(x=>x.checked);
+      save(key,arr);update();
+    });
+    lab.append(cb,sp);li.append(lab);ul.append(li);
+  });
+  update();
+}
+checklist("#gCheck","#gBar","#gCount","pr_guitar",[
+  "認識吉他各部位，完成六條弦的調音",
+  "左手按 Em 和 Am，每條弦都彈得清楚",
+  "學會 C、G、D 三個和弦",
+  "右手刷出「下 下上 上下上」一小節",
+  "跟著節拍器換和弦 C–G–Am–F，完整一輪不中斷"
+]);
+checklist("#sCheck","#sBar","#sCount","pr_singing",[
+  "腹式呼吸 3 分鐘",
+  "嘴唇顫音，音高上下滑 2 分鐘",
+  "用「啊」唱 Do–Re–Mi–Fa–Sol–Fa–Mi–Re–Do",
+  "用音高偵測器唱穩一個長音 5 秒",
+  "慢速唱完一首歌的副歌，錄音回聽"
+]);
+
+/* ---------- guitar: chords ---------- */
+const OPEN=[40,45,50,55,59,64];
+const CH={
+  C:{f:[-1,3,2,0,1,0],fg:[0,3,2,0,1,0],n:"最常見的第一個和弦，無名指在 5 弦 3 格。"},
+  G:{f:[3,2,0,0,0,3],fg:[3,2,0,0,0,4],n:"六條弦都彈，聲音飽滿。"},
+  D:{f:[-1,-1,0,2,3,2],fg:[0,0,0,1,3,2],n:"只彈下面四條弦，三指排成小三角。"},
+  A:{f:[-1,0,2,2,2,0],fg:[0,0,1,2,3,0],n:"三指併排在第二格，不彈 6 弦。"},
+  E:{f:[0,2,2,1,0,0],fg:[0,2,3,1,0,0],n:"六條弦都彈，和 Am 很像只差一根手指。"},
+  Em:{f:[0,2,2,0,0,0],fg:[0,2,3,0,0,0],n:"最簡單的和弦，兩指就好。"},
+  Am:{f:[-1,0,2,2,1,0],fg:[0,0,2,3,1,0],n:"不彈 6 弦，食指按 2 弦 1 格。"},
+  Dm:{f:[-1,-1,0,2,3,1],fg:[0,0,0,2,3,1],n:"只彈下面四條弦，聽起來比 D 更憂鬱。"},
+  F:{f:[1,3,3,2,1,1],fg:[1,3,4,2,1,1],n:"食指要橫按六條弦（封閉和弦），是第一道關卡，慢慢來。"}
+};
+let curChord="C";
+const svgNS="http://www.w3.org/2000/svg";
+function S(tag,attrs,parent){const e=document.createElementNS(svgNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e}
+function drawChord(name){
+  const svg=$("#chordSvg");svg.innerHTML="";
+  const c=CH[name],x0=30,y0=44,sx=36,fy=40;
+  // frets
+  for(let i=0;i<=5;i++)S("line",{x1:x0,x2:x0+5*sx,y1:y0+i*fy,y2:y0+i*fy,stroke:"var(--muted)","stroke-width":i===0?5:1.5},svg);
+  // strings
+  for(let i=0;i<6;i++){
+    const l=S("line",{x1:x0+i*sx,x2:x0+i*sx,y1:y0,y2:y0+5*fy,stroke:"var(--ink)","stroke-width":1+(5-i)*0.0+ (6-i)*0.35,id:"str"+i},svg);
+    l.setAttribute("class","string-line");
+  }
+  // markers
+  c.f.forEach((f,i)=>{
+    const cx=x0+i*sx;
+    if(f===-1){
+      const t=S("text",{x:cx,y:28,"text-anchor":"middle","font-size":18,"font-weight":700,fill:"var(--muted)"},svg);t.textContent="X";
+    }else if(f===0){
+      S("circle",{cx:cx,cy:24,r:7,fill:"none",stroke:"var(--ink)","stroke-width":2},svg);
+    }else{
+      S("circle",{cx:cx,cy:y0+(f-0.5)*fy,r:14,fill:"var(--accent)"},svg);
+      if(c.fg[i]){const t=S("text",{x:cx,y:y0+(f-0.5)*fy+5,"text-anchor":"middle","font-size":16,"font-weight":700,fill:"var(--accent-on)"},svg);t.textContent=c.fg[i];}
+    }
+  });
+  // fret numbers
+  for(let i=1;i<=5;i++){const t=S("text",{x:6,y:y0+(i-0.5)*fy+4,"font-size":11,fill:"var(--muted)"},svg);t.textContent=i;}
+  $("#chordName").textContent=name;
+  $("#chordNote").textContent=c.n;
+  document.querySelectorAll("#chordPicker .pill").forEach(p=>p.setAttribute("aria-pressed",p.dataset.c===name));
+  curChord=name;
+}
+function chordFreqs(name){
+  return CH[name].f.map((f,i)=>f<0?null:{i:i,hz:midiFreq(OPEN[i]+f)}).filter(Boolean);
+}
+function ring(i){
+  const s=document.getElementById("str"+i);if(!s)return;
+  s.classList.add("ring");setTimeout(()=>s.classList.remove("ring"),350);
+}
+function strum(name,dir,t0,vol){
+  const c=audio();t0=t0||c.currentTime;
+  let list=chordFreqs(name);if(dir==="U")list=list.slice().reverse();
+  list.forEach((s,k)=>{
+    const t=t0+k*0.02;pluck(s.hz,t,vol||0.3);
+    setTimeout(()=>ring(s.i),Math.max(0,(t-c.currentTime)*1000));
+  });
+}
+Object.keys(CH).forEach(k=>{
+  const b=el("button","pill",k);b.dataset.c=k;b.setAttribute("aria-pressed","false");
+  b.addEventListener("click",()=>{drawChord(k);strum(k,"D");});
+  $("#chordPicker").append(b);
+});
+$("#strumDown").onclick=()=>strum(curChord,"D");
+$("#strumUp").onclick=()=>strum(curChord,"U");
+$("#arpeggio").onclick=()=>{
+  const c=audio();chordFreqs(curChord).forEach((s,k)=>{
+    const t=c.currentTime+k*0.28;pluck(s.hz,t,0.35);
+    setTimeout(()=>ring(s.i),k*280);
+  });
+};
+drawChord("C");
+
+/* ---------- guitar: tuning ---------- */
+const TUNE=[["E","6 弦",40],["A","5 弦",45],["D","4 弦",50],["G","3 弦",55],["B","2 弦",59],["E","1 弦",64]];
+TUNE.forEach(t=>{
+  const b=el("button","string-btn");
+  b.append(el("b","",t[0]),el("small","",t[1]));
+  b.addEventListener("click",()=>{
+    pluck(midiFreq(t[2]),audio().currentTime,0.5);
+    b.classList.add("on");setTimeout(()=>b.classList.remove("on"),500);
+  });
+  $("#tuning").append(b);
+});
+
+/* ---------- guitar: progression player ---------- */
+const PROGS=[["C","G","Am","F"],["Am","F","C","G"],["G","D","Em","C"],["Em","C","G","D"]];
+const PAT=["D","","D","U","","U","D","U"];
+let prog=PROGS[0],playing=false,timer=null,slot=0;
+PROGS.forEach((p,i)=>{
+  const b=el("button","pill",p.join(" – "));b.setAttribute("aria-pressed",i===0);
+  b.addEventListener("click",()=>{
+    prog=p;document.querySelectorAll("#progPicker .pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    renderProg();if(playing){stopPlayer();startPlayer();}
+  });
+  $("#progPicker").append(b);
+});
+function renderProg(){
+  const bar=$("#progBar");bar.innerHTML="";
+  prog.forEach(c=>bar.append(el("span","",c)));
+}
+renderProg();
+PAT.forEach(p=>$("#pattern").append(el("span",p?"":"rest",p==="D"?"↓":p==="U"?"↑":"·")));
+function bpmMs(){return 60000/Number($("#bpm").value)/2}
+function step(){
+  const c=audio(),t=c.currentTime+0.03,pos=slot%8,bar=Math.floor(slot/8)%prog.length;
+  if(pos===0){
+    drawChord(prog[bar]);
+    $("#curChord").textContent=prog[bar];
+    [...$("#progBar").children].forEach((s,i)=>s.classList.toggle("on",i===bar));
+  }
+  if(pos%2===0){click(t,pos===0);$("#beatInfo").textContent="第 "+(pos/2+1)+" 拍";}
+  if(PAT[pos])strum(prog[bar],PAT[pos],t,0.26);
+  [...$("#pattern").children].forEach((s,i)=>s.classList.toggle("on",i===pos));
+  slot++;
+}
+function startPlayer(){
+  audio();playing=true;slot=0;
+  $("#playBtn").textContent="停止";
+  step();timer=setInterval(step,bpmMs());
+}
+function stopPlayer(){
+  if(timer)clearInterval(timer);timer=null;
+  if(playing){playing=false;}
+  $("#playBtn").textContent="開始";
+  $("#curChord").textContent="—";$("#beatInfo").textContent="按開始";
+  [...$("#progBar").children].forEach(s=>s.classList.remove("on"));
+  [...$("#pattern").children].forEach(s=>s.classList.remove("on"));
+}
+$("#playBtn").onclick=()=>playing?stopPlayer():startPlayer();
+$("#bpm").addEventListener("input",e=>{
+  $("#bpmVal").textContent=e.target.value+" BPM";
+  if(playing){clearInterval(timer);timer=setInterval(step,bpmMs());}
+});
+
+/* ---------- singing: breathing ---------- */
+const BREATHS=[
+  {n:"4 吸 · 4 停 · 6 吐",p:[["吸氣",4],["停住",4],["吐氣",6]]},
+  {n:"4 吸 · 8 吐",p:[["吸氣",4],["吐氣",8]]},
+  {n:"4 · 7 · 8 放鬆",p:[["吸氣",4],["停住",7],["吐氣",8]]}
+];
+let bSel=BREATHS[0],bRun=false,bTimers=[],bCycles=0;
+BREATHS.forEach((b,i)=>{
+  const p=el("button","pill",b.n);p.setAttribute("aria-pressed",i===0);
+  p.addEventListener("click",()=>{
+    bSel=b;document.querySelectorAll("#breathPicker .pill").forEach(x=>x.setAttribute("aria-pressed",x===p));
+    if(bRun){stopBreath();startBreath();}
+  });
+  $("#breathPicker").append(p);
+});
+function clearB(){bTimers.forEach(t=>{clearTimeout(t);clearInterval(t)});bTimers=[]}
+function runPhase(i){
+  if(!bRun)return;
+  const ph=bSel.p[i],name=ph[0],sec=ph[1],orb=$("#orb");
+  $("#phaseName").textContent=name;
+  orb.style.transitionDuration=(name==="停住"?0:sec)+"s";
+  if(name==="吸氣")orb.style.transform="scale(1)";
+  if(name==="吐氣")orb.style.transform="scale(.5)";
+  let left=sec;$("#phaseCount").textContent=left;
+  const iv=setInterval(()=>{left--;if(left>0)$("#phaseCount").textContent=left;},1000);
+  bTimers.push(iv);
+  bTimers.push(setTimeout(()=>{
+    clearInterval(iv);
+    let nx=i+1;
+    if(nx>=bSel.p.length){nx=0;bCycles++;$("#breathCycles").textContent="已完成 "+bCycles+" 輪";}
+    runPhase(nx);
+  },sec*1000));
+}
+function startBreath(){bRun=true;$("#breathBtn").textContent="停止";runPhase(0);}
+function stopBreath(){
+  bRun=false;clearB();$("#breathBtn").textContent="開始";
+  const o=$("#orb");o.style.transitionDuration=".6s";o.style.transform="scale(.5)";
+  $("#phaseName").textContent="準備";$("#phaseCount").textContent="—";
+}
+$("#breathBtn").onclick=()=>bRun?stopBreath():startBreath();
+
+/* ---------- singing: pitch detector ---------- */
+const NOTES=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+const SOL={"C":"Do","D":"Re","E":"Mi","F":"Fa","G":"Sol","A":"La","B":"Si"};
+let micStream=null,micCtx=null,analyser=null,raf=null,hist=[];
+function autoCorrelate(buf,sr){
+  let size=buf.length,rms=0;
+  for(let i=0;i<size;i++)rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/size);if(rms<0.012)return -1;
+  let r1=0,r2=size-1,th=0.2;
+  for(let i=0;i<size/2;i++)if(Math.abs(buf[i])<th){r1=i;break}
+  for(let i=1;i<size/2;i++)if(Math.abs(buf[size-i])<th){r2=size-i;break}
+  buf=buf.slice(r1,r2);size=buf.length;if(size<64)return -1;
+  const c=new Array(size).fill(0);
+  for(let i=0;i<size;i++)for(let j=0;j<size-i;j++)c[i]+=buf[j]*buf[j+i];
+  let d=0;while(d<size-1&&c[d]>c[d+1])d++;
+  let mv=-1,mp=-1;
+  for(let i=d;i<size;i++)if(c[i]>mv){mv=c[i];mp=i}
+  if(mp<1||mp>=size-1)return -1;
+  let T=mp;const x1=c[T-1],x2=c[T],x3=c[T+1],a=(x1+x3-2*x2)/2,b=(x3-x1)/2;
+  if(a)T=T-b/(2*a);
+  return sr/T;
+}
+function loop(){
+  const buf=new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buf);
+  const f=autoCorrelate(buf,micCtx.sampleRate);
+  if(f>70&&f<1200){
+    const m=69+12*Math.log2(f/440);
+    hist.push(m);if(hist.length>5)hist.shift();
+    const avg=hist.reduce((a,b)=>a+b,0)/hist.length;
+    const r=Math.round(avg),cents=Math.round((avg-r)*100);
+    const name=NOTES[((r%12)+12)%12],oct=Math.floor(r/12)-1;
+    $("#pNote").textContent=name+oct;
+    const sol=SOL[name]?"　唱名 "+SOL[name]:"";
+    $("#pSub").textContent=Math.round(f)+" Hz　"+(cents>0?"偏高 ":cents<0?"偏低 ":"")+Math.abs(cents)+" 音分"+sol;
+    const dot=$("#pDot");dot.style.left=(50+Math.max(-50,Math.min(50,cents)))+"%";
+    dot.classList.toggle("good",Math.abs(cents)<=15);
+  }else{
+    hist=[];
+    $("#pNote").textContent="—";$("#pSub").textContent="沒聽到聲音，唱大聲一點或靠近麥克風";
+    $("#pDot").style.left="50%";$("#pDot").classList.remove("good");
+  }
+  raf=requestAnimationFrame(loop);
+}
+async function startMic(){
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("unsupported");
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    micCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=micCtx.createMediaStreamSource(micStream);
+    analyser=micCtx.createAnalyser();analyser.fftSize=2048;
+    src.connect(analyser);
+    $("#micBtn").textContent="停止偵測";$("#micMsg").textContent="";
+    $("#pSub").textContent="開始唱吧";
+    loop();
+  }catch(e){
+    micStream=null;
+    const n=e&&e.name;
+    $("#micMsg").textContent=(n==="NotAllowedError"||n==="SecurityError")
+      ?"這個頁面目前被內嵌環境擋住麥克風權限，不會跳出詢問。請下載頁面檔案用瀏覽器直接開啟，或用下方「參考音」跟唱。"
+      :n==="NotFoundError"?"找不到麥克風裝置。"
+      :"此環境無法使用麥克風。請下載頁面檔案用瀏覽器直接開啟，或用下方「參考音」跟唱。";
+  }
+}
+function stopMic(){
+  if(raf)cancelAnimationFrame(raf);raf=null;
+  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
+  if(micCtx){try{micCtx.close()}catch(e){}micCtx=null}
+  hist=[];
+  $("#micBtn").textContent="開始偵測";
+  $("#pNote").textContent="—";$("#pSub").textContent="按下開始，唱一個長音「啊」";
+  $("#pDot").style.left="50%";$("#pDot").classList.remove("good");
+}
+$("#micBtn").onclick=()=>micStream?stopMic():startMic();
+
+/* ---------- singing: reference tones ---------- */
+[["Do",60],["Re",62],["Mi",64],["Fa",65],["Sol",67],["La",69],["Si",71],["Do",72]].forEach(k=>{
+  const b=el("button","pill",k[0]);
+  b.addEventListener("click",()=>tone(midiFreq(k[1]),2.5,"sine",0.35));
+  $("#refTones").append(b);
+});
+
+/* ---------- singing: ear training ---------- */
+const KEYS=[["Do","C4",60],["Re","D4",62],["Mi","E4",64],["Fa","F4",65],["Sol","G4",67],["La","A4",69],["Si","B4",71],["Do","C5",72]];
+let target=null,right=0,total=0;
+KEYS.forEach((k,i)=>{
+  const b=el("button","key");b.append(el("b","",k[0]),el("small","",k[1]));b.dataset.i=i;
+  b.addEventListener("click",()=>{
+    tone(midiFreq(k[2]),1.1);
+    if(target!==null)answer(i,b);
+    else{b.classList.add("on");setTimeout(()=>b.classList.remove("on"),300);}
+  });
+  $("#keys").append(b);
+});
+function playTarget(){
+  tone(midiFreq(60),0.9);
+  setTimeout(()=>tone(midiFreq(KEYS[target][2]),1.1),1000);
+}
+function answer(i,btn){
+  total++;const ok=i===target;if(ok)right++;
+  btn.classList.add(ok?"right":"wrong");
+  const keys=$("#keys").children;
+  if(!ok)keys[target].classList.add("right");
+  $("#quizMsg").textContent=ok?"答對了，是 "+KEYS[target][0]+"。":"這個音是 "+KEYS[target][0]+"，再試下一題。";
+  $("#score").textContent="答對 "+right+" / "+total;
+  target=null;
+  setTimeout(()=>{[...keys].forEach(k=>k.classList.remove("right","wrong"))},1400);
+}
+$("#quizBtn").onclick=()=>{
+  [...$("#keys").children].forEach(k=>k.classList.remove("right","wrong"));
+  let n;do{n=Math.floor(Math.random()*8)}while(n===0&&Math.random()<0.7);
+  target=n;$("#quizMsg").textContent="聽，這是哪一個唱名？";playTarget();
+};
+$("#replayBtn").onclick=()=>{
+  if(target===null){$("#quizMsg").textContent="先按「出題」。";return;}
+  playTarget();
+};
+})();
+</script>
+</body>
+</html>
