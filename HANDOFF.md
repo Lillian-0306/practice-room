@@ -90,7 +90,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）、`pr_guitar_sub`／`pr_singing_sub`（`common` 或 `projects`）。
 
 ## 設計決策
-- 色彩用 CSS 變數，含淺色與深色（`prefers-color-scheme` + `data-theme`）。
+- 色彩用 CSS 變數，含淺色與深色（`prefers-color-scheme` + `data-theme`）。右上角按鈕切換亮／暗，選擇存在 `pr_theme`；沒選過就跟系統。`<head>` 裡有一小段 script 在畫面出現前套用，避免閃一下。
 - 標題用 Noto Serif TC，內文用 Noto Sans TC。
 - 版面寬度上限 880px，手機優先，加入 safe-area 內距。
 - 尊重 `prefers-reduced-motion`。
