@@ -72,6 +72,7 @@ section.panel[hidden]{display:none}
 .song .meta span{background:var(--accent-soft);border-radius:6px;padding:2px 10px;font-size:.85rem}
 .song .chords{margin:4px 0 12px}
 .song .chords .pill{min-height:36px;padding:4px 12px}
+.song .chords .pill-off{display:inline-flex;align-items:center;border-style:dashed;color:var(--muted)}
 .player{margin:4px 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
 .player audio{width:100%;display:block}
 .sheet{margin-top:14px;display:flex;flex-direction:column;gap:12px}
@@ -785,7 +786,13 @@ const SONGS=[
    chords:["C","G","F","Am","Dm7","Em","D","D7","Bm"],
    file:"組曲吉他譜(詞曲版).pdf",
    pages:[1,2,3,4,5].map(n=>"sheets/sun-medley/"+n+".jpg"),
-   audio:"生命的太陽+凝眸+幸福時刻.mp3",audioNote:"Guitar Pro 示範音檔"}
+   audio:"生命的太陽+凝眸+幸福時刻.mp3",audioNote:"Guitar Pro 示範音檔"},
+  {title:"勇悍行",by:"鋼弦吉他・編曲 真如",
+   meta:["標準調音","♩=96","全程悶音（P.M.）八分音符","譜 3 頁","音檔 1:50"],
+   chords:["C#m7","Aadd9","Bsus4","G#m7(#5)","C#m","E"],
+   file:"勇悍行(AG1003).pdf",
+   pages:[1,2,3].map(n=>"sheets/yong-han-xing/"+n+".jpg"),
+   audio:"勇悍行1003.mp3",audioNote:"Guitar Pro 示範音檔"}
 ];
 // Audio player with practice speed and an A-B loop.
 function player(src){
@@ -816,6 +823,8 @@ function renderSongs(){
     const card=el("article","song"),meta=el("div","meta"),chords=el("div","row chords");
     s.meta.forEach(m=>meta.append(el("span","",m)));
     s.chords.forEach(c=>{
+      // chords missing from the CH library are shown as plain labels
+      if(!CH[c]){const t=el("span","pill pill-off",c);t.title="和弦庫還沒有這個和弦";chords.append(t);return}
       const b=el("button","pill",c);
       b.onclick=()=>{showSub("common");drawChord(c);strum(c,"D");$("#chordSvg").scrollIntoView({behavior:"smooth",block:"center"})};
       chords.append(b);
