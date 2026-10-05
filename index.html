@@ -126,10 +126,29 @@ section.panel[hidden]{display:none}
 .prog{display:flex;gap:6px;margin:6px 0 12px}
 .prog span{flex:1;min-width:0;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prog span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
-.pattern{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-bottom:12px}
-.pattern span{text-align:center;padding:6px 0;border-radius:6px;background:var(--accent-soft);font-weight:700;font-size:1.05rem;min-height:36px;color:var(--ink)}
-.pattern span.rest{opacity:.35}
-.pattern span.on{background:var(--accent);color:var(--accent-on)}
+.pattern{display:grid;grid-template-columns:repeat(var(--n,8),minmax(0,1fr));gap:4px;margin-bottom:6px}
+.pattern>*{text-align:center;padding:6px 0;border:0;border-radius:6px;background:var(--accent-soft);font-weight:700;font-size:1.05rem;min-height:36px;color:var(--ink);font-family:inherit}
+.pattern.dense>*{font-size:.85rem;min-height:32px}
+.pattern>.beat{box-shadow:inset 2px 0 0 var(--accent)}
+.pattern>.rest{opacity:.35}
+.pattern>.on{background:var(--accent);color:var(--accent-on);opacity:1}
+.pattern button{cursor:pointer}
+.pattern.editing>*{outline:1.5px dashed var(--line);outline-offset:-1.5px}
+.legend{font-size:.8rem;color:var(--muted);margin-bottom:12px}
+.pat-edit{background:var(--bg);border-radius:10px;padding:12px;margin:0 0 10px}
+.pat-edit[hidden]{display:none}
+.pat-edit .row{margin-bottom:6px}
+.lbl{font-size:.85rem;color:var(--muted);min-width:2.6em}
+/* metronome */
+.metro-bpm{display:flex;align-items:center;justify-content:center;gap:20px;margin:4px 0 8px}
+.metro-bpm b{display:block;font-family:var(--serif);font-size:3.4rem;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums;text-align:center;min-width:3ch}
+.metro-bpm span{display:block;text-align:center;font-size:.8rem;color:var(--muted)}
+.round{width:52px;height:52px;border-radius:50%;padding:0;font-size:1.6rem;line-height:1}
+.metro-row{margin:10px 0}
+.beats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.beats i{width:24px;height:24px;border-radius:50%;background:var(--line);transition:transform .06s,background .06s}
+.beats i.acc{box-shadow:inset 0 0 0 3px var(--accent)}
+.beats i.on{background:var(--accent);transform:scale(1.25)}
 input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 
 /* checklist */
@@ -249,13 +268,37 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <p class="msg note" id="tunerMsg"></p>
     </div>
 
+    <div class="block" id="metro">
+      <header><h2>節拍器</h2><p>單純打拍子。可以選拍號、加細分拍，或跟著歌按「點按測速」找出速度。</p></header>
+      <div class="metro-bpm">
+        <button class="btn ghost round" id="mMinus" aria-label="慢一點">−</button>
+        <div><b id="mBpm">80</b><span>BPM</span></div>
+        <button class="btn ghost round" id="mPlus" aria-label="快一點">+</button>
+      </div>
+      <input type="range" id="mRange" min="30" max="240" value="80" aria-label="節拍器速度">
+      <div class="row metro-row"><span class="lbl">拍號</span><div class="row" id="mMeter" role="group" aria-label="拍號"></div></div>
+      <div class="row metro-row"><span class="lbl">細分</span><div class="row" id="mSub" role="group" aria-label="細分拍"></div></div>
+      <div class="beats" id="mBeats" aria-hidden="true"></div>
+      <div class="row"><button class="btn" id="mBtn">開始</button><button class="btn ghost" id="mTap">點按測速</button><span class="note" id="mTapInfo"></span></div>
+    </div>
+
     <div class="block">
-      <header><h2>跟著節拍換和弦</h2><p>每小節換一個和弦，節奏圖亮起時刷弦。</p></header>
+      <header><h2>跟著節拍換和弦</h2><p>選和弦進行和刷法，每小節換一個和弦，節奏圖亮起時刷弦。</p></header>
+      <span class="grp-label">和弦進行</span>
       <div class="row" id="progPicker" role="group" aria-label="和弦進行"></div>
+      <span class="grp-label" style="margin-top:12px">刷法</span>
+      <div class="row" id="patPicker" role="group" aria-label="刷法"></div>
+      <div class="pat-edit" id="patEdit" hidden>
+        <div class="row"><span class="lbl">拍號</span><div class="row" id="ceMeter" role="group" aria-label="自訂拍號"></div></div>
+        <div class="row"><span class="lbl">格子</span><div class="row" id="ceGrid" role="group" aria-label="自訂格子"></div></div>
+        <p class="note" style="margin:4px 0 8px">點下方節奏圖的格子切換：↓ 下刷 → ↑ 上刷 → ✕ 切音 → · 不刷。播放中也能改。</p>
+        <div class="row"><button class="pill" id="ceDown">每拍下刷</button><button class="pill" id="ceClear">清空</button></div>
+      </div>
       <div class="now"><div class="cur" id="curChord">—</div><div class="note" id="beatInfo">按開始</div></div>
       <div class="prog" id="progBar"></div>
       <div class="pattern" id="pattern"></div>
-      <label for="bpm" class="row" style="justify-content:space-between"><span>速度</span><b id="bpmVal">80 BPM</b></label>
+      <p class="legend">↓ 下刷　↑ 上刷　✕ 切音（右手掌悶住弦再刷）　· 不刷</p>
+      <label for="bpm" class="row" style="justify-content:space-between"><span>速度 <small class="note" id="bpmUnit"></small></span><b id="bpmVal">80 BPM</b></label>
       <input type="range" id="bpm" min="50" max="140" value="80">
       <div class="row" style="margin-top:12px"><button class="btn" id="playBtn">開始</button><span class="note">建議從 60–70 BPM 開始，穩了再加速。</span></div>
     </div>
@@ -380,12 +423,22 @@ function tone(freq,dur,type,vol){
   o.connect(g).connect(c.destination);
   o.start(t);o.stop(t+dur+0.05);
 }
-function click(when,accent){
+// level: 2 bar start, 1 beat, 0 subdivision (true/false still mean bar start / beat)
+function click(when,level){
+  if(level===true)level=2;else if(level===false||level==null)level=1;
   const c=audio(),o=c.createOscillator(),g=c.createGain();
-  o.type="square";o.frequency.value=accent?1500:1000;
-  g.gain.setValueAtTime(0.08,when);
+  o.type="square";o.frequency.value=[800,1000,1500][level];
+  g.gain.setValueAtTime([0.035,0.07,0.09][level],when);
   g.gain.exponentialRampToValueAtTime(0.001,when+0.04);
   o.connect(g).connect(c.destination);o.start(when);o.stop(when+0.05);
+}
+// muted strum ("chuck"): a short band-passed noise burst
+function chuck(when){
+  const c=audio(),n=Math.floor(c.sampleRate*0.07),b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+  const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+  s.buffer=b;f.type="bandpass";f.frequency.value=1700;f.Q.value=0.8;g.gain.value=0.55;
+  s.connect(f).connect(g).connect(c.destination);s.start(when);
 }
 const midiFreq=m=>440*Math.pow(2,(m-69)/12);
 const freqMidi=f=>69+12*Math.log2(f/440);
@@ -446,7 +499,7 @@ document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".mode").forEach(x=>x.setAttribute("aria-selected",x===b));
   $("#guitar").hidden=m!=="guitar";
   $("#singing").hidden=m!=="singing";
-  if(m!=="guitar"){stopPlayer();stopTuner();recG.stop();}
+  if(m!=="guitar"){stopPlayer();stopMetro();stopTuner();recG.stop();}
   else{stopSing();stopBreath();recS.stop();}
   window.scrollTo({top:0});
   drawCurve();
@@ -676,8 +729,30 @@ const PROGS=[
   ["C","Am","Dm","G7"],["Am","Dm","E7","Am"],["D","Dsus4","D","Dsus2"],
   ["C","G","Am","Em","F","C","F","G"]
 ];
-const PAT=["D","","D","U","","U","D","U"];
+// Strum patterns. beats per bar, sub = slots per beat; D down, U up, X muted chuck, - rest.
+const PATS=[
+  {n:"民謠基本",beats:4,sub:2,s:"D-DU-UDU"},
+  {n:"四分下刷",beats:4,sub:2,s:"D-D-D-D-"},
+  {n:"八分下刷",beats:4,sub:2,s:"DDDDDDDD"},
+  {n:"下上交替",beats:4,sub:2,s:"DUDUDUDU"},
+  {n:"流行切音",beats:4,sub:2,s:"D-XU-UXU"},
+  {n:"搖滾",beats:4,sub:2,s:"DDDUDDDU"},
+  {n:"反拍上刷",beats:4,sub:2,s:"-U-U-U-U"},
+  {n:"十六分切分",beats:4,sub:4,s:"D--UD-DU-UD-DUDU"},
+  {n:"3/4 華爾滋",beats:3,sub:2,s:"D-DUDU"},
+  {n:"6/8 抒情",beats:2,sub:3,s:"D-UDDU"}
+].map(p=>({...p,slots:[...p.s].map(x=>x==="-"?"":x)}));
+const CE_METERS={"2/4":[2,2],"3/4":[3,2],"4/4":[4,2],"6/8":[2,3]}; // [beats, eighth-note slots per beat]
+const savedCustom=load("pr_custom",null);
+const custom={n:"自訂",custom:true,meter:"4/4",grid:8,beats:4,sub:2,slots:[..."D-DU-UDU"].map(x=>x==="-"?"":x)};
+if(savedCustom&&CE_METERS[savedCustom.meter]&&[8,16].includes(savedCustom.grid)&&Array.isArray(savedCustom.slots)){
+  const [bt,sb]=CE_METERS[savedCustom.meter],k=savedCustom.grid===16?2:1;
+  if(savedCustom.slots.length===bt*sb*k&&savedCustom.slots.every(x=>["","D","U","X"].includes(x)))
+    Object.assign(custom,{meter:savedCustom.meter,grid:savedCustom.grid,beats:bt,sub:sb*k,slots:savedCustom.slots});
+}
+PATS.push(custom);
 const LOOKAHEAD=0.12,TICK_MS=25;
+let pat=PATS[Math.max(0,Math.min(PATS.length-1,load("pr_pattern",0)|0))];
 let prog=PROGS[0],playing=false,sched=null,slot=0,nextT=0,uiTimers=[];
 PROGS.forEach((p,i)=>{
   const b=el("button","pill",p.join(" – "));b.setAttribute("aria-pressed",i===0);
@@ -692,8 +767,43 @@ function renderProg(){
   prog.forEach(c=>bar.append(el("span","",c)));
 }
 renderProg();
-PAT.forEach(p=>$("#pattern").append(el("span",p?"":"rest",p==="D"?"↓":p==="U"?"↑":"·")));
-const slotDur=()=>60/Number($("#bpm").value)/2;
+const SYM={D:"↓",U:"↑",X:"✕","":"·"},NEXT={"":"D",D:"U",U:"X",X:""};
+function renderPattern(){
+  const box=$("#pattern"),n=pat.slots.length;box.innerHTML="";
+  box.style.setProperty("--n",n);box.classList.toggle("dense",n>8);box.classList.toggle("editing",!!pat.custom);
+  pat.slots.forEach((s,i)=>{
+    const c=el(pat.custom?"button":"span",((s?"":"rest")+(i%pat.sub===0&&i?" beat":"")).trim(),SYM[s]);
+    if(pat.custom){
+      c.setAttribute("aria-label","第 "+(Math.floor(i/pat.sub)+1)+" 拍第 "+(i%pat.sub+1)+" 格："+SYM[s]);
+      c.onclick=()=>{pat.slots[i]=NEXT[pat.slots[i]];saveCustom();renderPattern()};
+    }
+    box.append(c);
+  });
+  $("#bpmUnit").textContent=pat.sub%3===0?"（一拍＝附點四分音符）":"";
+}
+function saveCustom(){save("pr_custom",{meter:custom.meter,grid:custom.grid,slots:custom.slots})}
+function setPattern(p){
+  const was=playing;stopPlayer();
+  pat=p;save("pr_pattern",PATS.indexOf(p));
+  $("#patPicker").querySelectorAll(".pill").forEach((b,i)=>b.setAttribute("aria-pressed",PATS[i]===p));
+  $("#patEdit").hidden=!p.custom;
+  renderPattern();if(was)startPlayer();
+}
+PATS.forEach(p=>{const b=el("button","pill",p.n);b.onclick=()=>setPattern(p);$("#patPicker").append(b)});
+// custom editor: meter and grid (eighths / sixteenths); changing either resets to one down-strum per beat
+function resizeCustom(){
+  const [bt,sb]=CE_METERS[custom.meter],k=custom.grid===16?2:1;
+  custom.beats=bt;custom.sub=sb*k;
+  custom.slots=Array.from({length:bt*sb*k},(_,i)=>i%(sb*k)===0?"D":"");
+  saveCustom();
+  $("#ceMeter").querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-pressed",b.textContent===custom.meter));
+  $("#ceGrid").querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.g===custom.grid));
+}
+Object.keys(CE_METERS).forEach(m=>{const b=el("button","pill",m);b.setAttribute("aria-pressed",m===custom.meter);b.onclick=()=>{custom.meter=m;resizeCustom();setPattern(custom)};$("#ceMeter").append(b)});
+[[8,"八分"],[16,"十六分"]].forEach(([g,t])=>{const b=el("button","pill",t);b.dataset.g=g;b.setAttribute("aria-pressed",g===custom.grid);b.onclick=()=>{custom.grid=g;resizeCustom();setPattern(custom)};$("#ceGrid").append(b)});
+$("#ceDown").onclick=()=>{custom.slots=custom.slots.map((_,i)=>i%custom.sub===0?"D":"");saveCustom();renderPattern()};
+$("#ceClear").onclick=()=>{custom.slots=custom.slots.map(()=>"");saveCustom();renderPattern()};
+const slotDur=()=>60/Number($("#bpm").value)/pat.sub;
 function showSlot(pos,bar){
   if(!playing)return;
   if(pos===0){
@@ -701,13 +811,13 @@ function showSlot(pos,bar){
     $("#curChord").textContent=prog[bar];
     [...$("#progBar").children].forEach((s,i)=>s.classList.toggle("on",i===bar));
   }
-  if(pos%2===0)$("#beatInfo").textContent="第 "+(pos/2+1)+" 拍";
+  if(pos%pat.sub===0)$("#beatInfo").textContent="第 "+(pos/pat.sub+1)+" 拍";
   [...$("#pattern").children].forEach((s,i)=>s.classList.toggle("on",i===pos));
 }
 function scheduleSlot(t){
-  const c=audio(),pos=slot%8,bar=Math.floor(slot/8)%prog.length;
-  if(pos%2===0)click(t,pos===0);
-  if(PAT[pos])strum(prog[bar],PAT[pos],t,0.26);
+  const c=audio(),n=pat.slots.length,pos=slot%n,bar=Math.floor(slot/n)%prog.length,s=pat.slots[pos];
+  if(pos%pat.sub===0)click(t,pos===0?2:1);
+  if(s==="X")chuck(t);else if(s)strum(prog[bar],s,t,pos%pat.sub===0?0.28:0.22);
   const id=setTimeout(()=>{uiTimers=uiTimers.filter(x=>x!==id);showSlot(pos,bar)},Math.max(0,(t-c.currentTime)*1000));
   uiTimers.push(id);
 }
@@ -717,6 +827,7 @@ function scheduler(){
   while(nextT<c.currentTime+LOOKAHEAD){scheduleSlot(nextT);nextT+=slotDur();slot++;}
 }
 function startPlayer(){
+  stopMetro();
   const c=audio();playing=true;slot=0;nextT=c.currentTime+0.06;
   $("#playBtn").textContent="停止";
   scheduler();sched=setInterval(scheduler,TICK_MS);
@@ -732,6 +843,61 @@ function stopPlayer(){
 }
 $("#playBtn").onclick=()=>playing?stopPlayer():startPlayer();
 $("#bpm").addEventListener("input",e=>{$("#bpmVal").textContent=e.target.value+" BPM";});
+
+/* ---------- guitar: metronome ---------- */
+// weak: in 6/8 only beats 1 and 4 are felt, so the others click at subdivision level
+const METERS=[{n:"2/4",beats:2},{n:"3/4",beats:3},{n:"4/4",beats:4},{n:"6/8",beats:6,acc:[3],weak:true}];
+const SUBS=[{n:"無",k:1},{n:"八分",k:2},{n:"三連音",k:3},{n:"十六分",k:4}];
+const ms=Object.assign({bpm:80,meter:2,sub:0},load("pr_metro",{}));
+ms.bpm=Math.max(30,Math.min(240,ms.bpm|0||80));if(!METERS[ms.meter])ms.meter=2;if(!SUBS[ms.sub])ms.sub=0;
+let mOn=false,mSched=null,mNext=0,mTick=0,mTimers=[],taps=[];
+function mSave(){save("pr_metro",ms)}
+function mSetBpm(v){ms.bpm=Math.max(30,Math.min(240,Math.round(v)));$("#mBpm").textContent=ms.bpm;$("#mRange").value=ms.bpm;mSave()}
+function mRenderBeats(){
+  const m=METERS[ms.meter],box=$("#mBeats");box.innerHTML="";
+  for(let i=0;i<m.beats;i++)box.append(el("i",i===0||(m.acc||[]).includes(i)?"acc":""));
+}
+METERS.forEach((m,i)=>{const b=el("button","pill",m.n);b.setAttribute("aria-pressed",i===ms.meter);
+  b.onclick=()=>{ms.meter=i;mSave();$("#mMeter").querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i));mRenderBeats();mTick=0};$("#mMeter").append(b)});
+SUBS.forEach((s,i)=>{const b=el("button","pill",s.n);b.setAttribute("aria-pressed",i===ms.sub);
+  b.onclick=()=>{ms.sub=i;mSave();$("#mSub").querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i));mTick=0};$("#mSub").append(b)});
+function mSchedule(t){
+  const m=METERS[ms.meter],k=SUBS[ms.sub].k,pos=mTick%k,beat=Math.floor(mTick/k)%m.beats;
+  let lv=0;
+  if(pos===0)lv=beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1;
+  click(t,lv);
+  if(pos===0){const c=audio(),id=setTimeout(()=>{mTimers=mTimers.filter(x=>x!==id);
+    if(mOn)[...$("#mBeats").children].forEach((d,i)=>d.classList.toggle("on",i===beat))},Math.max(0,(t-c.currentTime)*1000));mTimers.push(id)}
+}
+function mScheduler(){
+  const c=audio();
+  if(mNext<c.currentTime)mNext=c.currentTime+0.02;
+  while(mNext<c.currentTime+LOOKAHEAD){mSchedule(mNext);mNext+=60/ms.bpm/SUBS[ms.sub].k;mTick++}
+}
+function startMetro(){
+  stopPlayer();
+  const c=audio();mOn=true;mTick=0;mNext=c.currentTime+0.06;
+  $("#mBtn").textContent="停止";mScheduler();mSched=setInterval(mScheduler,TICK_MS);
+}
+function stopMetro(){
+  if(mSched)clearInterval(mSched);mSched=null;mTimers.forEach(clearTimeout);mTimers=[];
+  mOn=false;$("#mBtn").textContent="開始";[...$("#mBeats").children].forEach(d=>d.classList.remove("on"));
+}
+$("#mBtn").onclick=()=>mOn?stopMetro():startMetro();
+$("#mMinus").onclick=()=>mSetBpm(ms.bpm-1);
+$("#mPlus").onclick=()=>mSetBpm(ms.bpm+1);
+$("#mRange").addEventListener("input",e=>mSetBpm(+e.target.value));
+// tap tempo: average of the last few intervals; a pause over 2 s starts over
+$("#mTap").onclick=()=>{
+  const now=performance.now();
+  if(taps.length&&now-taps[taps.length-1]>2000)taps=[];
+  taps.push(now);if(taps.length>6)taps.shift();
+  if(taps.length<2){$("#mTapInfo").textContent="再按幾下";return}
+  const iv=(taps[taps.length-1]-taps[0])/(taps.length-1);
+  mSetBpm(60000/iv);$("#mTapInfo").textContent="已按 "+taps.length+" 下";
+};
+mSetBpm(ms.bpm);mRenderBeats();
+setPattern(pat);
 
 /* ---------- recorder ---------- */
 function recorder(root,prefix){
@@ -791,7 +957,7 @@ function showSub(sub){
   document.querySelectorAll(".subtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.sub===sub));
   $("#g-common").hidden=sub!=="common";
   $("#g-projects").hidden=sub!=="projects";
-  if(sub!=="common"){stopPlayer();stopTuner();recG.stop();}
+  if(sub!=="common"){stopPlayer();stopMetro();stopTuner();recG.stop();}
   save("pr_guitar_sub",sub);
 }
 document.querySelectorAll(".subtab").forEach(b=>b.addEventListener("click",()=>showSub(b.dataset.sub)));
