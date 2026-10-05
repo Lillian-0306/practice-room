@@ -74,6 +74,11 @@ section.panel[hidden]{display:none}
 .song .chords .pill{min-height:36px;padding:4px 12px}
 .player{margin:4px 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
 .player audio{width:100%;display:block}
+.sheet{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.sheet[hidden]{display:none}
+.sheet figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.sheet img{display:block;width:100%;height:auto}
+.sheet figcaption{font-size:.8rem;color:var(--muted);text-align:center;padding:4px;background:var(--surface)}
 .player .row{margin-top:8px}
 .player .pill{min-height:36px;padding:4px 12px}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
@@ -779,6 +784,7 @@ const SONGS=[
    meta:["標準調音","♩=70，結尾漸慢到 ♩=48","譜 5 頁","音檔 4:54"],
    chords:["C","G","F","Am","Dm7","Em","D","D7","Bm"],
    file:"組曲吉他譜(詞曲版).pdf",
+   pages:[1,2,3,4,5].map(n=>"sheets/sun-medley/"+n+".jpg"),
    audio:"生命的太陽+凝眸+幸福時刻.mp3",audioNote:"Guitar Pro 示範音檔"}
 ];
 // Audio player with practice speed and an A-B loop.
@@ -807,26 +813,39 @@ function renderSongs(){
   const box=$("#songs");box.innerHTML="";
   if(!SONGS.length){const e=el("div","empty");e.append(el("b","","還沒有樂譜"),"之後上傳的樂譜會出現在這裡。");box.append(e);return}
   SONGS.forEach(s=>{
-    const card=el("article","song"),meta=el("div","meta"),chords=el("div","row chords"),msg=el("p","msg note");
+    const card=el("article","song"),meta=el("div","meta"),chords=el("div","row chords");
     s.meta.forEach(m=>meta.append(el("span","",m)));
     s.chords.forEach(c=>{
       const b=el("button","pill",c);
       b.onclick=()=>{showSub("common");drawChord(c);strum(c,"D");$("#chordSvg").scrollIntoView({behavior:"smooth",block:"center"})};
       chords.append(b);
     });
-    const open=el("button","btn","開啟樂譜");
-    open.onclick=async()=>{
-      msg.textContent="";
-      if(location.protocol!=="file:"){
-        let ok=false;try{ok=(await fetch(s.file,{method:"HEAD",cache:"no-store"})).ok}catch(e){}
-        // not served here (e.g. the artifact copy, which can't hold the large PDF): open it from GitHub Pages
-        if(!ok){window.open(SITE+encodeURIComponent(s.file),"_blank","noopener");return}
+    // Sheet pages are images shown inline; the original PDF is linked from GitHub Pages
+    // (the artifact copy can't hold the 22 MB file).
+    const actions=el("div","row"),open=el("button","btn","開啟樂譜"),sheet=el("div","sheet");
+    sheet.hidden=true;
+    if(s.file){const pdf=el("a","note","下載原始 PDF");pdf.href=SITE+encodeURIComponent(s.file);pdf.target="_blank";pdf.rel="noopener";actions.append(open,pdf)}
+    else actions.append(open);
+    const toggle=()=>{
+      if(!sheet.childElementCount){
+        s.pages.forEach((src,i)=>{
+          const fig=el("figure"),img=el("img");
+          img.src=src;img.alt=s.title+" 樂譜第 "+(i+1)+" 頁";img.loading=i?"lazy":"eager";img.width=1400;img.height=1980;
+          const big=el("a");big.href=src;big.target="_blank";big.rel="noopener";big.append(img);
+          fig.append(big,el("figcaption","","第 "+(i+1)+" / "+s.pages.length+" 頁・點圖放大"));sheet.append(fig);
+        });
+        const close=el("button","btn ghost","收起樂譜");close.onclick=()=>{toggle();open.scrollIntoView({block:"center"})};
+        sheet.append(close);
       }
-      window.open(s.file,"_blank","noopener");
+      sheet.hidden=!sheet.hidden;
+      open.textContent=sheet.hidden?"開啟樂譜":"收起樂譜";
+      if(!sheet.hidden)sheet.scrollIntoView({behavior:"smooth",block:"start"});
     };
+    open.onclick=toggle;
     card.append(el("h3","",s.title),el("p","by",s.by),meta);
     if(s.audio)card.append(el("span","grp-label",s.audioNote||"示範音檔"),player(s.audio));
-    card.append(el("span","grp-label","用到的和弦（點一下看按法）"),chords,open,msg);
+    card.append(el("span","grp-label","用到的和弦（點一下看按法）"),chords);
+    if(s.pages)card.append(actions,sheet);
     box.append(card);
   });
 }
