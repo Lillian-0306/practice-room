@@ -774,12 +774,11 @@ document.querySelectorAll(".subtab").forEach(b=>b.addEventListener("click",()=>s
 showSub(load("pr_guitar_sub","common")==="projects"?"projects":"common");
 
 /* ---------- guitar: projects (sheet music) ---------- */
-// local: the file is kept out of git (see .gitignore), so it only opens where the folder exists, e.g. localhost.
 const SONGS=[
   {title:"生命的太陽 + 凝眸 + 幸福時刻",by:"吉他指彈組曲（詞曲版）・編曲 真如",
    meta:["標準調音","♩=70，結尾漸慢到 ♩=48","譜 5 頁","音檔 4:54"],
    chords:["C","G","F","Am","Dm7","Em","D","D7","Bm"],
-   file:"組曲吉他譜(詞曲版).pdf",local:true,
+   file:"組曲吉他譜(詞曲版).pdf",
    audio:"生命的太陽+凝眸+幸福時刻.mp3",audioNote:"Guitar Pro 示範音檔"}
 ];
 // Audio player with practice speed and an A-B loop.
@@ -820,7 +819,8 @@ function renderSongs(){
       msg.textContent="";
       if(location.protocol!=="file:"){
         let ok=false;try{ok=(await fetch(s.file,{method:"HEAD",cache:"no-store"})).ok}catch(e){}
-        if(!ok){msg.textContent=s.local?"這份樂譜只存在你的電腦，沒有上傳。請在電腦上用本機網址（localhost）開啟練習室。":"找不到樂譜檔案。";return}
+        // not served here (e.g. the artifact copy, which can't hold the large PDF): open it from GitHub Pages
+        if(!ok){window.open(SITE+encodeURIComponent(s.file),"_blank","noopener");return}
       }
       window.open(s.file,"_blank","noopener");
     };
