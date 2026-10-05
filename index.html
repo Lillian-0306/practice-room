@@ -72,6 +72,10 @@ section.panel[hidden]{display:none}
 .song .meta span{background:var(--accent-soft);border-radius:6px;padding:2px 10px;font-size:.85rem}
 .song .chords{margin:4px 0 12px}
 .song .chords .pill{min-height:36px;padding:4px 12px}
+.player{margin:4px 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
+.player audio{width:100%;display:block}
+.player .row{margin-top:8px}
+.player .pill{min-height:36px;padding:4px 12px}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
 .block>header{margin-bottom:12px}
 .block>header p{color:var(--muted);font-size:.93rem;margin-top:4px}
@@ -773,10 +777,33 @@ showSub(load("pr_guitar_sub","common")==="projects"?"projects":"common");
 // local: the file is kept out of git (see .gitignore), so it only opens where the folder exists, e.g. localhost.
 const SONGS=[
   {title:"生命的太陽 + 凝眸 + 幸福時刻",by:"吉他指彈組曲（詞曲版）・編曲 真如",
-   meta:["標準調音","♩=70，結尾漸慢到 ♩=48","5 頁"],
+   meta:["標準調音","♩=70，結尾漸慢到 ♩=48","譜 5 頁","音檔 4:54"],
    chords:["C","G","F","Am","Dm7","Em","D","D7","Bm"],
-   file:"組曲吉他譜(詞曲版).pdf",local:true}
+   file:"組曲吉他譜(詞曲版).pdf",local:true,
+   audio:"生命的太陽+凝眸+幸福時刻.mp3",audioNote:"Guitar Pro 示範音檔"}
 ];
+// Audio player with practice speed and an A-B loop.
+function player(src){
+  const box=el("div","player"),au=el("audio"),speeds=el("div","row"),loop=el("div","row"),info=el("span","note");
+  au.controls=true;au.preload="none";au.src=src;
+  const fmt=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
+  [0.5,0.75,1].forEach(r=>{
+    const b=el("button","pill",r===1?"原速":r+"×");b.setAttribute("aria-pressed",r===1);
+    b.onclick=()=>{au.playbackRate=r;au.defaultPlaybackRate=r;speeds.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b))};
+    speeds.append(b);
+  });
+  let A=null,B=null;
+  const show=()=>{info.textContent=A===null?"":"循環 "+fmt(A)+" – "+(B===null?"…":fmt(B))};
+  const setA=el("button","pill","設 A 點"),setB=el("button","pill","設 B 點"),clr=el("button","pill","取消循環");
+  setA.onclick=()=>{A=au.currentTime;if(B!==null&&B<=A)B=null;show()};
+  setB.onclick=()=>{if(A===null||au.currentTime<=A){info.textContent="先在要開始的地方按「設 A 點」";return}B=au.currentTime;au.currentTime=A;au.play();show()};
+  clr.onclick=()=>{A=B=null;show()};
+  au.addEventListener("timeupdate",()=>{if(A!==null&&B!==null&&au.currentTime>=B)au.currentTime=A});
+  loop.append(setA,setB,clr,info);
+  speeds.prepend(el("span","note","速度"));
+  box.append(au,speeds,loop);
+  return box;
+}
 function renderSongs(){
   const box=$("#songs");box.innerHTML="";
   if(!SONGS.length){const e=el("div","empty");e.append(el("b","","還沒有樂譜"),"之後上傳的樂譜會出現在這裡。");box.append(e);return}
@@ -797,7 +824,9 @@ function renderSongs(){
       }
       window.open(s.file,"_blank","noopener");
     };
-    card.append(el("h3","",s.title),el("p","by",s.by),meta,el("span","grp-label","用到的和弦（點一下看按法）"),chords,open,msg);
+    card.append(el("h3","",s.title),el("p","by",s.by),meta);
+    if(s.audio)card.append(el("span","grp-label",s.audioNote||"示範音檔"),player(s.audio));
+    card.append(el("span","grp-label","用到的和弦（點一下看按法）"),chords,open,msg);
     box.append(card);
   });
 }
