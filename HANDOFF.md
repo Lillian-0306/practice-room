@@ -9,15 +9,21 @@
 - 已部署到 GitHub Pages：https://lillian-0306.github.io/practice-room/ （main 分支根目錄，推送後約一分鐘更新）。
 - 也發佈在 Claude 內嵌預覽，但**內嵌環境擋麥克風**，麥克風相關功能會顯示錯誤訊息並附上正式網址。
 
+## 樂譜（不公開）
+- 樂譜 PDF 放在專案根目錄，`.gitignore` 排除 `*.pdf`，**不會上傳**到公開倉庫。
+- 新增歌曲：把檔案放進資料夾，在 `index.html` 的 `SONGS` 陣列加一筆（`local:true`）。
+- 在 GitHub Pages 或 artifact 上按「開啟樂譜」會顯示「只存在你的電腦」；要看譜請用本機伺服器開啟。
+
 ## 本機執行
 ```
-python3 -m http.server 8000
+npx http-server -p 8000 -c-1
+# 或 python3 -m http.server 8000
 # 開 http://localhost:8000
 ```
 localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。用手機測試時需 https（可用 GitHub Pages 或 ngrok）。
 
 ## 功能清單
-**吉他**（分兩個子分頁：「常用」放下列 1–5 項；「專案」目前是空的，之後放樂譜。上次選的子分頁存在 localStorage `pr_guitar_sub`）
+**吉他**（分兩個子分頁：「常用」放下列 1–5 項；「專案」列出 `SONGS` 裡的歌曲卡片：歌名、編曲、調音與速度、用到的和弦（點了跳到「常用」的和弦圖）、開啟樂譜按鈕。上次選的子分頁存在 localStorage `pr_guitar_sub`）
 1. 和弦圖與試聽：28 個和弦，分四組（基本、七和弦、sus 掛留、封閉）。SVG 動態繪製指法，封閉和弦畫橫按長條，刷下、刷上、逐弦彈。
 2. 調音：六條弦參考音，加上麥克風調音器（自動判斷最接近的弦、顯示偏差音分與「轉緊/轉鬆」提示，±5 音分內算準）。
 3. 跟拍換和弦：8 組和弦進行（含 8 小節卡農進行）、節拍器、八分音符刷弦節奏圖（↓ · ↓ ↑ · ↑ ↓ ↑）、50–140 BPM。用 Web Audio lookahead 排程，不會飄拍。
