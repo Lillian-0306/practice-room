@@ -17,7 +17,7 @@ python3 -m http.server 8000
 localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。用手機測試時需 https（可用 GitHub Pages 或 ngrok）。
 
 ## 功能清單
-**吉他**
+**吉他**（分兩個子分頁：「常用」放下列 1–5 項；「專案」目前是空的，之後放樂譜。上次選的子分頁存在 localStorage `pr_guitar_sub`）
 1. 和弦圖與試聽：28 個和弦，分四組（基本、七和弦、sus 掛留、封閉）。SVG 動態繪製指法，封閉和弦畫橫按長條，刷下、刷上、逐弦彈。
 2. 調音：六條弦參考音，加上麥克風調音器（自動判斷最接近的弦、顯示偏差音分與「轉緊/轉鬆」提示，±5 音分內算準）。
 3. 跟拍換和弦：8 組和弦進行（含 8 小節卡農進行）、節拍器、八分音符刷弦節奏圖（↓ · ↓ ↑ · ↑ ↓ ↑）、50–140 BPM。用 Web Audio lookahead 排程，不會飄拍。
@@ -77,7 +77,8 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 吉他：`CH` 和弦資料表（`f` 為六弦品位，-1 不彈、0 空弦；`fg` 為手指編號；`b` 為橫按 `[品位, 起弦, 終弦]`）、`GROUPS`、`drawChord()`、`strum()`；調音器 `tunerLoop/startTuner/stopTuner`；節拍器 `scheduler()` 每 25ms 預排未來 120ms 的拍子，UI 用 setTimeout 對齊。
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
 - 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`KEYS`、`answer()`。
-- localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）。
+- 吉他子分頁：`.subtab` 按鈕 + `showSub()`，切到「專案」會停止節拍器、調音器、錄音。
+- localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）、`pr_guitar_sub`（`common` 或 `projects`）。
 
 ## 設計決策
 - 色彩用 CSS 變數，含淺色與深色（`prefers-color-scheme` + `data-theme`）。
