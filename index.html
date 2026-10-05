@@ -72,6 +72,11 @@ section.panel[hidden]{display:none}
 .song .meta span{background:var(--accent-soft);border-radius:6px;padding:2px 10px;font-size:.85rem}
 .song .chords{margin:4px 0 12px}
 .song .chords .pill{min-height:36px;padding:4px 12px}
+.song-chord{display:grid;grid-template-columns:minmax(0,200px) 1fr;gap:14px;align-items:start;margin:0 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
+.song-chord[hidden]{display:none}
+.song-chord .chord-name{font-size:2rem}
+.song-chord .note{margin:6px 0 10px}
+@media (max-width:480px){.song-chord{grid-template-columns:1fr}.song-chord .chord-svg{max-width:200px}}
 .song .chords .pill-off{display:inline-flex;align-items:center;border-style:dashed;color:var(--muted)}
 .player{margin:4px 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
 .player audio{width:100%;display:block}
@@ -484,7 +489,8 @@ checklist("#sCheck","#sBar","#sCount","pr_singing",[
 
 /* ---------- guitar: chords ---------- */
 const OPEN=[40,45,50,55,59,64];
-// f: fret per string (6th→1st), -1 muted, 0 open; fg: finger numbers; b: barre [fret, fromString, toString] as indexes into f
+// f: fret per string (6th→1st), -1 muted, 0 open; fg: finger numbers; b: barre [fret, fromString, toString] as indexes into f;
+// s: first fret shown in the diagram (default 1). All frets are absolute.
 const CH={
   C:{f:[-1,3,2,0,1,0],fg:[0,3,2,0,1,0],n:"最常見的第一個和弦，無名指在 5 弦 3 格。"},
   G:{f:[3,2,0,0,0,3],fg:[3,2,0,0,0,4],n:"六條弦都彈，聲音飽滿。"},
@@ -513,30 +519,37 @@ const CH={
   F:{f:[1,3,3,2,1,1],fg:[1,3,4,2,1,1],b:[1,0,5],n:"食指要橫按六條弦（封閉和弦），是第一道關卡，慢慢來。"},
   Bm:{f:[-1,2,4,4,3,2],fg:[0,1,3,4,2,1],b:[2,1,5],n:"食指橫按第 2 格的 1 到 5 弦，不彈 6 弦。"},
   "F#m":{f:[2,4,4,2,2,2],fg:[1,3,4,1,1,1],b:[2,0,5],n:"Em 的形狀整個往上移兩格，再用食指封閉。"},
-  Cm:{f:[-1,3,5,5,4,3],fg:[0,1,3,4,2,1],b:[3,1,5],n:"Am 形狀往上移到第 3 格，食指封閉 1 到 5 弦。"}
+  Cm:{f:[-1,3,5,5,4,3],fg:[0,1,3,4,2,1],b:[3,1,5],n:"Am 形狀往上移到第 3 格，食指封閉 1 到 5 弦。"},
+  Aadd9:{f:[-1,0,2,2,0,0],fg:[0,0,1,2,0,0],n:"兩指並排在第 2 格，1、2 弦放空，聲音明亮開闊。"},
+  Bsus4:{f:[-1,2,4,4,0,0],fg:[0,1,3,4,0,0],n:"食指 5 弦 2 格，無名指和小指在 4 格，1、2 弦放空。"},
+  "C#m":{f:[-1,4,6,6,5,0],fg:[0,1,3,4,2,0],s:4,n:"從第 4 格開始，1 弦放空。手指形狀和 Am 很像。"},
+  "C#m7":{f:[-1,4,6,6,0,0],fg:[0,1,3,4,0,0],s:4,n:"從第 4 格開始，1、2 弦放空，帶一點朦朧感。"},
+  "G#m7(#5)":{f:[4,-1,4,4,0,0],fg:[1,0,2,3,0,0],n:"三指都在第 4 格，5 弦用按 6 弦的手指輕碰悶掉，1、2 弦放空。"}
 };
 const GROUPS=[
   ["基本和弦",["C","G","D","A","E","Em","Am","Dm"]],
   ["七和弦",["C7","G7","D7","A7","E7","B7","Am7","Em7","Dm7","Cmaj7","Fmaj7"]],
   ["掛留和弦 sus",["Dsus2","Dsus4","Asus2","Asus4","Esus4"]],
-  ["封閉和弦",["F","Bm","F#m","Cm"]]
+  ["封閉和弦",["F","Bm","F#m","Cm"]],
+  ["色彩與高把位",["Aadd9","Bsus4","C#m","C#m7","G#m7(#5)"]]
 ];
 let curChord="C";
 const svgNS="http://www.w3.org/2000/svg";
 function S(tag,attrs,parent){const e=document.createElementNS(svgNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e}
-function drawChord(name){
-  const svg=$("#chordSvg");svg.innerHTML="";
-  const c=CH[name],x0=30,y0=44,sx=36,fy=40,b=c.b;
-  // frets
-  for(let i=0;i<=5;i++)S("line",{x1:x0,x2:x0+5*sx,y1:y0+i*fy,y2:y0+i*fy,stroke:"var(--muted)","stroke-width":i===0?5:1.5},svg);
+function renderChord(svg,name){
+  svg.innerHTML="";
+  const c=CH[name],x0=30,y0=44,sx=36,fy=40,b=c.b,base=c.s||1;
+  const fy0=f=>y0+(f-base+0.5)*fy; // centre of an absolute fret
+  // frets (thick nut only when starting from fret 1)
+  for(let i=0;i<=5;i++)S("line",{x1:x0,x2:x0+5*sx,y1:y0+i*fy,y2:y0+i*fy,stroke:"var(--muted)","stroke-width":i===0&&base===1?5:1.5},svg);
   // strings
   for(let i=0;i<6;i++){
-    const l=S("line",{x1:x0+i*sx,x2:x0+i*sx,y1:y0,y2:y0+5*fy,stroke:"var(--ink)","stroke-width":1+(6-i)*0.35,id:"str"+i},svg);
+    const l=S("line",{x1:x0+i*sx,x2:x0+i*sx,y1:y0,y2:y0+5*fy,stroke:"var(--ink)","stroke-width":1+(6-i)*0.35,"data-s":i},svg);
     l.setAttribute("class","string-line");
   }
   // barre
   if(b){
-    const cy=y0+(b[0]-0.5)*fy,xa=x0+b[1]*sx-14,xb=x0+b[2]*sx+14;
+    const cy=fy0(b[0]),xa=x0+b[1]*sx-14,xb=x0+b[2]*sx+14;
     S("rect",{x:xa,y:cy-14,width:xb-xa,height:28,rx:14,fill:"var(--accent)"},svg);
     const t=S("text",{x:xa+14,y:cy+5,"text-anchor":"middle","font-size":16,"font-weight":700,fill:"var(--accent-on)"},svg);t.textContent="1";
   }
@@ -548,12 +561,16 @@ function drawChord(name){
     }else if(f===0){
       S("circle",{cx:cx,cy:24,r:7,fill:"none",stroke:"var(--ink)","stroke-width":2},svg);
     }else if(!(b&&f===b[0]&&i>=b[1]&&i<=b[2])){
-      S("circle",{cx:cx,cy:y0+(f-0.5)*fy,r:14,fill:"var(--accent)"},svg);
-      if(c.fg[i]){const t=S("text",{x:cx,y:y0+(f-0.5)*fy+5,"text-anchor":"middle","font-size":16,"font-weight":700,fill:"var(--accent-on)"},svg);t.textContent=c.fg[i];}
+      S("circle",{cx:cx,cy:fy0(f),r:14,fill:"var(--accent)"},svg);
+      if(c.fg[i]){const t=S("text",{x:cx,y:fy0(f)+5,"text-anchor":"middle","font-size":16,"font-weight":700,fill:"var(--accent-on)"},svg);t.textContent=c.fg[i];}
     }
   });
   // fret numbers
-  for(let i=1;i<=5;i++){const t=S("text",{x:6,y:y0+(i-0.5)*fy+4,"font-size":11,fill:"var(--muted)"},svg);t.textContent=i;}
+  for(let i=0;i<5;i++){const t=S("text",{x:6,y:y0+(i+0.5)*fy+4,"font-size":11,fill:"var(--muted)","font-weight":i===0&&base>1?700:400},svg);t.textContent=base+i;}
+}
+function drawChord(name){
+  renderChord($("#chordSvg"),name);
+  const c=CH[name];
   $("#chordName").textContent=name;
   $("#chordNote").textContent=c.n;
   document.querySelectorAll("#chordPicker .pill").forEach(p=>p.setAttribute("aria-pressed",p.dataset.c===name));
@@ -562,16 +579,22 @@ function drawChord(name){
 function chordFreqs(name){
   return CH[name].f.map((f,i)=>f<0?null:{i:i,hz:midiFreq(OPEN[i]+f)}).filter(Boolean);
 }
-function ring(i){
-  const s=document.getElementById("str"+i);if(!s)return;
+function ring(i,svg){
+  const s=(svg||$("#chordSvg")).querySelector('[data-s="'+i+'"]');if(!s)return;
   s.classList.add("ring");setTimeout(()=>s.classList.remove("ring"),350);
 }
-function strum(name,dir,t0,vol){
+function strum(name,dir,t0,vol,svg){
   const c=audio();t0=t0||c.currentTime;
   let list=chordFreqs(name);if(dir==="U")list=list.slice().reverse();
   list.forEach((s,k)=>{
     const t=t0+k*0.02;pluck(s.hz,t,vol||0.3);
-    setTimeout(()=>ring(s.i),Math.max(0,(t-c.currentTime)*1000));
+    setTimeout(()=>ring(s.i,svg),Math.max(0,(t-c.currentTime)*1000));
+  });
+}
+function arpeggio(name,svg){
+  const c=audio();chordFreqs(name).forEach((s,k)=>{
+    const t=c.currentTime+k*0.28;pluck(s.hz,t,0.35);
+    setTimeout(()=>ring(s.i,svg),k*280);
   });
 }
 GROUPS.forEach(g=>{
@@ -587,12 +610,7 @@ GROUPS.forEach(g=>{
 });
 $("#strumDown").onclick=()=>strum(curChord,"D");
 $("#strumUp").onclick=()=>strum(curChord,"U");
-$("#arpeggio").onclick=()=>{
-  const c=audio();chordFreqs(curChord).forEach((s,k)=>{
-    const t=c.currentTime+k*0.28;pluck(s.hz,t,0.35);
-    setTimeout(()=>ring(s.i),k*280);
-  });
-};
+$("#arpeggio").onclick=()=>arpeggio(curChord);
 drawChord("C");
 
 /* ---------- guitar: tuning ---------- */
@@ -822,11 +840,24 @@ function renderSongs(){
   SONGS.forEach(s=>{
     const card=el("article","song"),meta=el("div","meta"),chords=el("div","row chords");
     s.meta.forEach(m=>meta.append(el("span","",m)));
+    // tapping a chord shows its diagram right inside the card
+    const cp=el("div","song-chord"),csvg=document.createElementNS(svgNS,"svg"),cinfo=el("div"),cname=el("div","chord-name"),cnote=el("p","note"),cbtns=el("div","row");
+    cp.hidden=true;csvg.setAttribute("viewBox","0 0 240 270");csvg.setAttribute("class","chord-svg");csvg.setAttribute("role","img");
+    let cur=null;
+    const down=el("button","btn","刷下"),arp=el("button","btn ghost","逐弦彈"),hide=el("button","btn ghost","收起");
+    down.onclick=()=>strum(cur,"D",0,0,csvg);arp.onclick=()=>arpeggio(cur,csvg);
+    hide.onclick=()=>{cp.hidden=true;chords.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed","false"))};
+    cbtns.append(down,arp,hide);cinfo.append(cname,cnote,cbtns);cp.append(csvg,cinfo);
     s.chords.forEach(c=>{
       // chords missing from the CH library are shown as plain labels
       if(!CH[c]){const t=el("span","pill pill-off",c);t.title="和弦庫還沒有這個和弦";chords.append(t);return}
-      const b=el("button","pill",c);
-      b.onclick=()=>{showSub("common");drawChord(c);strum(c,"D");$("#chordSvg").scrollIntoView({behavior:"smooth",block:"center"})};
+      const b=el("button","pill",c);b.setAttribute("aria-pressed","false");
+      b.onclick=()=>{
+        cur=c;renderChord(csvg,c);csvg.setAttribute("aria-label",c+" 和弦指法圖");
+        cname.textContent=c;cnote.textContent=CH[c].n;cp.hidden=false;
+        chords.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
+        strum(c,"D",0,0,csvg);
+      };
       chords.append(b);
     });
     // Sheet pages are images shown inline; the original PDF is linked from GitHub Pages
@@ -853,7 +884,7 @@ function renderSongs(){
     open.onclick=toggle;
     card.append(el("h3","",s.title),el("p","by",s.by),meta);
     if(s.audio)card.append(el("span","grp-label",s.audioNote||"示範音檔"),player(s.audio));
-    card.append(el("span","grp-label","用到的和弦（點一下看按法）"),chords);
+    card.append(el("span","grp-label","用到的和弦（點一下看按法）"),chords,cp);
     if(s.pages)card.append(actions,sheet);
     box.append(card);
   });
