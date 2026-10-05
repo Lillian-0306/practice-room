@@ -90,6 +90,12 @@ section.panel[hidden]{display:none}
 @media (max-width:480px){.song-chord{grid-template-columns:1fr}.song-chord .chord-svg{max-width:200px}}
 .song .chords .pill-off{display:inline-flex;align-items:center;border-style:dashed;color:var(--muted)}
 .player{margin:4px 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
+.video{position:relative;display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;overflow:hidden;background:#000;padding:0;margin:4px 0 8px}
+.video img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85}
+.video .play{position:absolute;inset:0;display:grid;place-items:center}
+.video .play span{width:64px;height:64px;border-radius:50%;background:var(--accent);color:var(--accent-on);display:grid;place-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video-links{display:flex;flex-wrap:wrap;gap:12px;font-size:.88rem;margin-bottom:6px}
 .player audio{width:100%;display:block}
 .sheet{margin-top:14px;display:flex;flex-direction:column;gap:12px}
 .sheet[hidden]{display:none}
@@ -407,7 +413,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     <div id="s-projects" role="tabpanel" aria-labelledby="ssub-projects" hidden>
       <div class="block">
         <header><h2>專案</h2><p>正在練唱的歌會放在這裡。</p></header>
-        <div class="empty"><b>還沒有歌曲</b>之後加入的練唱歌曲會出現在這裡。</div>
+        <div class="songs" id="vsongs"></div>
       </div>
     </div>
   </section>
@@ -1130,6 +1136,41 @@ function renderSongs(){
   });
 }
 renderSongs();
+
+/* ---------- singing: projects (songs to sing) ---------- */
+const VSONGS=[
+  {title:"篇章",by:"張韶涵／王赫野 合唱",meta:["男女對唱","動態歌詞影片"],
+   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)"}
+];
+// YouTube player that only loads after a tap (privacy-enhanced embed)
+function ytPlayer(id,title){
+  const box=el("button","video");box.type="button";box.setAttribute("aria-label","播放影片："+title);
+  const img=el("img");img.src="https://i.ytimg.com/vi/"+id+"/hqdefault.jpg";img.alt="";img.loading="lazy";
+  const play=el("span","play");play.innerHTML='<span><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>';
+  box.append(img,play);
+  box.onclick=()=>{
+    const f=el("iframe");f.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0&playsinline=1";
+    f.title=title;f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;
+    const wrap=el("div","video");wrap.append(f);box.replaceWith(wrap);
+  };
+  return box;
+}
+function renderVSongs(){
+  const box=$("#vsongs");box.innerHTML="";
+  if(!VSONGS.length){const e=el("div","empty");e.append(el("b","","還沒有歌曲"),"之後加入的練唱歌曲會出現在這裡。");box.append(e);return}
+  VSONGS.forEach(s=>{
+    const card=el("article","song"),meta=el("div","meta"),links=el("div","video-links");
+    s.meta.forEach(m=>meta.append(el("span","",m)));
+    card.append(el("h3","",s.title),el("p","by",s.by),meta);
+    if(s.yt){
+      const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+s.yt;a.target="_blank";a.rel="noopener";
+      links.append(a,el("span","note",s.ytNote||""));
+      card.append(ytPlayer(s.yt,s.title),links);
+    }
+    box.append(card);
+  });
+}
+renderVSongs();
 
 /* ---------- singing: breathing ---------- */
 const BREATHS=[

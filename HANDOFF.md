@@ -86,7 +86,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 吉他：`CH` 和弦資料表（`f` 為六弦品位，-1 不彈、0 空弦；`fg` 為手指編號；`b` 為橫按 `[品位, 起弦, 終弦]`；`s` 為圖上起始品位，品位一律寫絕對值）、`renderChord(svg, 名稱)` 可畫進任何 svg、`GROUPS`、`drawChord()`、`strum()`；調音器 `tunerLoop/startTuner/stopTuner`；跟拍播放 `scheduler()` 與節拍器 `mScheduler()` 都每 25ms 預排未來 120ms，UI 用 setTimeout 對齊；刷法資料 `PATS`（`beats`、`sub` 每拍格數、`slots` 為 D/U/X/空字串），`click(時間, 等級 0–2)`、`chuck()` 切音。
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
 - 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`KEYS`、`answer()`。
-- 子分頁：吉他與歌唱都分「常用／專案」，`showSub(panel, sub)` 共用；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」目前是空的。
+- 子分頁：吉他與歌唱都分「常用／專案」，`showSub(panel, sub)` 共用；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」列出 `VSONGS`（目前：篇章，YouTube 影片），`ytPlayer()` 先顯示縮圖，點了才載入 youtube-nocookie 播放器，另附「在 YouTube 開啟」連結。
 - localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）、`pr_guitar_sub`／`pr_singing_sub`（`common` 或 `projects`）。
 
 ## 設計決策
