@@ -329,6 +329,12 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
   <!-- ============ SINGING ============ -->
   <section class="panel" id="singing" role="tabpanel" aria-labelledby="tab-singing" hidden>
 
+    <div class="subtabs" role="tablist" aria-label="歌唱分類">
+      <button class="subtab" role="tab" id="ssub-common" data-sub="common" aria-selected="true" aria-controls="s-common">常用</button>
+      <button class="subtab" role="tab" id="ssub-projects" data-sub="projects" aria-selected="false" aria-controls="s-projects">專案</button>
+    </div>
+
+    <div id="s-common" role="tabpanel" aria-labelledby="ssub-common">
     <div class="block">
       <header><h2>呼吸練習</h2><p>跟著圓圈吸氣、停住、吐氣。吸氣時肚子往外推，肩膀保持放鬆。</p></header>
       <div class="row" id="breathPicker" role="group" aria-label="呼吸節奏"></div>
@@ -378,6 +384,14 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
         <li>感覺喉嚨緊或痛就停下來喝水休息。</li>
         <li>先唱小聲、音域中間的位置，再慢慢擴大。</li>
       </ul>
+    </div>
+    </div>
+
+    <div id="s-projects" role="tabpanel" aria-labelledby="ssub-projects" hidden>
+      <div class="block">
+        <header><h2>專案</h2><p>正在練唱的歌會放在這裡。</p></header>
+        <div class="empty"><b>還沒有歌曲</b>之後加入的練唱歌曲會出現在這裡。</div>
+      </div>
     </div>
   </section>
 
@@ -980,16 +994,22 @@ function recorder(root,prefix){
 const recG=recorder($("#recG"),"吉他練習");
 const recS=recorder($("#recS"),"歌唱練習");
 
-/* ---------- guitar: sub-tabs (常用 / 專案) ---------- */
-function showSub(sub){
-  document.querySelectorAll(".subtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.sub===sub));
-  $("#g-common").hidden=sub!=="common";
-  $("#g-projects").hidden=sub!=="projects";
-  if(sub!=="common"){stopPlayer();stopMetro();stopTuner();recG.stop();}
-  save("pr_guitar_sub",sub);
+/* ---------- sub-tabs (常用 / 專案) in each panel ---------- */
+// leaving 常用 stops anything still running there
+const SUB_STOP={guitar:()=>{stopPlayer();stopMetro();stopTuner();recG.stop()},singing:()=>{stopSing();stopBreath();recS.stop()}};
+function showSub(panel,sub,init){
+  const pre=panel[0]; // g-… / s-…
+  $("#"+panel).querySelectorAll(".subtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.sub===sub));
+  $("#"+pre+"-common").hidden=sub!=="common";
+  $("#"+pre+"-projects").hidden=sub!=="projects";
+  if(sub!=="common"&&!init)SUB_STOP[panel]();
+  save("pr_"+panel+"_sub",sub);
+  if(panel==="singing"&&sub==="common"&&!init)drawCurve();
 }
-document.querySelectorAll(".subtab").forEach(b=>b.addEventListener("click",()=>showSub(b.dataset.sub)));
-showSub(load("pr_guitar_sub","common")==="projects"?"projects":"common");
+["guitar","singing"].forEach(panel=>{
+  $("#"+panel).querySelectorAll(".subtab").forEach(b=>b.addEventListener("click",()=>showSub(panel,b.dataset.sub)));
+  showSub(panel,load("pr_"+panel+"_sub","common")==="projects"?"projects":"common",true);
+});
 
 /* ---------- guitar: projects (sheet music) ---------- */
 const SONGS=[
