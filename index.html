@@ -39,6 +39,7 @@ body[data-mode="singing"]{--accent:var(--voc);--accent-soft:var(--voc-soft);--ac
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--accent)}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .wrap{max-width:880px;margin:0 auto;padding:20px 16px 56px}
 h1,h2,h3{font-family:var(--serif);line-height:1.25;margin:0}
@@ -68,9 +69,12 @@ section.panel[hidden]{display:none}
 .btn.ghost{background:var(--accent-soft);color:var(--ink)}
 .btn:active{transform:translateY(1px)}
 .note{font-size:.88rem;color:var(--muted)}
+.sub-h{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 
 /* chord */
-.chord-grid{display:grid;grid-template-columns:minmax(0,250px) 1fr;gap:18px;align-items:start;margin-top:14px}
+.chord-groups{display:flex;flex-direction:column;gap:12px}
+.grp-label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.04em}
+.chord-grid{display:grid;grid-template-columns:minmax(0,250px) 1fr;gap:18px;align-items:start;margin-top:16px}
 @media (max-width:560px){.chord-grid{grid-template-columns:1fr}}
 .chord-name{font-family:var(--serif);font-size:2.6rem;font-weight:900;color:var(--accent);line-height:1}
 .chord-svg{width:100%;max-width:250px;height:auto;display:block}
@@ -80,19 +84,21 @@ section.panel[hidden]{display:none}
 .tips li{margin-bottom:3px}
 
 /* tuning */
-.tuning{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.tuning{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
 .string-btn{border:1.5px solid var(--line);border-radius:10px;background:transparent;padding:10px 0;display:flex;flex-direction:column;align-items:center;min-height:64px}
 .string-btn b{font-size:1.3rem;font-family:var(--serif)}
 .string-btn small{color:var(--muted);font-size:.72rem}
-.string-btn:active,.string-btn.on{background:var(--accent-soft);border-color:var(--accent)}
+.string-btn:active,.string-btn.on,.string-btn.match{background:var(--accent-soft);border-color:var(--accent)}
+.string-btn.tuned{background:var(--ok);border-color:var(--ok);color:#fff}
+.string-btn.tuned small{color:#fff}
 
 /* player */
 .now{display:flex;align-items:baseline;gap:10px;margin:12px 0}
 .now .cur{font-family:var(--serif);font-size:2.2rem;font-weight:900;color:var(--accent);min-width:3.2em}
 .prog{display:flex;gap:6px;margin:6px 0 12px}
-.prog span{flex:1;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);font-weight:700}
+.prog span{flex:1;min-width:0;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prog span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
-.pattern{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px}
+.pattern{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-bottom:12px}
 .pattern span{text-align:center;padding:6px 0;border-radius:6px;background:var(--accent-soft);font-weight:700;font-size:1.05rem;min-height:36px;color:var(--ink)}
 .pattern span.rest{opacity:.35}
 .pattern span.on{background:var(--accent);color:var(--accent-on)}
@@ -108,15 +114,20 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:8px 0 4px}
 .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
 
-/* pitch */
+/* pitch / tuner readout */
 .pitch-out{text-align:center;padding:10px 0}
 .pitch-note{font-family:var(--serif);font-size:4.2rem;font-weight:900;line-height:1;min-height:1em;color:var(--accent)}
 .pitch-sub{color:var(--muted);min-height:1.6em}
+.pitch-hint{font-weight:700;min-height:1.6em}
 .meter{position:relative;height:14px;border-radius:99px;background:var(--line);margin:16px 6px 6px}
 .meter .zone{position:absolute;left:35%;width:30%;top:0;bottom:0;background:var(--accent-soft);border-radius:99px;border:1px solid var(--accent)}
+.meter.tight .zone{left:45%;width:10%}
 .meter .dot{position:absolute;top:-5px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:var(--ink);left:50%;transition:left .08s,background .1s}
 .meter .dot.good{background:var(--ok)}
 .meter-labels{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);padding:0 4px}
+.curve{display:block;width:100%;height:190px;margin-top:14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.hold{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:.92rem}
+.hold b{color:var(--accent)}
 
 /* breathing */
 .breath{display:grid;place-items:center;height:230px}
@@ -125,9 +136,9 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .orb span{font-size:1.9rem;font-weight:700;color:var(--accent)}
 
 /* keyboard */
-.keys{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.keys{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
 .key{border:1.5px solid var(--line);border-radius:6px 6px 12px 12px;background:var(--surface);height:150px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:10px;gap:2px;transition:background .1s}
-.key b{font-family:var(--serif);font-size:1.1rem}
+.key b{font-family:var(--serif);font-size:1.1rem;white-space:nowrap}
 .key small{color:var(--muted);font-size:.72rem}
 .key.on{background:var(--accent-soft);border-color:var(--accent)}
 .key.right{background:var(--ok);border-color:var(--ok);color:#fff}
@@ -136,8 +147,20 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .key.wrong small{color:#fff}
 .score{font-weight:700}
 .msg{min-height:1.7em;margin-top:8px}
+
+/* recorder */
+.rec-time{font-variant-numeric:tabular-nums;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--warn);display:none}
+.recording .rec-dot{display:inline-block;animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.rec-list{list-style:none;margin:6px 0 0;padding:0}
+.rec-list li{border-top:1px solid var(--line);padding:12px 0}
+.rec-list .rec-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.rec-list audio{width:100%;height:40px}
+.rec-actions{display:flex;gap:6px}
+.rec-actions a,.rec-actions button{font-size:.85rem;padding:4px 12px;min-height:34px;border:1.5px solid var(--line);border-radius:999px;background:transparent;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
 footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body data-mode="guitar">
@@ -155,7 +178,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 
     <div class="block">
       <header><h2>和弦圖與試聽</h2><p>點選和弦，看按法，再聽聽正確的聲音是什麼樣子。</p></header>
-      <div class="row" id="chordPicker" role="group" aria-label="選擇和弦"></div>
+      <div class="chord-groups" id="chordPicker"></div>
       <div class="chord-grid">
         <svg id="chordSvg" class="chord-svg" viewBox="0 0 240 270" role="img" aria-label="和弦指法圖"></svg>
         <div>
@@ -168,7 +191,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
           </div>
           <ul class="tips">
             <li>圖中數字是左手手指：1 食指、2 中指、3 無名指、4 小指。</li>
-            <li>X 代表不彈，O 代表空弦。</li>
+            <li>X 代表不彈，O 代表空弦。長條代表食指橫按（封閉）。</li>
             <li>每條弦逐一彈，有悶音就調整手指位置。</li>
           </ul>
         </div>
@@ -176,9 +199,20 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>標準調音</h2><p>點每條弦聽標準音，轉旋鈕讓自己的吉他對上它。</p></header>
+      <header><h2>調音</h2><p>點每條弦聽標準音，或打開麥克風調音器，讓它告訴你偏高還是偏低。</p></header>
       <div class="tuning" id="tuning"></div>
       <p class="note" style="margin-top:10px">由粗到細：6 弦 E、5 弦 A、4 弦 D、3 弦 G、2 弦 B、1 弦 E。</p>
+
+      <h3 class="sub-h">麥克風調音器</h3>
+      <div class="pitch-out">
+        <div class="pitch-note" id="tNote">—</div>
+        <div class="pitch-sub" id="tSub">按下開始，彈一條空弦</div>
+        <div class="pitch-hint" id="tHint"></div>
+      </div>
+      <div class="meter tight" aria-hidden="true"><div class="zone"></div><div class="dot" id="tDot"></div></div>
+      <div class="meter-labels"><span>太低・轉緊</span><span>準</span><span>太高・轉鬆</span></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="tunerBtn">開始調音</button><span class="note">安靜的環境效果最好，手機靠近音孔。</span></div>
+      <p class="msg note" id="tunerMsg"></p>
     </div>
 
     <div class="block">
@@ -190,6 +224,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <label for="bpm" class="row" style="justify-content:space-between"><span>速度</span><b id="bpmVal">80 BPM</b></label>
       <input type="range" id="bpm" min="50" max="140" value="80">
       <div class="row" style="margin-top:12px"><button class="btn" id="playBtn">開始</button><span class="note">建議從 60–70 BPM 開始，穩了再加速。</span></div>
+    </div>
+
+    <div class="block" id="recG">
+      <header><h2>錄音回放</h2><p>錄下自己的彈奏，馬上回聽哪裡有悶音、換和弦有沒有斷掉。可以搭配上面的節拍器一起錄。</p></header>
+      <div class="row"><button class="btn rec-btn">開始錄音</button><span class="rec-time note"><i class="rec-dot"></i><span class="rec-clock">0:00</span></span></div>
+      <p class="msg note rec-msg"></p>
+      <ol class="rec-list"></ol>
     </div>
 
     <div class="block">
@@ -210,16 +251,21 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>音高偵測器</h2><p>用麥克風聽你唱的音，顯示音名和偏高偏低多少。</p></header>
+      <header><h2>音高偵測器</h2><p>用麥克風聽你唱的音，顯示音名、偏高偏低多少，以及最近幾秒的音高曲線。</p></header>
+      <span class="grp-label">目標音（選一個就會變成跟唱練習）</span>
+      <div class="row" id="targetPicker" role="group" aria-label="目標音"></div>
+      <div class="row" style="margin-top:8px"><button class="pill" id="octBtn" aria-pressed="false">低八度（男聲建議）</button></div>
       <div class="pitch-out">
         <div class="pitch-note" id="pNote">—</div>
         <div class="pitch-sub" id="pSub">按下開始，唱一個長音「啊」</div>
       </div>
       <div class="meter" aria-hidden="true"><div class="zone"></div><div class="dot" id="pDot"></div></div>
       <div class="meter-labels"><span>偏低</span><span>準</span><span>偏高</span></div>
+      <canvas class="curve" id="curve" aria-label="最近 8 秒的音高曲線" role="img"></canvas>
+      <div class="hold" id="holdBox" hidden><span>連續唱準 <b id="holdNow">0.0</b> 秒</span><span>最佳紀錄 <b id="holdBest">0.0</b> 秒</span></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="micBtn">開始偵測</button></div>
       <p class="msg note" id="micMsg"></p>
-      <h3 style="margin-top:14px">參考音跟唱（不需要麥克風）</h3>
+      <h3 class="sub-h">參考音跟唱（不需要麥克風）</h3>
       <p class="note" style="margin:4px 0 10px">點一個音，用「啊」唱出來，再和它比對是否一致。</p>
       <div class="row" id="refTones"></div>
     </div>
@@ -229,6 +275,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <div class="keys" id="keys"></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="quizBtn">出題</button><button class="btn ghost" id="replayBtn">再聽一次</button><span class="score" id="score">答對 0 / 0</span></div>
       <p class="msg" id="quizMsg"></p>
+    </div>
+
+    <div class="block" id="recS">
+      <header><h2>錄音回放</h2><p>錄下自己唱的段落，回聽是進步最快的方法。用另一支裝置放伴奏、戴耳機會更清楚。</p></header>
+      <div class="row"><button class="btn rec-btn">開始錄音</button><span class="rec-time note"><i class="rec-dot"></i><span class="rec-clock">0:00</span></span></div>
+      <p class="msg note rec-msg"></p>
+      <ol class="rec-list"></ol>
     </div>
 
     <div class="block">
@@ -242,7 +295,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
   </section>
 
-  <footer>聲音皆由瀏覽器即時合成。戴耳機效果更好。</footer>
+  <footer>聲音皆由瀏覽器即時合成，錄音只存在這個分頁，不會上傳。戴耳機效果更好。</footer>
 </div>
 
 <script>
@@ -250,6 +303,8 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 "use strict";
 const $=s=>document.querySelector(s);
 const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
+const AC=window.AudioContext||window.webkitAudioContext;
+const SITE="https://lillian-0306.github.io/practice-room/";
 
 /* ---------- storage ---------- */
 function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
@@ -258,7 +313,7 @@ function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 /* ---------- audio ---------- */
 let ctx=null;
 function audio(){
-  if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();}
+  if(!ctx){ctx=new AC();}
   if(ctx.state==="suspended")ctx.resume();
   return ctx;
 }
@@ -291,6 +346,56 @@ function click(when,accent){
   o.connect(g).connect(c.destination);o.start(when);o.stop(when+0.05);
 }
 const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+const freqMidi=f=>69+12*Math.log2(f/440);
+const NOTES=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+const noteName=m=>NOTES[((m%12)+12)%12]+(Math.floor(m/12)-1);
+
+/* ---------- microphone (shared by tuner & pitch detector) ---------- */
+let micStream=null,micCtx=null,analyser=null,micBuf=null,raf=null;
+const MIC_OPTS={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
+async function openMic(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){const e=new Error("unsupported");e.name="NotSupportedError";throw e;}
+  micStream=await navigator.mediaDevices.getUserMedia(MIC_OPTS);
+  micCtx=new AC();
+  const src=micCtx.createMediaStreamSource(micStream);
+  analyser=micCtx.createAnalyser();analyser.fftSize=2048;
+  micBuf=new Float32Array(analyser.fftSize);
+  src.connect(analyser);
+}
+function closeMic(){
+  if(raf)cancelAnimationFrame(raf);raf=null;
+  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
+  if(micCtx){try{micCtx.close()}catch(e){}micCtx=null}
+  analyser=null;
+}
+function autoCorrelate(buf,sr){
+  let size=buf.length,rms=0;
+  for(let i=0;i<size;i++)rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/size);if(rms<0.012)return -1;
+  let r1=0,r2=size-1,th=0.2;
+  for(let i=0;i<size/2;i++)if(Math.abs(buf[i])<th){r1=i;break}
+  for(let i=1;i<size/2;i++)if(Math.abs(buf[size-i])<th){r2=size-i;break}
+  buf=buf.slice(r1,r2);size=buf.length;if(size<64)return -1;
+  const c=new Array(size).fill(0);
+  for(let i=0;i<size;i++)for(let j=0;j<size-i;j++)c[i]+=buf[j]*buf[j+i];
+  let d=0;while(d<size-1&&c[d]>c[d+1])d++;
+  let mv=-1,mp=-1;
+  for(let i=d;i<size;i++)if(c[i]>mv){mv=c[i];mp=i}
+  if(mp<1||mp>=size-1)return -1;
+  let T=mp;const x1=c[T-1],x2=c[T],x3=c[T+1],a=(x1+x3-2*x2)/2,b=(x3-x1)/2;
+  if(a)T=T-b/(2*a);
+  return sr/T;
+}
+function readPitch(){analyser.getFloatTimeDomainData(micBuf);return autoCorrelate(micBuf,micCtx.sampleRate)}
+// Shows why the mic failed; links to the deployed site when the page is embedded somewhere that blocks it.
+function micError(node,e){
+  const n=e&&e.name;node.textContent="";
+  if(n==="NotFoundError"){node.textContent="找不到麥克風裝置。";return}
+  node.append(n==="NotAllowedError"||n==="SecurityError"
+    ?"麥克風權限被拒絕，或被目前的內嵌環境擋住。可在網址列的權限設定允許麥克風，或改用正式網址開啟："
+    :"此環境無法使用麥克風，請改用正式網址開啟：");
+  const a=el("a","",SITE);a.href=SITE;a.target="_blank";a.rel="noopener";node.append(a);
+}
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
@@ -299,9 +404,10 @@ document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".mode").forEach(x=>x.setAttribute("aria-selected",x===b));
   $("#guitar").hidden=m!=="guitar";
   $("#singing").hidden=m!=="singing";
-  if(m!=="guitar")stopPlayer();
-  else{stopMic();stopBreath();}
+  if(m!=="guitar"){stopPlayer();stopTuner();recG.stop();}
+  else{stopSing();stopBreath();recS.stop();}
   window.scrollTo({top:0});
+  drawCurve();
 }));
 
 /* ---------- checklist ---------- */
@@ -341,6 +447,7 @@ checklist("#sCheck","#sBar","#sCount","pr_singing",[
 
 /* ---------- guitar: chords ---------- */
 const OPEN=[40,45,50,55,59,64];
+// f: fret per string (6th→1st), -1 muted, 0 open; fg: finger numbers; b: barre [fret, fromString, toString] as indexes into f
 const CH={
   C:{f:[-1,3,2,0,1,0],fg:[0,3,2,0,1,0],n:"最常見的第一個和弦，無名指在 5 弦 3 格。"},
   G:{f:[3,2,0,0,0,3],fg:[3,2,0,0,0,4],n:"六條弦都彈，聲音飽滿。"},
@@ -350,20 +457,51 @@ const CH={
   Em:{f:[0,2,2,0,0,0],fg:[0,2,3,0,0,0],n:"最簡單的和弦，兩指就好。"},
   Am:{f:[-1,0,2,2,1,0],fg:[0,0,2,3,1,0],n:"不彈 6 弦，食指按 2 弦 1 格。"},
   Dm:{f:[-1,-1,0,2,3,1],fg:[0,0,0,2,3,1],n:"只彈下面四條弦，聽起來比 D 更憂鬱。"},
-  F:{f:[1,3,3,2,1,1],fg:[1,3,4,2,1,1],n:"食指要橫按六條弦（封閉和弦），是第一道關卡，慢慢來。"}
+  C7:{f:[-1,3,2,3,1,0],fg:[0,3,2,4,1,0],n:"C 再加小指按 3 弦 3 格，常用來接 F。"},
+  G7:{f:[3,2,0,0,0,1],fg:[3,2,0,0,0,1],n:"和 G 很像，但 1 弦改按第 1 格，很想回到 C。"},
+  D7:{f:[-1,-1,0,2,1,2],fg:[0,0,0,2,1,3],n:"三指排成倒三角，常接到 G。"},
+  A7:{f:[-1,0,2,0,2,0],fg:[0,0,2,0,3,0],n:"A 拿掉中間一指，3 弦放空。"},
+  E7:{f:[0,2,0,1,0,0],fg:[0,2,0,1,0,0],n:"E 拿掉無名指，常接到 Am 或 A。"},
+  B7:{f:[-1,2,1,2,0,2],fg:[0,2,1,3,0,4],n:"四指都用上，藍調和民謠裡很常見。"},
+  Am7:{f:[-1,0,2,0,1,0],fg:[0,0,2,0,1,0],n:"Am 放掉 3 弦，聲音更柔和。"},
+  Em7:{f:[0,2,0,0,0,0],fg:[0,2,0,0,0,0],n:"一根手指就能按，很輕鬆的色彩和弦。"},
+  Dm7:{f:[-1,-1,0,2,1,1],fg:[0,0,0,2,1,1],b:[1,4,5],n:"食指同時壓 1、2 弦第 1 格（小封閉）。"},
+  Cmaj7:{f:[-1,3,2,0,0,0],fg:[0,3,2,0,0,0],n:"C 放掉食指，夢幻感立刻出現。"},
+  Fmaj7:{f:[-1,-1,3,2,1,0],fg:[0,0,3,2,1,0],n:"不用封閉的 F 替代版，初學好上手。"},
+  Dsus2:{f:[-1,-1,0,2,3,0],fg:[0,0,0,1,3,0],n:"D 把 1 弦放空，聲音開闊。"},
+  Dsus4:{f:[-1,-1,0,2,3,3],fg:[0,0,0,1,3,4],n:"小指加在 1 弦 3 格，再放開回到 D，很好聽。"},
+  Asus2:{f:[-1,0,2,2,0,0],fg:[0,0,1,2,0,0],n:"A 把 2 弦放空。"},
+  Asus4:{f:[-1,0,2,2,3,0],fg:[0,0,1,2,3,0],n:"2 弦改按第 3 格，再放回 A。"},
+  Esus4:{f:[0,2,2,2,0,0],fg:[0,2,3,4,0,0],n:"E 加上 3 弦第 2 格，常和 E 交替。"},
+  F:{f:[1,3,3,2,1,1],fg:[1,3,4,2,1,1],b:[1,0,5],n:"食指要橫按六條弦（封閉和弦），是第一道關卡，慢慢來。"},
+  Bm:{f:[-1,2,4,4,3,2],fg:[0,1,3,4,2,1],b:[2,1,5],n:"食指橫按第 2 格的 1 到 5 弦，不彈 6 弦。"},
+  "F#m":{f:[2,4,4,2,2,2],fg:[1,3,4,1,1,1],b:[2,0,5],n:"Em 的形狀整個往上移兩格，再用食指封閉。"},
+  Cm:{f:[-1,3,5,5,4,3],fg:[0,1,3,4,2,1],b:[3,1,5],n:"Am 形狀往上移到第 3 格，食指封閉 1 到 5 弦。"}
 };
+const GROUPS=[
+  ["基本和弦",["C","G","D","A","E","Em","Am","Dm"]],
+  ["七和弦",["C7","G7","D7","A7","E7","B7","Am7","Em7","Dm7","Cmaj7","Fmaj7"]],
+  ["掛留和弦 sus",["Dsus2","Dsus4","Asus2","Asus4","Esus4"]],
+  ["封閉和弦",["F","Bm","F#m","Cm"]]
+];
 let curChord="C";
 const svgNS="http://www.w3.org/2000/svg";
 function S(tag,attrs,parent){const e=document.createElementNS(svgNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e}
 function drawChord(name){
   const svg=$("#chordSvg");svg.innerHTML="";
-  const c=CH[name],x0=30,y0=44,sx=36,fy=40;
+  const c=CH[name],x0=30,y0=44,sx=36,fy=40,b=c.b;
   // frets
   for(let i=0;i<=5;i++)S("line",{x1:x0,x2:x0+5*sx,y1:y0+i*fy,y2:y0+i*fy,stroke:"var(--muted)","stroke-width":i===0?5:1.5},svg);
   // strings
   for(let i=0;i<6;i++){
-    const l=S("line",{x1:x0+i*sx,x2:x0+i*sx,y1:y0,y2:y0+5*fy,stroke:"var(--ink)","stroke-width":1+(5-i)*0.0+ (6-i)*0.35,id:"str"+i},svg);
+    const l=S("line",{x1:x0+i*sx,x2:x0+i*sx,y1:y0,y2:y0+5*fy,stroke:"var(--ink)","stroke-width":1+(6-i)*0.35,id:"str"+i},svg);
     l.setAttribute("class","string-line");
+  }
+  // barre
+  if(b){
+    const cy=y0+(b[0]-0.5)*fy,xa=x0+b[1]*sx-14,xb=x0+b[2]*sx+14;
+    S("rect",{x:xa,y:cy-14,width:xb-xa,height:28,rx:14,fill:"var(--accent)"},svg);
+    const t=S("text",{x:xa+14,y:cy+5,"text-anchor":"middle","font-size":16,"font-weight":700,fill:"var(--accent-on)"},svg);t.textContent="1";
   }
   // markers
   c.f.forEach((f,i)=>{
@@ -372,7 +510,7 @@ function drawChord(name){
       const t=S("text",{x:cx,y:28,"text-anchor":"middle","font-size":18,"font-weight":700,fill:"var(--muted)"},svg);t.textContent="X";
     }else if(f===0){
       S("circle",{cx:cx,cy:24,r:7,fill:"none",stroke:"var(--ink)","stroke-width":2},svg);
-    }else{
+    }else if(!(b&&f===b[0]&&i>=b[1]&&i<=b[2])){
       S("circle",{cx:cx,cy:y0+(f-0.5)*fy,r:14,fill:"var(--accent)"},svg);
       if(c.fg[i]){const t=S("text",{x:cx,y:y0+(f-0.5)*fy+5,"text-anchor":"middle","font-size":16,"font-weight":700,fill:"var(--accent-on)"},svg);t.textContent=c.fg[i];}
     }
@@ -399,10 +537,16 @@ function strum(name,dir,t0,vol){
     setTimeout(()=>ring(s.i),Math.max(0,(t-c.currentTime)*1000));
   });
 }
-Object.keys(CH).forEach(k=>{
-  const b=el("button","pill",k);b.dataset.c=k;b.setAttribute("aria-pressed","false");
-  b.addEventListener("click",()=>{drawChord(k);strum(k,"D");});
-  $("#chordPicker").append(b);
+GROUPS.forEach(g=>{
+  const wrap=el("div"),row=el("div","row");
+  row.setAttribute("role","group");row.setAttribute("aria-label",g[0]);
+  wrap.append(el("span","grp-label",g[0]),row);
+  g[1].forEach(k=>{
+    const b=el("button","pill",k);b.dataset.c=k;b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",()=>{drawChord(k);strum(k,"D");});
+    row.append(b);
+  });
+  $("#chordPicker").append(wrap);
 });
 $("#strumDown").onclick=()=>strum(curChord,"D");
 $("#strumUp").onclick=()=>strum(curChord,"U");
@@ -416,6 +560,7 @@ drawChord("C");
 
 /* ---------- guitar: tuning ---------- */
 const TUNE=[["E","6 弦",40],["A","5 弦",45],["D","4 弦",50],["G","3 弦",55],["B","2 弦",59],["E","1 弦",64]];
+const strBtns=[];
 TUNE.forEach(t=>{
   const b=el("button","string-btn");
   b.append(el("b","",t[0]),el("small","",t[1]));
@@ -423,18 +568,67 @@ TUNE.forEach(t=>{
     pluck(midiFreq(t[2]),audio().currentTime,0.5);
     b.classList.add("on");setTimeout(()=>b.classList.remove("on"),500);
   });
-  $("#tuning").append(b);
+  $("#tuning").append(b);strBtns.push(b);
 });
 
-/* ---------- guitar: progression player ---------- */
-const PROGS=[["C","G","Am","F"],["Am","F","C","G"],["G","D","Em","C"],["Em","C","G","D"]];
+/* ---------- guitar: microphone tuner ---------- */
+let tunerOn=false,tHist=[];
+const median=a=>{const s=a.slice().sort((x,y)=>x-y);return s[s.length>>1]};
+function tunerLoop(){
+  const f=readPitch();
+  if(f>60&&f<1000){
+    tHist.push(freqMidi(f));if(tHist.length>7)tHist.shift();
+    const m=median(tHist);
+    let si=0;OPEN.forEach((o,i)=>{if(Math.abs(m-o)<Math.abs(m-OPEN[si]))si=i});
+    const cents=Math.round((m-OPEN[si])*100),t=TUNE[si];
+    $("#tNote").textContent=t[0];
+    $("#tSub").textContent=t[1]+"　目標 "+midiFreq(OPEN[si]).toFixed(1)+" Hz　你 "+midiFreq(m).toFixed(1)+" Hz";
+    const ok=Math.abs(cents)<=5;
+    $("#tHint").textContent=Math.abs(cents)>100?"差很多，先把弦大致轉到接近 "+t[0]+" 再微調"
+      :ok?"準了！":cents<0?"偏低 "+(-cents)+" 音分，把弦轉緊一點":"偏高 "+cents+" 音分，把弦轉鬆一點";
+    const dot=$("#tDot");dot.style.left=(50+Math.max(-50,Math.min(50,cents)))+"%";
+    dot.classList.toggle("good",ok);
+    strBtns.forEach((b,i)=>{b.classList.toggle("match",i===si&&!ok);b.classList.toggle("tuned",i===si&&ok)});
+  }else{
+    tHist=[];
+    $("#tHint").textContent="";$("#tSub").textContent="彈一條空弦，讓它響久一點";
+    $("#tDot").classList.remove("good");
+  }
+  raf=requestAnimationFrame(tunerLoop);
+}
+async function startTuner(){
+  stopSing();
+  try{
+    await openMic();tunerOn=true;
+    $("#tunerBtn").textContent="停止調音";$("#tunerMsg").textContent="";
+    $("#tSub").textContent="彈一條空弦，讓它響久一點";
+    tunerLoop();
+  }catch(e){closeMic();micError($("#tunerMsg"),e)}
+}
+function stopTuner(){
+  if(!tunerOn)return;
+  tunerOn=false;closeMic();tHist=[];
+  $("#tunerBtn").textContent="開始調音";
+  $("#tNote").textContent="—";$("#tSub").textContent="按下開始，彈一條空弦";$("#tHint").textContent="";
+  $("#tDot").style.left="50%";$("#tDot").classList.remove("good");
+  strBtns.forEach(b=>b.classList.remove("match","tuned"));
+}
+$("#tunerBtn").onclick=()=>tunerOn?stopTuner():startTuner();
+
+/* ---------- guitar: progression player (Web Audio lookahead scheduler) ---------- */
+const PROGS=[
+  ["C","G","Am","F"],["Am","F","C","G"],["G","D","Em","C"],["Em","C","G","D"],
+  ["C","Am","Dm","G7"],["Am","Dm","E7","Am"],["D","Dsus4","D","Dsus2"],
+  ["C","G","Am","Em","F","C","F","G"]
+];
 const PAT=["D","","D","U","","U","D","U"];
-let prog=PROGS[0],playing=false,timer=null,slot=0;
+const LOOKAHEAD=0.12,TICK_MS=25;
+let prog=PROGS[0],playing=false,sched=null,slot=0,nextT=0,uiTimers=[];
 PROGS.forEach((p,i)=>{
   const b=el("button","pill",p.join(" – "));b.setAttribute("aria-pressed",i===0);
   b.addEventListener("click",()=>{
     prog=p;document.querySelectorAll("#progPicker .pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
-    renderProg();if(playing){stopPlayer();startPlayer();}
+    const was=playing;stopPlayer();renderProg();if(was)startPlayer();
   });
   $("#progPicker").append(b);
 });
@@ -444,37 +638,98 @@ function renderProg(){
 }
 renderProg();
 PAT.forEach(p=>$("#pattern").append(el("span",p?"":"rest",p==="D"?"↓":p==="U"?"↑":"·")));
-function bpmMs(){return 60000/Number($("#bpm").value)/2}
-function step(){
-  const c=audio(),t=c.currentTime+0.03,pos=slot%8,bar=Math.floor(slot/8)%prog.length;
+const slotDur=()=>60/Number($("#bpm").value)/2;
+function showSlot(pos,bar){
+  if(!playing)return;
   if(pos===0){
     drawChord(prog[bar]);
     $("#curChord").textContent=prog[bar];
     [...$("#progBar").children].forEach((s,i)=>s.classList.toggle("on",i===bar));
   }
-  if(pos%2===0){click(t,pos===0);$("#beatInfo").textContent="第 "+(pos/2+1)+" 拍";}
-  if(PAT[pos])strum(prog[bar],PAT[pos],t,0.26);
+  if(pos%2===0)$("#beatInfo").textContent="第 "+(pos/2+1)+" 拍";
   [...$("#pattern").children].forEach((s,i)=>s.classList.toggle("on",i===pos));
-  slot++;
+}
+function scheduleSlot(t){
+  const c=audio(),pos=slot%8,bar=Math.floor(slot/8)%prog.length;
+  if(pos%2===0)click(t,pos===0);
+  if(PAT[pos])strum(prog[bar],PAT[pos],t,0.26);
+  const id=setTimeout(()=>{uiTimers=uiTimers.filter(x=>x!==id);showSlot(pos,bar)},Math.max(0,(t-c.currentTime)*1000));
+  uiTimers.push(id);
+}
+function scheduler(){
+  const c=audio();
+  if(nextT<c.currentTime)nextT=c.currentTime+0.02; // tab was throttled: skip ahead instead of bursting
+  while(nextT<c.currentTime+LOOKAHEAD){scheduleSlot(nextT);nextT+=slotDur();slot++;}
 }
 function startPlayer(){
-  audio();playing=true;slot=0;
+  const c=audio();playing=true;slot=0;nextT=c.currentTime+0.06;
   $("#playBtn").textContent="停止";
-  step();timer=setInterval(step,bpmMs());
+  scheduler();sched=setInterval(scheduler,TICK_MS);
 }
 function stopPlayer(){
-  if(timer)clearInterval(timer);timer=null;
-  if(playing){playing=false;}
+  if(sched)clearInterval(sched);sched=null;
+  uiTimers.forEach(clearTimeout);uiTimers=[];
+  playing=false;
   $("#playBtn").textContent="開始";
   $("#curChord").textContent="—";$("#beatInfo").textContent="按開始";
   [...$("#progBar").children].forEach(s=>s.classList.remove("on"));
   [...$("#pattern").children].forEach(s=>s.classList.remove("on"));
 }
 $("#playBtn").onclick=()=>playing?stopPlayer():startPlayer();
-$("#bpm").addEventListener("input",e=>{
-  $("#bpmVal").textContent=e.target.value+" BPM";
-  if(playing){clearInterval(timer);timer=setInterval(step,bpmMs());}
-});
+$("#bpm").addEventListener("input",e=>{$("#bpmVal").textContent=e.target.value+" BPM";});
+
+/* ---------- recorder ---------- */
+function recorder(root,prefix){
+  const btn=root.querySelector(".rec-btn"),clock=root.querySelector(".rec-clock"),timeBox=root.querySelector(".rec-time"),
+        msg=root.querySelector(".rec-msg"),list=root.querySelector(".rec-list");
+  let mr=null,stream=null,chunks=[],t0=0,iv=null,count=0;
+  const fmt=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+  function pickType(){
+    if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return "";
+    return ["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg"].find(t=>MediaRecorder.isTypeSupported(t))||"";
+  }
+  function addTake(blob,secs){
+    count++;
+    const url=URL.createObjectURL(blob),li=el("li"),head=el("div","rec-head");
+    const ext=/mp4/.test(blob.type)?"m4a":/ogg/.test(blob.type)?"ogg":"webm";
+    const au=el("audio");au.controls=true;au.src=url;au.preload="metadata";
+    const dl=el("a","","下載");dl.href=url;dl.download=prefix+"-"+count+"."+ext;
+    const del=el("button","","刪除");
+    del.onclick=()=>{URL.revokeObjectURL(url);li.remove()};
+    const acts=el("div","rec-actions");acts.append(dl,del);
+    head.append(el("b","","第 "+count+" 段　"+fmt(secs)),acts);
+    li.append(head,au);list.prepend(li);
+    while(list.children.length>10){const old=list.lastElementChild;old.querySelector("button").click();}
+  }
+  async function start(){
+    msg.textContent="";
+    if(!window.MediaRecorder){msg.textContent="這個瀏覽器不支援錄音，請更新瀏覽器或改用 Chrome。";return}
+    try{stream=await navigator.mediaDevices.getUserMedia(MIC_OPTS)}
+    catch(e){stream=null;micError(msg,e);return}
+    const type=pickType();
+    mr=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+    chunks=[];
+    mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    mr.onstop=()=>{
+      const secs=(performance.now()-t0)/1000;
+      if(chunks.length)addTake(new Blob(chunks,{type:mr.mimeType||type||"audio/webm"}),secs);
+      stream.getTracks().forEach(t=>t.stop());stream=null;mr=null;
+    };
+    mr.start();t0=performance.now();
+    btn.textContent="停止錄音";timeBox.classList.add("recording");clock.textContent="0:00";
+    iv=setInterval(()=>{clock.textContent=fmt((performance.now()-t0)/1000)},250);
+  }
+  function stop(){
+    if(!mr)return;
+    clearInterval(iv);iv=null;
+    if(mr.state!=="inactive")mr.stop();
+    btn.textContent="開始錄音";timeBox.classList.remove("recording");
+  }
+  btn.onclick=()=>mr?stop():start();
+  return {stop};
+}
+const recG=recorder($("#recG"),"吉他練習");
+const recS=recorder($("#recS"),"歌唱練習");
 
 /* ---------- singing: breathing ---------- */
 const BREATHS=[
@@ -517,121 +772,177 @@ function stopBreath(){
 }
 $("#breathBtn").onclick=()=>bRun?stopBreath():startBreath();
 
-/* ---------- singing: pitch detector ---------- */
-const NOTES=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+/* ---------- singing: pitch detector, curve & target practice ---------- */
 const SOL={"C":"Do","D":"Re","E":"Mi","F":"Fa","G":"Sol","A":"La","B":"Si"};
-let micStream=null,micCtx=null,analyser=null,raf=null,hist=[];
-function autoCorrelate(buf,sr){
-  let size=buf.length,rms=0;
-  for(let i=0;i<size;i++)rms+=buf[i]*buf[i];
-  rms=Math.sqrt(rms/size);if(rms<0.012)return -1;
-  let r1=0,r2=size-1,th=0.2;
-  for(let i=0;i<size/2;i++)if(Math.abs(buf[i])<th){r1=i;break}
-  for(let i=1;i<size/2;i++)if(Math.abs(buf[size-i])<th){r2=size-i;break}
-  buf=buf.slice(r1,r2);size=buf.length;if(size<64)return -1;
-  const c=new Array(size).fill(0);
-  for(let i=0;i<size;i++)for(let j=0;j<size-i;j++)c[i]+=buf[j]*buf[j+i];
-  let d=0;while(d<size-1&&c[d]>c[d+1])d++;
-  let mv=-1,mp=-1;
-  for(let i=d;i<size;i++)if(c[i]>mv){mv=c[i];mp=i}
-  if(mp<1||mp>=size-1)return -1;
-  let T=mp;const x1=c[T-1],x2=c[T],x3=c[T+1],a=(x1+x3-2*x2)/2,b=(x3-x1)/2;
-  if(a)T=T-b/(2*a);
-  return sr/T;
+const SCALE=[["Do",60],["Re",62],["Mi",64],["Fa",65],["Sol",67],["La",69],["Si",71],["Do",72]];
+const WINDOW_MS=8000,SPAN=12,ON_CENTS=25;
+let singOn=false,hist=[],pts=[],center=60,target=null,lowOct=false,holdStart=0,lastOn=0,holdBest=0;
+const targetMidi=()=>target===null?null:SCALE[target][1]-(lowOct?12:0);
+
+const freeBtn=el("button","pill","自由唱");freeBtn.setAttribute("aria-pressed","true");
+$("#targetPicker").append(freeBtn);
+const tBtns=[freeBtn];
+freeBtn.onclick=()=>setTarget(null);
+SCALE.forEach((k,i)=>{
+  const b=el("button","pill",k[0]+(i===7?"↑":""));b.setAttribute("aria-pressed","false");
+  b.onclick=()=>setTarget(i);
+  $("#targetPicker").append(b);tBtns.push(b);
+});
+function setTarget(i){
+  target=i;holdStart=0;holdBest=0;
+  tBtns.forEach((b,k)=>b.setAttribute("aria-pressed",(i===null?k===0:k===i+1)));
+  $("#holdBox").hidden=i===null;
+  $("#holdNow").textContent="0.0";$("#holdBest").textContent="0.0";
+  if(i!==null){tone(midiFreq(targetMidi()),1.6,"sine",0.35);center=targetMidi();}
+  drawCurve();
 }
-function loop(){
-  const buf=new Float32Array(analyser.fftSize);
-  analyser.getFloatTimeDomainData(buf);
-  const f=autoCorrelate(buf,micCtx.sampleRate);
+$("#octBtn").onclick=()=>{
+  lowOct=!lowOct;$("#octBtn").setAttribute("aria-pressed",lowOct);
+  if(target!==null)setTarget(target);else{center=lowOct?48:60;drawCurve();}
+};
+
+function drawCurve(){
+  const cv=$("#curve");if(!cv||!cv.clientWidth)return;
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const cs=getComputedStyle(document.body),col=n=>cs.getPropertyValue(n).trim();
+  const y=m=>h/2-(m-center)/SPAN*h;
+  // semitone grid, labels on natural notes
+  g.font="11px "+col("--sans");g.textBaseline="middle";
+  for(let m=Math.ceil(center-SPAN/2);m<=center+SPAN/2;m++){
+    const nat=NOTES[((m%12)+12)%12].length===1;
+    g.strokeStyle=col("--line");g.lineWidth=nat?1:0.5;g.globalAlpha=nat?1:0.5;
+    g.beginPath();g.moveTo(36,y(m));g.lineTo(w,y(m));g.stroke();g.globalAlpha=1;
+    if(nat){g.fillStyle=col("--muted");g.fillText(noteName(m),4,y(m));}
+  }
+  // target band in the octave the singer is currently using
+  const tm=targetMidi();
+  let tLine=null;
+  if(tm!==null){
+    const last=[...pts].reverse().find(p=>p.m!==null);
+    tLine=tm+(last?12*Math.round((last.m-tm)/12):0);
+    g.fillStyle=col("--ok");g.globalAlpha=0.18;
+    g.fillRect(36,y(tLine+ON_CENTS/100),w-36,y(tLine-ON_CENTS/100)-y(tLine+ON_CENTS/100));
+    g.globalAlpha=1;g.strokeStyle=col("--ok");g.lineWidth=2;g.setLineDash([6,4]);
+    g.beginPath();g.moveTo(36,y(tLine));g.lineTo(w,y(tLine));g.stroke();g.setLineDash([]);
+  }
+  // pitch trace
+  const now=performance.now();
+  g.strokeStyle=col("--accent");g.lineWidth=3;g.lineJoin="round";g.lineCap="round";
+  g.beginPath();let pen=false;
+  pts.forEach(p=>{
+    if(p.m===null){pen=false;return}
+    const x=36+(w-36)*(1-(now-p.t)/WINDOW_MS);
+    if(pen)g.lineTo(x,y(p.m));else{g.moveTo(x,y(p.m));pen=true}
+  });
+  g.stroke();
+}
+window.addEventListener("resize",drawCurve);
+
+function singLoop(){
+  const f=readPitch(),now=performance.now();
+  let avg=null;
   if(f>70&&f<1200){
-    const m=69+12*Math.log2(f/440);
-    hist.push(m);if(hist.length>5)hist.shift();
-    const avg=hist.reduce((a,b)=>a+b,0)/hist.length;
-    const r=Math.round(avg),cents=Math.round((avg-r)*100);
-    const name=NOTES[((r%12)+12)%12],oct=Math.floor(r/12)-1;
-    $("#pNote").textContent=name+oct;
-    const sol=SOL[name]?"　唱名 "+SOL[name]:"";
-    $("#pSub").textContent=Math.round(f)+" Hz　"+(cents>0?"偏高 ":cents<0?"偏低 ":"")+Math.abs(cents)+" 音分"+sol;
+    hist.push(freqMidi(f));if(hist.length>5)hist.shift();
+    avg=hist.reduce((a,b)=>a+b,0)/hist.length;
+    const tm=targetMidi();
+    if(tm===null&&Math.abs(avg-center)>SPAN/2-1)center=Math.round(avg);
+    const r=Math.round(avg),name=NOTES[((r%12)+12)%12];
+    $("#pNote").textContent=noteName(r);
+    let cents,label;
+    if(tm===null){
+      cents=Math.round((avg-r)*100);
+      label=Math.round(f)+" Hz　"+(cents>0?"偏高 ":cents<0?"偏低 ":"")+Math.abs(cents)+" 音分"+(SOL[name]?"　唱名 "+SOL[name]:"");
+    }else{
+      const diff=avg-tm-12*Math.round((avg-tm)/12);
+      cents=Math.round(diff*100);
+      const tn="目標 "+SCALE[target][0]+"（"+noteName(tm)+"）　";
+      label=Math.abs(diff)>=0.5
+        ?tn+"差 "+Math.abs(diff).toFixed(1)+" 個半音，"+(diff<0?"往上唱":"往下唱")
+        :tn+(Math.abs(cents)<=ON_CENTS?"準！":(cents<0?"偏低 ":"偏高 ")+Math.abs(cents)+" 音分");
+    }
+    $("#pSub").textContent=label;
     const dot=$("#pDot");dot.style.left=(50+Math.max(-50,Math.min(50,cents)))+"%";
     dot.classList.toggle("good",Math.abs(cents)<=15);
+    // hold timer: only an off-pitch reading lasting over 200 ms breaks the streak (slow frames don't)
+    if(tm!==null&&Math.abs(cents)<=ON_CENTS){
+      if(!holdStart)holdStart=now;
+      lastOn=now;
+      const held=(now-holdStart)/1000;
+      if(held>holdBest)holdBest=held;
+      $("#holdNow").textContent=held.toFixed(1);$("#holdBest").textContent=holdBest.toFixed(1);
+    }else if(now-lastOn>200){holdStart=0;$("#holdNow").textContent="0.0";}
   }else{
     hist=[];
     $("#pNote").textContent="—";$("#pSub").textContent="沒聽到聲音，唱大聲一點或靠近麥克風";
     $("#pDot").style.left="50%";$("#pDot").classList.remove("good");
+    if(now-lastOn>200){holdStart=0;$("#holdNow").textContent="0.0";}
   }
-  raf=requestAnimationFrame(loop);
+  pts.push({t:now,m:avg});
+  while(pts.length&&now-pts[0].t>WINDOW_MS)pts.shift();
+  drawCurve();
+  raf=requestAnimationFrame(singLoop);
 }
-async function startMic(){
+async function startSing(){
+  stopTuner();
   try{
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("unsupported");
-    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    micCtx=new (window.AudioContext||window.webkitAudioContext)();
-    const src=micCtx.createMediaStreamSource(micStream);
-    analyser=micCtx.createAnalyser();analyser.fftSize=2048;
-    src.connect(analyser);
+    await openMic();singOn=true;pts=[];
     $("#micBtn").textContent="停止偵測";$("#micMsg").textContent="";
     $("#pSub").textContent="開始唱吧";
-    loop();
-  }catch(e){
-    micStream=null;
-    const n=e&&e.name;
-    $("#micMsg").textContent=(n==="NotAllowedError"||n==="SecurityError")
-      ?"這個頁面目前被內嵌環境擋住麥克風權限，不會跳出詢問。請下載頁面檔案用瀏覽器直接開啟，或用下方「參考音」跟唱。"
-      :n==="NotFoundError"?"找不到麥克風裝置。"
-      :"此環境無法使用麥克風。請下載頁面檔案用瀏覽器直接開啟，或用下方「參考音」跟唱。";
-  }
+    singLoop();
+  }catch(e){closeMic();micError($("#micMsg"),e)}
 }
-function stopMic(){
-  if(raf)cancelAnimationFrame(raf);raf=null;
-  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
-  if(micCtx){try{micCtx.close()}catch(e){}micCtx=null}
-  hist=[];
+function stopSing(){
+  if(!singOn)return;
+  singOn=false;closeMic();hist=[];
   $("#micBtn").textContent="開始偵測";
   $("#pNote").textContent="—";$("#pSub").textContent="按下開始，唱一個長音「啊」";
   $("#pDot").style.left="50%";$("#pDot").classList.remove("good");
+  holdStart=0;$("#holdNow").textContent="0.0";
 }
-$("#micBtn").onclick=()=>micStream?stopMic():startMic();
+$("#micBtn").onclick=()=>singOn?stopSing():startSing();
 
 /* ---------- singing: reference tones ---------- */
-[["Do",60],["Re",62],["Mi",64],["Fa",65],["Sol",67],["La",69],["Si",71],["Do",72]].forEach(k=>{
+SCALE.forEach(k=>{
   const b=el("button","pill",k[0]);
-  b.addEventListener("click",()=>tone(midiFreq(k[1]),2.5,"sine",0.35));
+  b.addEventListener("click",()=>tone(midiFreq(k[1]-(lowOct?12:0)),2.5,"sine",0.35));
   $("#refTones").append(b);
 });
 
 /* ---------- singing: ear training ---------- */
 const KEYS=[["Do","C4",60],["Re","D4",62],["Mi","E4",64],["Fa","F4",65],["Sol","G4",67],["La","A4",69],["Si","B4",71],["Do","C5",72]];
-let target=null,right=0,total=0;
+let quiz=null,right=0,total=0;
 KEYS.forEach((k,i)=>{
   const b=el("button","key");b.append(el("b","",k[0]),el("small","",k[1]));b.dataset.i=i;
   b.addEventListener("click",()=>{
     tone(midiFreq(k[2]),1.1);
-    if(target!==null)answer(i,b);
+    if(quiz!==null)answer(i,b);
     else{b.classList.add("on");setTimeout(()=>b.classList.remove("on"),300);}
   });
   $("#keys").append(b);
 });
 function playTarget(){
   tone(midiFreq(60),0.9);
-  setTimeout(()=>tone(midiFreq(KEYS[target][2]),1.1),1000);
+  setTimeout(()=>tone(midiFreq(KEYS[quiz][2]),1.1),1000);
 }
 function answer(i,btn){
-  total++;const ok=i===target;if(ok)right++;
+  total++;const ok=i===quiz;if(ok)right++;
   btn.classList.add(ok?"right":"wrong");
   const keys=$("#keys").children;
-  if(!ok)keys[target].classList.add("right");
-  $("#quizMsg").textContent=ok?"答對了，是 "+KEYS[target][0]+"。":"這個音是 "+KEYS[target][0]+"，再試下一題。";
+  if(!ok)keys[quiz].classList.add("right");
+  $("#quizMsg").textContent=ok?"答對了，是 "+KEYS[quiz][0]+"。":"這個音是 "+KEYS[quiz][0]+"，再試下一題。";
   $("#score").textContent="答對 "+right+" / "+total;
-  target=null;
+  quiz=null;
   setTimeout(()=>{[...keys].forEach(k=>k.classList.remove("right","wrong"))},1400);
 }
 $("#quizBtn").onclick=()=>{
   [...$("#keys").children].forEach(k=>k.classList.remove("right","wrong"));
   let n;do{n=Math.floor(Math.random()*8)}while(n===0&&Math.random()<0.7);
-  target=n;$("#quizMsg").textContent="聽，這是哪一個唱名？";playTarget();
+  quiz=n;$("#quizMsg").textContent="聽，這是哪一個唱名？";playTarget();
 };
 $("#replayBtn").onclick=()=>{
-  if(target===null){$("#quizMsg").textContent="先按「出題」。";return;}
+  if(quiz===null){$("#quizMsg").textContent="先按「出題」。";return;}
   playTarget();
 };
 })();
