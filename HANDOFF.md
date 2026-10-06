@@ -87,6 +87,8 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
 - 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`KEYS`、`answer()`。
 - 子分頁：吉他與歌唱都分「常用／專案」，`showSub(panel, sub)` 共用；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」列出 `VSONGS`（目前：篇章，YouTube 影片），`ytPlayer()` 先顯示縮圖，點了才載入 youtube-nocookie 播放器，另附「在 YouTube 開啟」連結。
+- 跟唱比對（`karaPanel()`）：歌曲有 `melody` 時出現。用 YouTube IFrame API 的 `getCurrentTime()` 當時間軸，目標音符來自 `songs/*-melody.json`（`notes: [[開始秒, 長度秒, MIDI]]`），麥克風音高摺到目標的八度後比對，±50 音分算準；計分以時間加權、每個音前 80ms 不計；可升降 Key（±7）；停止後列出最不準的音，點了跳回前 2 秒。
+- 篇章的旋律是從原曲錄音自動辨識（Melodia 式諧波顯著度 + Viterbi 追蹤，濾掉 C3 以下的貝斯），378 個音、B 大調、調音偏差約 +1 音分，可能有錯音或漏音。原曲 MP3 只在使用者電腦，不進倉庫。
 - localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）、`pr_guitar_sub`／`pr_singing_sub`（`common` 或 `projects`）。
 
 ## 設計決策

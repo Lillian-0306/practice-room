@@ -96,6 +96,16 @@ section.panel[hidden]{display:none}
 .video .play span{width:64px;height:64px;border-radius:50%;background:var(--accent);color:var(--accent-on);display:grid;place-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35)}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .video-links{display:flex;flex-wrap:wrap;gap:12px;font-size:.88rem;margin-bottom:6px}
+.video>div,.video>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.kara{margin-top:12px;padding:12px;border-radius:10px;background:var(--bg)}
+.kara canvas{display:block;width:100%;height:220px;border-radius:8px;background:var(--surface);border:1px solid var(--line);margin:10px 0 8px}
+.kara-stat{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:.92rem}
+.kara-stat b{color:var(--accent);font-size:1.15rem}
+.kara-live{font-weight:700;min-height:1.5em;text-align:center}
+.kara-worst{list-style:none;margin:8px 0 0;padding:0}
+.kara-worst li{border-top:1px solid var(--line)}
+.kara-worst button{width:100%;display:flex;justify-content:space-between;gap:8px;padding:8px 2px;border:0;background:transparent;text-align:left;font-size:.9rem}
+.kara-worst .off{color:var(--warn);font-weight:700}
 .player audio{width:100%;display:block}
 .sheet{margin-top:14px;display:flex;flex-direction:column;gap:12px}
 .sheet[hidden]{display:none}
@@ -562,7 +572,7 @@ document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
   $("#guitar").hidden=m!=="guitar";
   $("#singing").hidden=m!=="singing";
   if(m!=="guitar"){stopPlayer();stopMetro();stopTuner();recG.stop();}
-  else{stopSing();stopBreath();recS.stop();}
+  else{stopSing();stopKara();stopBreath();recS.stop();}
   window.scrollTo({top:0});
   drawCurve();
 }));
@@ -767,7 +777,7 @@ function tunerLoop(){
   raf=requestAnimationFrame(tunerLoop);
 }
 async function startTuner(){
-  stopSing();
+  stopSing();stopKara();
   try{
     await openMic();tunerOn=true;
     $("#tunerBtn").textContent="停止調音";$("#tunerMsg").textContent="";
@@ -1083,7 +1093,7 @@ const recS=recorder($("#recS"),"歌唱練習");
 
 /* ---------- sub-tabs (常用 / 專案) in each panel ---------- */
 // leaving 常用 stops anything still running there
-const SUB_STOP={guitar:()=>{stopPlayer();stopMetro();stopTuner();recG.stop()},singing:()=>{stopSing();stopBreath();recS.stop()}};
+const SUB_STOP={guitar:()=>{stopPlayer();stopMetro();stopTuner();recG.stop()},singing:()=>{stopSing();stopKara();stopBreath();recS.stop()}};
 function showSub(panel,sub,init){
   const pre=panel[0]; // g-… / s-…
   $("#"+panel).querySelectorAll(".subtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.sub===sub));
@@ -1193,22 +1203,175 @@ function renderSongs(){
 renderSongs();
 
 /* ---------- singing: projects (songs to sing) ---------- */
+// melody: JSON with notes [[start s, length s, midi]] extracted from the recording, timed to the YouTube video
 const VSONGS=[
   {title:"篇章",by:"張韶涵／王赫野 合唱",meta:["男女對唱","動態歌詞影片"],
-   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)"}
+   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)",melody:"songs/pianzhang-melody.json"}
 ];
-// YouTube player that only loads after a tap (privacy-enhanced embed)
-function ytPlayer(id,title){
+// YouTube IFrame API, loaded on first use
+let ytReady=null;
+function loadYT(){
+  if(window.YT&&YT.Player)return Promise.resolve();
+  if(ytReady)return ytReady;
+  ytReady=new Promise((res,rej)=>{
+    const prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=()=>{if(prev)prev();res()};
+    const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";s.onerror=()=>rej(new Error("yt"));document.head.append(s);
+    setTimeout(()=>rej(new Error("timeout")),12000);
+  }).catch(e=>{ytReady=null;throw e});
+  return ytReady;
+}
+// Thumbnail first; a tap swaps in a real player. Resolves with a YT.Player (or null if only a plain iframe could load).
+function ytBox(id,title){
   const box=el("button","video");box.type="button";box.setAttribute("aria-label","播放影片："+title);
   const img=el("img");img.src="https://i.ytimg.com/vi/"+id+"/hqdefault.jpg";img.alt="";img.loading="lazy";
   const play=el("span","play");play.innerHTML='<span><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>';
   box.append(img,play);
-  box.onclick=()=>{
-    const f=el("iframe");f.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0&playsinline=1";
-    f.title=title;f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;
-    const wrap=el("div","video");wrap.append(f);box.replaceWith(wrap);
+  let made=null;
+  const make=(autoplay)=>{
+    if(made)return made;
+    const wrap=el("div","video"),host=el("div");wrap.append(host);box.replaceWith(wrap);
+    made=loadYT().then(()=>new Promise(res=>{
+      const p=new YT.Player(host,{videoId:id,host:"https://www.youtube-nocookie.com",
+        playerVars:{autoplay:autoplay?1:0,rel:0,playsinline:1},events:{onReady:()=>res(p)}});
+    })).catch(()=>{ // API blocked: fall back to a plain embed
+      const f=el("iframe");f.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0&playsinline=1";
+      f.title=title;f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;
+      wrap.innerHTML="";wrap.append(f);return null;
+    });
+    return made;
   };
+  box.onclick=()=>make(true);
+  return {el:box,player:()=>make(false)};
+}
+
+/* ---------- singing: sing-along comparison (跟唱比對) ---------- */
+// Your pitch is folded to the target's octave, so either the male or the female part counts.
+const K_BEFORE=2.5,K_AFTER=5.5,K_HIT=50,K_GRACE=0.08,K_MIN=0.12; // seconds shown, cents tolerance, skip start of note, min sung time to judge
+let kara=null; // the running session
+const fmtT=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+function karaPanel(song,yt){
+  const box=el("div","kara"),cv=el("canvas"),live=el("p","kara-live"),stat=el("div","kara-stat"),btns=el("div","row"),keyRow=el("div","row"),msg=el("p","msg note"),worst=el("ol","kara-worst");
+  cv.setAttribute("role","img");cv.setAttribute("aria-label","目標旋律與你的音高");
+  const startB=el("button","btn","開始跟唱"),reset=el("button","btn ghost","重新計分");
+  btns.append(startB,reset);
+  const keyLbl=el("span","note"),kDown=el("button","pill","降"),kUp=el("button","pill","升");kDown.setAttribute("aria-label","降半音");kUp.setAttribute("aria-label","升半音");
+  keyRow.append(el("span","lbl","調"),kDown,keyLbl,kUp);
+  const accEl=el("b","","—"),cntEl=el("span","note","");
+  const s1=el("span");s1.append("唱準率 ",accEl);stat.append(s1,cntEl);
+  box.append(el("h3","sub-h","跟唱比對"),el("p","note","戴耳機播放影片，跟著唱。上面的橫條是原唱的旋律，你唱的音高會畫成一條線，對準就變綠。男生女生的段落都可以唱，不用管八度。"),cv,live,stat,keyRow,btns,msg,worst);
+  const st={song,yt,cv,live,accEl,cntEl,worst,msg,startB,data:null,shift:0,stats:[],trail:[],lastT:0,on:false,center:60};
+  const showKey=()=>{keyLbl.textContent=(st.data?st.data.key:"")+(st.shift?"・"+(st.shift>0?"升 ":"降 ")+Math.abs(st.shift):"・原調")};
+  kDown.onclick=()=>{st.shift=Math.max(-7,st.shift-1);showKey();resetStats(st);drawKara(st)};
+  kUp.onclick=()=>{st.shift=Math.min(7,st.shift+1);showKey();resetStats(st);drawKara(st)};
+  reset.onclick=()=>{resetStats(st);drawKara(st)};
+  startB.onclick=()=>kara===st?stopKara():startKara(st);
+  fetch(song.melody).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{st.data=d;resetStats(st);showKey();drawKara(st)})
+    .catch(()=>{msg.textContent="找不到這首歌的旋律資料。";startB.disabled=true});
   return box;
+}
+function resetStats(st){
+  if(!st.data)return;
+  st.stats=st.data.notes.map(()=>({v:0,h:0,sum:0,last:-9}));st.trail=[];
+  st.accEl.textContent="—";st.cntEl.textContent="";st.worst.innerHTML="";
+}
+// index of the note sounding at time t (binary search on start times)
+function noteAt(notes,t){let lo=0,hi=notes.length-1,ans=-1;while(lo<=hi){const m=(lo+hi)>>1;if(notes[m][0]<=t){ans=m;lo=m+1}else hi=m-1}
+  return ans>=0&&t<notes[ans][0]+notes[ans][1]?ans:-1}
+async function startKara(st){
+  stopKara();stopSing();stopTuner();
+  st.msg.textContent="";
+  let player;
+  try{player=await st.yt.player()}catch(e){player=null}
+  if(!player){st.msg.textContent="無法控制 YouTube 播放器（可能被目前的環境擋住）。請用正式網址開啟：";const a=el("a","",SITE);a.href=SITE;a.target="_blank";a.rel="noopener";st.msg.append(a);return}
+  try{await openMic()}catch(e){closeMic();micError(st.msg,e);return}
+  st.player=player;st.on=true;kara=st;st.startB.textContent="停止跟唱";st.trail=[];
+  try{player.playVideo()}catch(e){}
+  karaLoop();
+}
+function stopKara(){
+  if(!kara)return;
+  const st=kara;kara=null;st.on=false;
+  if(raf)cancelAnimationFrame(raf);closeMic();
+  st.startB.textContent="開始跟唱";st.live.textContent="";
+  try{st.player&&st.player.pauseVideo()}catch(e){}
+  showWorst(st);drawKara(st);
+}
+function karaLoop(){
+  const st=kara;if(!st)return;
+  let t=0;try{t=st.player.getCurrentTime()||0}catch(e){}
+  if(Math.abs(t-st.lastT)>0.6)st.trail=[]; // seek: start a fresh line
+  const dt=Math.min(0.1,Math.max(0,t-st.lastT));st.lastT=t; // scoring is weighted by time, not frames
+  const notes=st.data.notes,i=noteAt(notes,t),f=readPitch();
+  let playing=true;try{playing=st.player.getPlayerState()===1}catch(e){}
+  if(f>70&&f<1200&&playing){
+    const m=freqMidi(f);
+    let ref=i>=0?notes[i][2]+st.shift:st.center,k=Math.round((m-ref)/12),dm=m-12*k;
+    if(i>=0){
+      const s=st.stats[i],cents=(dm-ref)*100;
+      if(t-s.last>1.5){s.v=0;s.h=0;s.sum=0} // came back to this note: score it again
+      s.last=t;const hit=Math.abs(cents)<=K_HIT;
+      if(t-notes[i][0]>=K_GRACE){s.v+=dt;s.sum+=cents*dt;if(hit)s.h+=dt}
+      st.live.textContent=hit?"準！":(cents<0?"偏低 ":"偏高 ")+Math.abs(Math.round(cents))+" 音分";
+      st.trail.push({t,m:dm,hit});
+    }else{st.live.textContent="";st.trail.push({t,m:dm,hit:null})}
+  }else{st.trail.push({t,m:null});if(i<0)st.live.textContent=""}
+  while(st.trail.length&&st.trail[0].t<t-K_BEFORE)st.trail.shift();
+  updateScore(st);drawKara(st,t);
+  raf=requestAnimationFrame(karaLoop);
+}
+function updateScore(st){
+  let v=0,h=0,n=0;st.stats.forEach(s=>{if(s.v>=K_MIN){v+=s.v;h+=s.h;n++}});
+  st.accEl.textContent=v?Math.round(h/v*100)+"%":"—";st.cntEl.textContent=n?"已判定 "+n+" 個音":"";
+}
+function showWorst(st){
+  st.worst.innerHTML="";if(!st.data)return;
+  const list=st.stats.map((s,i)=>({i,s})).filter(o=>o.s.v>=K_MIN*1.5).map(o=>({...o,acc:o.s.h/o.s.v,avg:o.s.sum/o.s.v})).filter(o=>o.acc<0.6).sort((a,b)=>a.acc-b.acc).slice(0,6);
+  if(!list.length)return;
+  list.forEach(o=>{
+    const n=st.data.notes[o.i],li=el("li"),b=el("button");
+    b.append(el("span","",fmtT(n[0])+"　目標 "+noteName(n[2]+st.shift)),el("span","off",(o.avg<0?"偏低 ":"偏高 ")+Math.abs(Math.round(o.avg))+" 音分"));
+    b.onclick=()=>{try{st.player.seekTo(Math.max(0,n[0]-2),true);st.player.playVideo()}catch(e){}};
+    li.append(b);st.worst.append(li);
+  });
+  const cap=el("li");cap.append(el("span","note","最需要練的音（點一下跳到前 2 秒）"));st.worst.prepend(cap);
+}
+function drawKara(st,t){
+  const cv=st.cv;if(!cv.clientWidth||!st.data)return;
+  if(t==null)t=st.lastT;
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const cs=getComputedStyle(document.body),col=n=>cs.getPropertyValue(n).trim();
+  const notes=st.data.notes,vis=notes.filter(n=>n[0]+n[1]>t-K_BEFORE&&n[0]<t+K_AFTER);
+  if(vis.length){const ms=vis.map(n=>n[2]+st.shift).sort((a,b)=>a-b);st.center+=(ms[ms.length>>1]-st.center)*0.08}
+  const span=16,x=s=>36+(s-(t-K_BEFORE))/(K_BEFORE+K_AFTER)*(w-36),y=m=>h/2-(m-st.center)/span*h;
+  g.font="11px "+col("--sans");g.textBaseline="middle";
+  for(let m=Math.ceil(st.center-span/2);m<=st.center+span/2;m++){
+    const nat=NOTES[((m%12)+12)%12].length===1;g.strokeStyle=col("--line");g.globalAlpha=nat?1:0.45;
+    g.beginPath();g.moveTo(36,y(m));g.lineTo(w,y(m));g.stroke();g.globalAlpha=1;
+    if(nat){g.fillStyle=col("--muted");g.fillText(noteName(m),3,y(m))}
+  }
+  // target bars
+  vis.forEach(n=>{
+    const i=notes.indexOf(n),s=st.stats[i],m=n[2]+st.shift,x0=Math.max(36,x(n[0])),x1=x(n[0]+n[1]);
+    let c=col("--accent-soft");
+    if(n[0]+n[1]<t&&s.v>=K_MIN)c=s.h/s.v>=0.6?col("--ok"):col("--warn");
+    else if(n[0]<=t)c=col("--accent");
+    g.fillStyle=c;g.globalAlpha=n[0]+n[1]<t?0.55:1;
+    g.beginPath();g.roundRect?g.roundRect(x0,y(m)-5,Math.max(2,x1-x0),10,5):g.rect(x0,y(m)-5,Math.max(2,x1-x0),10);g.fill();g.globalAlpha=1;
+  });
+  // your pitch
+  g.lineWidth=3;g.lineCap="round";let prev=null;
+  st.trail.forEach(p=>{
+    if(p.m==null){prev=null;return}
+    if(prev){g.strokeStyle=p.hit===true?col("--ok"):p.hit===false?col("--warn"):col("--muted");g.beginPath();g.moveTo(x(prev.t),y(prev.m));g.lineTo(x(p.t),y(p.m));g.stroke()}
+    prev=p;
+  });
+  // now line
+  g.strokeStyle=col("--ink");g.globalAlpha=0.5;g.lineWidth=1.5;g.beginPath();g.moveTo(x(t),0);g.lineTo(x(t),h);g.stroke();g.globalAlpha=1;
+  g.fillStyle=col("--muted");g.textAlign="right";g.fillText(fmtT(t),w-4,10);
+  if(!vis.length){const nx=notes.find(n=>n[0]>t);g.textAlign="center";g.font="14px "+col("--sans");g.fillText(nx?"下一句在 "+fmtT(nx[0]):"這首歌的旋律到這裡結束",(36+w)/2,h/2)}
+  g.textAlign="left";
 }
 function renderVSongs(){
   const box=$("#vsongs");box.innerHTML="";
@@ -1218,14 +1381,17 @@ function renderVSongs(){
     s.meta.forEach(m=>meta.append(el("span","",m)));
     card.append(el("h3","",s.title),el("p","by",s.by),meta);
     if(s.yt){
+      const yt=ytBox(s.yt,s.title);
       const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+s.yt;a.target="_blank";a.rel="noopener";
       links.append(a,el("span","note",s.ytNote||""));
-      card.append(ytPlayer(s.yt,s.title),links);
+      card.append(yt.el,links);
+      if(s.melody)card.append(karaPanel(s,yt));
     }
     box.append(card);
   });
 }
 renderVSongs();
+window.addEventListener("resize",()=>{if(kara)drawKara(kara)});
 
 /* ---------- singing: breathing ---------- */
 const BREATHS=[
@@ -1381,7 +1547,7 @@ function singLoop(){
   raf=requestAnimationFrame(singLoop);
 }
 async function startSing(){
-  stopTuner();
+  stopTuner();stopKara();
   try{
     await openMic();singOn=true;pts=[];
     $("#micBtn").textContent="停止偵測";$("#micMsg").textContent="";
