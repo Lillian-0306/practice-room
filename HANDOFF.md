@@ -92,6 +92,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）、`pr_guitar_sub`／`pr_singing_sub`（`common` 或 `projects`）。
 
 ## 設計決策
+- 導覽清單：寬度 ≥1024px 時左側固定側欄（248px，`body` 左邊留白）；較窄時隱藏，右下角圓形 ☰ 按鈕打開抽屜（背景變暗，點項目／背景／Esc／× 關閉）。清單由頁面自動產生（`buildNav()`：常用取各 `.block` 的 h2，專案取 `.song` 的 h3），新增區塊或歌曲會自動出現；捲動時標示目前區塊（`navSpy()`），點選後暫時固定標示被選的項目。電腦版可收合：清單右上角「收合」按鈕隱藏側欄、內容回到置中，收合後左上角出現「展開」按鈕；狀態存在 `pr_nav_collapsed`（`body.nav-collapsed`）。
 - 色彩用 CSS 變數，含淺色與深色（`prefers-color-scheme` + `data-theme`）。右上角按鈕切換亮／暗，選擇存在 `pr_theme`；沒選過就跟系統。`<head>` 裡有一小段 script 在畫面出現前套用，避免閃一下。
 - 標題用 Noto Serif TC，內文用 Noto Sans TC。
 - 版面寬度上限 880px，手機優先，加入 safe-area 內距。
