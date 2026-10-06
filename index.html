@@ -141,8 +141,16 @@ section.panel[hidden]{display:none}
 .now{display:flex;align-items:baseline;gap:10px;margin:12px 0}
 .now .cur{font-family:var(--serif);font-size:2.2rem;font-weight:900;color:var(--accent);min-width:3.2em}
 .prog{display:flex;gap:6px;margin:6px 0 12px}
-.prog span{flex:1;min-width:0;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prog span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+.prog>*{flex:1;min-width:0;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog>.on{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+.prog.diag{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--dz),1fr))}
+.prog.diag>*{padding:6px 4px 2px;white-space:normal}
+.prog.diag>.on{background:var(--accent-soft);color:var(--ink)}
+.prog.diag svg{display:block;width:100%;height:auto}
+.prog>.empty-note{border-style:dashed;font-weight:400;color:var(--muted)}
+.zoom-row{margin:12px 0 0}
+.palette .grp-label{margin:8px 0 4px}
+.palette .pill,#ceProg .pill{min-height:36px;padding:4px 12px}
 .pattern{display:grid;grid-template-columns:repeat(var(--n,8),minmax(0,1fr));gap:4px;margin-bottom:6px}
 .pattern>*{text-align:center;padding:6px 0;border:0;border-radius:6px;background:var(--accent-soft);font-weight:700;font-size:1.05rem;min-height:36px;color:var(--ink);font-family:inherit}
 .pattern.dense>*{font-size:.85rem;min-height:32px}
@@ -310,6 +318,14 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <header><h2>跟著節拍換和弦</h2><p>選和弦進行和刷法，每小節換一個和弦，節奏圖亮起時刷弦。</p></header>
       <span class="grp-label">和弦進行</span>
       <div class="row" id="progPicker" role="group" aria-label="和弦進行"></div>
+      <div class="row zoom-row"><span class="lbl">和弦圖</span><button class="pill" id="dzOut" aria-label="縮小和弦圖">−</button><span class="note" id="dzLbl"></span><button class="pill" id="dzIn" aria-label="放大和弦圖">＋</button></div>
+      <div class="prog" id="progBar"></div>
+      <div class="pat-edit" id="progEdit" hidden>
+        <p class="note" style="margin:0 0 8px">點下面的和弦加到最後，點已選的和弦可以刪掉，最多 16 小節。播放中也能改。</p>
+        <div class="row" id="ceProg" aria-label="自訂和弦進行"></div>
+        <div class="palette" id="cePalette"></div>
+        <div class="row" style="margin-top:10px"><button class="pill" id="ceProgUndo">刪最後一個</button><button class="pill" id="ceProgClear">清空</button></div>
+      </div>
       <span class="grp-label" style="margin-top:12px">刷法</span>
       <div class="row" id="patPicker" role="group" aria-label="刷法"></div>
       <div class="pat-edit" id="patEdit" hidden>
@@ -319,7 +335,6 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
         <div class="row"><button class="pill" id="ceDown">每拍下刷</button><button class="pill" id="ceClear">清空</button></div>
       </div>
       <div class="now"><div class="cur" id="curChord">—</div><div class="note" id="beatInfo">按開始</div></div>
-      <div class="prog" id="progBar"></div>
       <div class="pattern" id="pattern"></div>
       <p class="legend">↓ 下刷　↑ 上刷　✕ 切音（右手掌悶住弦再刷）　· 不刷</p>
       <label for="bpm" class="row" style="justify-content:space-between"><span>速度 <small class="note" id="bpmUnit"></small></span><b id="bpmVal">80 BPM</b></label>
@@ -800,20 +815,58 @@ if(savedCustom&&CE_METERS[savedCustom.meter]&&[8,16].includes(savedCustom.grid)&
 PATS.push(custom);
 const LOOKAHEAD=0.12,TICK_MS=25;
 let pat=PATS[Math.max(0,Math.min(PATS.length-1,load("pr_pattern",0)|0))];
-let prog=PROGS[0],playing=false,sched=null,slot=0,nextT=0,uiTimers=[];
-PROGS.forEach((p,i)=>{
-  const b=el("button","pill",p.join(" – "));b.setAttribute("aria-pressed",i===0);
-  b.addEventListener("click",()=>{
-    prog=p;document.querySelectorAll("#progPicker .pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
-    const was=playing;stopPlayer();renderProg();if(was)startPlayer();
-  });
+// custom progression: chords picked by the user, saved in the browser
+const customProg=(()=>{const v=load("pr_custom_prog",null);return Array.isArray(v)&&v.every(c=>CH[c])?v.slice(0,16):["C","Am","F","G"]})();
+const PROG_ALL=[...PROGS,customProg];
+let prog=PROG_ALL[Math.max(0,Math.min(PROG_ALL.length-1,load("pr_prog",0)|0))],playing=false,sched=null,slot=0,nextT=0,uiTimers=[];
+// chord-diagram zoom: 0 = names only
+const DZ=[0,64,88,120,160,220];
+let dzi=Math.max(0,Math.min(DZ.length-1,load("pr_prog_zoom",2)|0)),progSvgs=[];
+PROG_ALL.forEach(p=>{
+  const b=el("button","pill",p===customProg?"自訂":p.join(" – "));
+  b.addEventListener("click",()=>setProg(p));
   $("#progPicker").append(b);
 });
-function renderProg(){
-  const bar=$("#progBar");bar.innerHTML="";
-  prog.forEach(c=>bar.append(el("span","",c)));
+function setProg(p){
+  const was=playing;stopPlayer();
+  prog=p;save("pr_prog",PROG_ALL.indexOf(p));
+  $("#progPicker").querySelectorAll(".pill").forEach((x,i)=>x.setAttribute("aria-pressed",PROG_ALL[i]===p));
+  $("#progEdit").hidden=p!==customProg;
+  renderProg();renderProgEdit();if(was&&prog.length)startPlayer();
 }
-renderProg();
+function renderProg(){
+  const bar=$("#progBar"),dz=DZ[dzi];bar.innerHTML="";progSvgs=[];
+  bar.classList.toggle("diag",dz>0);bar.style.setProperty("--dz",dz+"px");
+  prog.forEach((c,i)=>{
+    const card=el("div");card.append(el("span","",c));
+    if(dz>0){const s=document.createElementNS(svgNS,"svg");s.setAttribute("viewBox","0 0 240 270");s.setAttribute("role","img");s.setAttribute("aria-label",c+" 和弦指法圖");renderChord(s,c);card.append(s);progSvgs[i]=s}
+    bar.append(card);
+  });
+  if(!prog.length)bar.append(el("span","empty-note","還沒有和弦，從上面選"));
+  $("#dzLbl").textContent=dz?"大小 "+dzi+" / "+(DZ.length-1):"只顯示名稱";
+  $("#dzOut").disabled=dzi===0;$("#dzIn").disabled=dzi===DZ.length-1;
+}
+$("#dzOut").onclick=()=>{dzi=Math.max(0,dzi-1);save("pr_prog_zoom",dzi);renderProg()};
+$("#dzIn").onclick=()=>{dzi=Math.min(DZ.length-1,dzi+1);save("pr_prog_zoom",dzi);renderProg()};
+function renderProgEdit(){
+  const box=$("#ceProg");box.innerHTML="";
+  customProg.forEach((c,i)=>{
+    const b=el("button","pill",c+" ×");b.setAttribute("aria-pressed","true");b.setAttribute("aria-label","刪掉第 "+(i+1)+" 小節的 "+c);
+    b.onclick=()=>{customProg.splice(i,1);progChanged()};box.append(b);
+  });
+  if(!customProg.length)box.append(el("span","note","（還沒選和弦）"));
+}
+function progChanged(){
+  save("pr_custom_prog",customProg);renderProgEdit();renderProg();
+  if(playing&&!prog.length)stopPlayer();
+}
+GROUPS.forEach(g=>{
+  const row=el("div","row");
+  g[1].forEach(k=>{const b=el("button","pill",k);b.onclick=()=>{if(customProg.length>=16)return;customProg.push(k);progChanged();strum(k,"D")};row.append(b)});
+  $("#cePalette").append(el("span","grp-label",g[0]),row);
+});
+$("#ceProgUndo").onclick=()=>{customProg.pop();progChanged()};
+$("#ceProgClear").onclick=()=>{customProg.length=0;progChanged()};
 const SYM={D:"↓",U:"↑",X:"✕","":"·"},NEXT={"":"D",D:"U",U:"X",X:""};
 function renderPattern(){
   const box=$("#pattern"),n=pat.slots.length;box.innerHTML="";
@@ -862,9 +915,10 @@ function showSlot(pos,bar){
   [...$("#pattern").children].forEach((s,i)=>s.classList.toggle("on",i===pos));
 }
 function scheduleSlot(t){
+  if(!prog.length)return;
   const c=audio(),n=pat.slots.length,pos=slot%n,bar=Math.floor(slot/n)%prog.length,s=pat.slots[pos];
   if(pos%pat.sub===0)click(t,pos===0?2:1);
-  if(s==="X")chuck(t);else if(s)strum(prog[bar],s,t,pos%pat.sub===0?0.28:0.22);
+  if(s==="X")chuck(t);else if(s)strum(prog[bar],s,t,pos%pat.sub===0?0.28:0.22,progSvgs[bar]);
   const id=setTimeout(()=>{uiTimers=uiTimers.filter(x=>x!==id);showSlot(pos,bar)},Math.max(0,(t-c.currentTime)*1000));
   uiTimers.push(id);
 }
@@ -875,6 +929,7 @@ function scheduler(){
 }
 function startPlayer(){
   stopMetro();
+  if(!prog.length){$("#beatInfo").textContent="先選幾個和弦";return}
   const c=audio();playing=true;slot=0;nextT=c.currentTime+0.06;
   $("#playBtn").textContent="停止";
   scheduler();sched=setInterval(scheduler,TICK_MS);
@@ -971,7 +1026,7 @@ $("#mTap").onclick=()=>{
   mSetBpm(60000/iv);$("#mTapInfo").textContent="已按 "+taps.length+" 下";
 };
 mSetBpm(ms.bpm);mRenderBeats();
-setPattern(pat);
+setPattern(pat);setProg(prog);
 
 /* ---------- recorder ---------- */
 function recorder(root,prefix){
