@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <style>
 :root{
+  color-scheme:light; /* native scrollbars and controls follow the theme */
   --bg:#F1EFF6; --surface:#FFFFFF; --ink:#1F1B2D; --muted:#5E5A72; --line:#D9D5E6;
   --gtr:#A8650A; --gtr-soft:#FBEBCF; --gtr-on:#FFFFFF;
   --voc:#3454D1; --voc-soft:#E0E6FB; --voc-on:#FFFFFF;
@@ -23,6 +24,7 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
+    color-scheme:dark;
     --bg:#15131F; --surface:#1F1C2E; --ink:#EDEAF7; --muted:#A7A2BD; --line:#352F4A;
     --gtr:#F0A93A; --gtr-soft:#3A2C12; --gtr-on:#1F1400;
     --voc:#8AA2FF; --voc-soft:#232C57; --voc-on:#0E1536;
@@ -30,6 +32,7 @@
   }
 }
 :root[data-theme="dark"]{
+  color-scheme:dark;
   --bg:#15131F; --surface:#1F1C2E; --ink:#EDEAF7; --muted:#A7A2BD; --line:#352F4A;
   --gtr:#F0A93A; --gtr-soft:#3A2C12; --gtr-on:#1F1400;
   --voc:#8AA2FF; --voc-soft:#232C57; --voc-on:#0E1536;
@@ -51,7 +54,7 @@ p{margin:0}
 .lead{color:var(--muted);margin-top:8px;max-width:34em}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 /* side navigation: fixed on desktop, slide-out drawer on narrow screens */
-.sidenav{position:fixed;top:0;bottom:0;left:0;width:248px;z-index:40;overflow-y:auto;background:var(--surface);border-right:1px solid var(--line);padding:20px 12px 32px}
+.sidenav{position:fixed;top:0;bottom:0;left:0;width:var(--navw,248px);z-index:40;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent;background:var(--surface);border-right:1px solid var(--line);padding:20px 12px 32px}
 .nav-head{display:flex;justify-content:space-between;align-items:center;margin:0 6px 10px}
 .nav-head b{font-family:var(--serif);font-size:1.1rem}
 .nav-close{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:transparent;font-size:1.4rem;line-height:1;display:none}
@@ -59,16 +62,29 @@ p{margin:0}
 .nav-panel>b{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:1.05rem;margin:0 10px 4px}
 .nav-panel>b i{width:10px;height:10px;border-radius:50%}
 .nav-page,.nav-tool{display:block;width:100%;text-align:left;border:0;background:transparent;font:inherit;color:var(--ink)}
-.nav-page{border-radius:8px;padding:7px 10px;font-weight:700;font-size:.93rem}
-.nav-page[aria-current="page"]{background:var(--accent-soft)}
+.nav-row{display:flex;align-items:center;border-radius:8px}
+.nav-row:has(.nav-page[aria-current="page"]){background:var(--accent-soft)}
+.nav-page{flex:1;border-radius:8px;padding:7px 10px;font-weight:700;font-size:.93rem}
+.nav-fold{flex:none;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--muted);display:grid;place-items:center;padding:0}
+.nav-fold svg{transition:transform .2s}
+.nav-fold[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.nav-fold:hover{background:var(--bg);color:var(--ink)}
+.nav-group[hidden]{display:none}
 .nav-tool{border-radius:6px;padding:5px 10px 5px 22px;font-size:.86rem;color:var(--muted);border-left:3px solid transparent}
 .nav-tool.cur{color:var(--ink);font-weight:700;border-left-color:var(--accent)}
 .nav-page:hover,.nav-tool:hover{background:var(--bg)}
-.nav-btn,.nav-backdrop,.nav-show{display:none}
+.nav-btn,.nav-backdrop,.nav-show,.nav-resize{display:none}
 .nav-hide,.nav-show{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);place-items:center;padding:0}
 .block,.song{scroll-margin-top:16px}
 @media (min-width:1024px){
-  body{padding-left:248px;transition:padding-left .25s ease}
+  body{padding-left:var(--navw,248px);transition:padding-left .25s ease}
+  /* drag handle on the sidebar's right edge */
+  .nav-resize{display:block;position:fixed;top:0;bottom:0;left:calc(var(--navw,248px) - 5px);width:10px;z-index:41;cursor:col-resize;touch-action:none}
+  .nav-resize::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:2px;background:transparent;transition:background .15s}
+  .nav-resize:hover::after,.nav-resize:focus-visible::after,body.nav-resizing .nav-resize::after{background:var(--accent)}
+  .nav-resize:focus-visible{outline:none}
+  body.nav-resizing{transition:none;user-select:none;cursor:col-resize}
+  body.nav-collapsed .nav-resize{display:none}
   .sidenav{transition:transform .25s ease,visibility 0s}
   .nav-hide{display:grid}
   body.nav-collapsed{padding-left:0}
@@ -295,6 +311,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
   <div id="navTree"></div>
 </nav>
 <div class="nav-backdrop" id="navBackdrop" hidden></div>
+<div class="nav-resize" id="navResize" role="separator" aria-orientation="vertical" aria-controls="sidenav" aria-label="調整選單寬度（左右方向鍵，雙擊恢復預設）" aria-valuemin="180" aria-valuemax="420" tabindex="0"></div>
 <button class="nav-show" id="navShow" type="button" aria-controls="sidenav" aria-label="展開選單" title="展開選單"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg></button>
 <button class="nav-btn" id="navBtn" type="button" aria-controls="sidenav" aria-expanded="false" aria-label="開啟選單">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -1705,7 +1722,9 @@ earReset();
 var navReady=false; // var: showSub runs during startup, before this line
 const NAV=[{panel:"guitar",name:"吉他",color:"var(--gtr)"},{panel:"singing",name:"歌唱",color:"var(--voc)"}];
 const SUBN={common:"常用",projects:"專案"};
-const navItems=[]; // {panel, sub, page button, tools:[{el, btn}]}
+const navItems=[]; // {panel, sub, page button, fold button, group, tools:[{el, btn}]}
+const navFold=load("pr_nav_fold",{}); // "guitar-common": true when that group is collapsed
+function setFold(it,collapsed){it.group.hidden=collapsed;it.fold.setAttribute("aria-expanded",String(!collapsed));navFold[it.panel+"-"+it.sub]=collapsed;save("pr_nav_fold",navFold)}
 const reducedMotion=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function navTargets(panel,sub){
   const box=$("#"+panel[0]+"-"+sub);
@@ -1717,13 +1736,19 @@ function buildNav(){
   NAV.forEach(p=>{
     const sec=el("div","nav-panel"),title=el("b");const dot=el("i");dot.style.background=p.color;title.append(dot,p.name);sec.append(title);
     ["common","projects"].forEach(sub=>{
-      const page=el("button","nav-page",SUBN[sub]);page.type="button";
-      page.onclick=()=>navGo(p.panel,sub,null);
-      sec.append(page);
+      const row=el("div","nav-row"),page=el("button","nav-page",SUBN[sub]),fold=el("button","nav-fold"),group=el("div","nav-group");
+      page.type="button";fold.type="button";
+      group.id="navg-"+p.panel+"-"+sub;fold.setAttribute("aria-controls",group.id);fold.setAttribute("aria-label",p.name+" "+SUBN[sub]+"：展開或收起");
+      fold.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+      row.append(page,fold);sec.append(row,group);
       const tools=navTargets(p.panel,sub).map(t=>{
-        const b=el("button","nav-tool",t.label);b.type="button";b.onclick=()=>navGo(p.panel,sub,t.el);sec.append(b);return {el:t.el,btn:b};
+        const b=el("button","nav-tool",t.label);b.type="button";b.onclick=()=>navGo(p.panel,sub,t.el);group.append(b);return {el:t.el,btn:b};
       });
-      navItems.push({panel:p.panel,sub,page,tools});
+      const it={panel:p.panel,sub,page,fold,group,tools};navItems.push(it);
+      // the name switches pages (and opens its list); the arrow only folds
+      page.onclick=()=>{if(it.group.hidden)setFold(it,false);navGo(p.panel,sub,null)};
+      fold.onclick=()=>setFold(it,!it.group.hidden);
+      setFold(it,!!navFold[p.panel+"-"+sub]);
     });
     tree.append(sec);
   });
@@ -1769,6 +1794,28 @@ function setCollapsed(v,focus){document.body.classList.toggle("nav-collapsed",v)
 $("#navHide").onclick=()=>setCollapsed(true,true);
 $("#navShow").onclick=()=>setCollapsed(false,true);
 setCollapsed(!!load("pr_nav_collapsed",false));
+// desktop: drag the sidebar edge to resize (180–420px), double-click resets, arrow keys nudge
+const NAVW_MIN=180,NAVW_MAX=420,NAVW_DEF=248;
+function setNavW(w,persist){
+  w=Math.round(Math.max(NAVW_MIN,Math.min(NAVW_MAX,+w||NAVW_DEF)));
+  document.documentElement.style.setProperty("--navw",w+"px");$("#navResize").setAttribute("aria-valuenow",w);
+  if(persist)save("pr_nav_w",w);
+}
+const rz=$("#navResize");
+rz.addEventListener("pointerdown",e=>{
+  e.preventDefault();rz.setPointerCapture(e.pointerId);document.body.classList.add("nav-resizing");
+  const move=ev=>setNavW(ev.clientX),up=()=>{rz.removeEventListener("pointermove",move);document.body.classList.remove("nav-resizing");
+    setNavW(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--navw")),true)};
+  rz.addEventListener("pointermove",move);rz.addEventListener("pointerup",up,{once:true});rz.addEventListener("pointercancel",up,{once:true});
+});
+rz.addEventListener("dblclick",()=>setNavW(NAVW_DEF,true));
+rz.addEventListener("keydown",e=>{
+  const cur=+rz.getAttribute("aria-valuenow"),step={ArrowLeft:-16,ArrowRight:16}[e.key];
+  if(step){setNavW(cur+step,true);e.preventDefault()}
+  else if(e.key==="Home"){setNavW(NAVW_MIN,true);e.preventDefault()}
+  else if(e.key==="End"){setNavW(NAVW_MAX,true);e.preventDefault()}
+});
+setNavW(load("pr_nav_w",NAVW_DEF));
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeNav()});
 buildNav();navReady=true;navSync();
 })();
