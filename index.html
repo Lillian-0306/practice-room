@@ -522,12 +522,12 @@ const noteName=m=>NOTES[((m%12)+12)%12]+(Math.floor(m/12)-1);
 /* ---------- microphone (shared by tuner & pitch detector) ---------- */
 let micStream=null,micCtx=null,analyser=null,micBuf=null,raf=null;
 const MIC_OPTS={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
-async function openMic(){
+async function openMic(size){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){const e=new Error("unsupported");e.name="NotSupportedError";throw e;}
   micStream=await navigator.mediaDevices.getUserMedia(MIC_OPTS);
   micCtx=new AC();
   const src=micCtx.createMediaStreamSource(micStream);
-  analyser=micCtx.createAnalyser();analyser.fftSize=2048;
+  analyser=micCtx.createAnalyser();analyser.fftSize=size||2048;
   micBuf=new Float32Array(analyser.fftSize);
   src.connect(analyser);
 }
@@ -556,6 +556,43 @@ function autoCorrelate(buf,sr){
   return sr/T;
 }
 function readPitch(){analyser.getFloatTimeDomainData(micBuf);return autoCorrelate(micBuf,micCtx.sampleRate)}
+/* ---------- tuner pitch: McLeod pitch method on a long (8192-sample) window ---------- */
+// Steadier than autoCorrelate on the low strings, and checks the octave against the guitar strings
+function fftC(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
+  for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<len>>1;k++){const p=i+k,q=p+(len>>1),tr=re[q]*cr-im[q]*ci,ti=re[q]*ci+im[q]*cr;re[q]=re[p]-tr;im[q]=im[p]-ti;re[p]+=tr;im[p]+=ti;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
+let W=null;
+function mpm(buf,sr,fmin,fmax){
+  const n=buf.length,m2=n*2;
+  if(!W||W.re.length!==m2)W={re:new Float64Array(m2),im:new Float64Array(m2)};
+  const re=W.re,im=W.im;let e=0;
+  for(let i=0;i<m2;i++){const v=i<n?buf[i]:0;re[i]=v;im[i]=0;e+=v*v}
+  if(Math.sqrt(e/n)<0.003)return null;
+  fftC(re,im);for(let i=0;i<m2;i++){re[i]=re[i]*re[i]+im[i]*im[i];im[i]=0}
+  fftC(re,im); // r(τ) = re[τ]/m2 (real, symmetric spectrum)
+  const tmin=Math.max(2,Math.floor(sr/fmax)),tmax=Math.min(n-2,Math.ceil(sr/fmin));
+  const nsdf=new Float64Array(tmax+2);let msum=2*e;
+  for(let t=1;t<=tmax+1;t++){msum-=buf[t-1]*buf[t-1]+buf[n-t]*buf[n-t];nsdf[t]=msum>0?2*(re[t]/m2)/msum:0}
+  // key maxima: highest point between each positive-going and negative-going zero crossing
+  const peaks=[];let t=1;while(t<tmax&&nsdf[t]>0)t++;
+  for(;t<=tmax;t++){if(nsdf[t]>0&&nsdf[t-1]<=0){let best=t;while(t<=tmax&&nsdf[t]>0){if(nsdf[t]>nsdf[best])best=t;t++}if(best>=tmin)peaks.push(best)}}
+  if(!peaks.length)return null;
+  const top=Math.max(...peaks.map(p=>nsdf[p]));
+  const p=peaks.find(q=>nsdf[q]>=0.9*top);
+  const a=nsdf[p-1],b=nsdf[p],c=nsdf[p+1],d=(a-c)/(2*(a-2*b+c)||1e-12);
+  const tau=p+d,clar=b-0.25*(a-c)*d;
+  const t2=Math.round(2*tau),clar2=t2<=tmax?nsdf[t2]:0;
+  return {f:sr/tau,clar,clar2};
+}
+// tuner reading: MPM, then prefer the octave below when that lands much closer to a string
+const near=m=>OPEN.reduce((b,o)=>Math.abs(m-o)<Math.abs(m-b)?o:b,OPEN[0]);
+function tunerPitch(buf,sr){
+  const r=mpm(buf,sr,70,700);if(!r||r.clar<0.8)return -1;
+  let m=69+12*Math.log2(r.f/440);
+  const lo=m-12;
+  if(r.clar2>0.8&&Math.abs(lo-near(lo))+0.5<Math.abs(m-near(m)))m=lo;
+  return 440*Math.pow(2,(m-69)/12);
+}
+function readTuner(){analyser.getFloatTimeDomainData(micBuf);return tunerPitch(micBuf,micCtx.sampleRate)}
 // Shows why the mic failed; links to the deployed site when the page is embedded somewhere that blocks it.
 function micError(node,e){
   const n=e&&e.name;node.textContent="";
@@ -766,7 +803,7 @@ TUNE.forEach(t=>{
 let tunerOn=false,tHist=[];
 const median=a=>{const s=a.slice().sort((x,y)=>x-y);return s[s.length>>1]};
 function tunerLoop(){
-  const f=readPitch();
+  const f=readTuner();
   if(f>60&&f<1000){
     tHist.push(freqMidi(f));if(tHist.length>7)tHist.shift();
     const m=median(tHist);
@@ -790,7 +827,7 @@ function tunerLoop(){
 async function startTuner(){
   stopSing();stopKara();
   try{
-    await openMic();tunerOn=true;
+    await openMic(8192);tunerOn=true;
     $("#tunerBtn").textContent="停止調音";$("#tunerMsg").textContent="";
     $("#tSub").textContent="彈一條空弦，讓它響久一點";
     tunerLoop();
