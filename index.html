@@ -235,7 +235,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .bk.right{background:var(--ok);color:#fff}
 .bk.wrong{background:var(--warn);color:#fff}
 .piano:not(.chrom) .bk{display:none}
-.key .ord,.bk .ord{font-size:.7rem;font-weight:700}
+
 .score{font-weight:700}
 .msg{min-height:1.7em;margin-top:8px}
 
@@ -420,7 +420,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音。按「出題」會先給你 Do，再播一個或兩個音，請依序點出它們的唱名。</p></header>
+      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音。按「出題」會先給你 Do，再播一個音，或同時播兩、三個音，請點出聽到的所有唱名（不用照順序）。</p></header>
       <div class="row metro-row"><span class="lbl">音域</span><div class="row" id="earRange" role="group" aria-label="音域"></div></div>
       <div class="row metro-row"><span class="lbl">題目</span><div class="row" id="earCount" role="group" aria-label="每題幾個音"></div></div>
       <div class="piano" id="piano"><div class="keys" id="keys"></div></div>
@@ -1584,11 +1584,11 @@ SCALE.forEach(k=>{
 });
 
 /* ---------- singing: ear training ---------- */
-// Do = C4. White keys always; black keys only in 含升降 mode. Two-note mode: answer both, in order.
+// Do = C4. White keys always; black keys only in 含升降 mode. 2–3 notes sound together; answer in any order.
 const SOLF=["Do","Do♯","Re","Re♯","Mi","Fa","Fa♯","Sol","Sol♯","La","La♯","Si"],FLAT={1:"Re♭",3:"Mi♭",6:"Sol♭",8:"La♭",10:"Si♭"};
 const solf=m=>SOLF[(m-60)%12],solfFull=m=>{const k=(m-60)%12;return SOLF[k]+(FLAT[k]?"（"+FLAT[k]+"）":"")};
 const WHITE=[60,62,64,65,67,69,71,72],BLACK=[[61,0],[63,1],[66,3],[68,4],[70,5]]; // [midi, white key it sits after]
-const ear=Object.assign({chrom:false,count:1},load("pr_ear",{}));ear.chrom=!!ear.chrom;if(ear.count!==2)ear.count=1;
+const ear=Object.assign({chrom:false,count:1},load("pr_ear",{}));ear.chrom=!!ear.chrom;if(![1,2,3].includes(ear.count))ear.count=1;
 const keyEl={};let quiz=null,ans=[],right=0,total=0;
 function pressKey(m,b){
   tone(midiFreq(m),1.1);
@@ -1615,36 +1615,38 @@ function earReset(){
   $("#score").textContent="答對 0 / 0";$("#quizMsg").textContent="";
 }
 earPills($("#earRange"),[[false,"基礎（Do–Do）"],[true,"含升降"]],ear.chrom,v=>{ear.chrom=v;earReset()});
-earPills($("#earCount"),[[1,"一個音"],[2,"兩個音"]],ear.count,v=>{ear.count=v;earReset()});
-function clearMarks(){Object.values(keyEl).forEach(k=>{k.classList.remove("right","wrong","on");const o=k.querySelector(".ord");if(o)o.remove()})}
-function mark(m,cls,ord){const k=keyEl[m];k.classList.add(cls);if(ord&&ear.count===2&&!k.querySelector(".ord"))k.prepend(el("span","ord",ord))}
+earPills($("#earCount"),[[1,"一個音"],[2,"兩個音（同時）"],[3,"三個音（同時）"]],ear.count,v=>{ear.count=v;earReset()});
+function clearMarks(){Object.values(keyEl).forEach(k=>k.classList.remove("right","wrong","on"))}
 function playTarget(){
   tone(midiFreq(60),0.9);
-  quiz.forEach((m,i)=>setTimeout(()=>tone(midiFreq(m),0.9),1000+i*900));
+  const v=0.3/Math.sqrt(quiz.length); // keep chords from getting louder than single notes
+  setTimeout(()=>quiz.forEach(m=>tone(midiFreq(m),1.4,"triangle",v)),1000);
 }
+const list=a=>[...a].sort((x,y)=>x-y).map(solfFull).join("、");
 function answer(m,btn){
-  ans.push(m);
-  if(ans.length<quiz.length){
-    btn.classList.add("on");setTimeout(()=>btn.classList.remove("on"),300);
-    $("#quizMsg").textContent="第 2 個音是？";return;
-  }
-  total++;const ok=quiz.every((q,i)=>q===ans[i]);if(ok)right++;
+  if(quiz.length>1){
+    // pick notes in any order; tapping a picked key again un-picks it
+    const i=ans.indexOf(m);
+    if(i>=0){ans.splice(i,1);btn.classList.remove("on")}else{ans.push(m);btn.classList.add("on")}
+    if(ans.length<quiz.length){$("#quizMsg").textContent="已選 "+ans.length+" / "+quiz.length+" 個音";return}
+  }else ans=[m];
+  total++;const ok=ans.every(a=>quiz.includes(a));if(ok)right++;
   clearMarks();
-  quiz.forEach((q,i)=>{if(ans[i]!==q)mark(ans[i],"wrong",(i+1)+"")});
-  quiz.forEach((q,i)=>mark(q,"right",(i+1)+""));
-  const seq=a=>a.map(solfFull).join(" → ");
-  $("#quizMsg").textContent=ok?"答對了，是 "+seq(quiz)+"。":"正確是 "+seq(quiz)+"，你答 "+seq(ans)+"。";
+  ans.forEach(a=>{if(!quiz.includes(a))keyEl[a].classList.add("wrong")});
+  quiz.forEach(q=>keyEl[q].classList.add("right"));
+  $("#quizMsg").textContent=ok?"答對了，是 "+list(quiz)+"。":"正確是 "+list(quiz)+"，你答 "+list(ans)+"。";
   $("#score").textContent="答對 "+right+" / "+total;
   quiz=null;ans=[];
-  setTimeout(clearMarks,ear.count===2?2200:1400);
+  setTimeout(clearMarks,ear.count>1?2200:1400);
 }
 $("#quizBtn").onclick=()=>{
   clearMarks();ans=[];
   const pool=ear.chrom?[...WHITE,...BLACK.map(b=>b[0])]:WHITE;
   const pick=()=>pool[Math.floor(Math.random()*pool.length)];
   quiz=[];
-  for(let i=0;i<ear.count;i++){let n;do{n=pick()}while((n===60&&Math.random()<0.7)||(i&&n===quiz[i-1]));quiz.push(n)}
-  $("#quizMsg").textContent=ear.count===2?"聽，第 1 個音是？":"聽，這是哪一個唱名？";playTarget();
+  // distinct notes; a lone Do is asked less often since it's the reference
+  while(quiz.length<ear.count){const n=pick();if(quiz.includes(n))continue;if(ear.count===1&&n===60&&Math.random()<0.7)continue;quiz.push(n)}
+  $("#quizMsg").textContent=ear.count>1?"聽，這 "+ear.count+" 個音是哪些唱名？":"聽，這是哪一個唱名？";playTarget();
 };
 $("#replayBtn").onclick=()=>{
   if(!quiz){$("#quizMsg").textContent="先按「出題」。";return;}
