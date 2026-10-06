@@ -38,7 +38,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 2. 音高偵測器：麥克風 + 自相關法，顯示音名、Hz、音分偏差、唱名，下方有最近 8 秒的音高曲線（canvas）。
 3. 目標音練習：選 Do–高 Do 其中一個目標音（可切換低八度），曲線上畫出目標線與 ±25 音分區間，計算「連續唱準秒數」與最佳紀錄。判斷時忽略八度差。
 4. 參考音跟唱：Do 到高 Do，不需麥克風（跟隨低八度設定）。
-5. 聽音辨唱名：先播 Do 再播目標音，選唱名並計分。
+5. 聽音辨唱名：先播 Do 再播目標音，選唱名並計分。音域可選「基礎（白鍵 Do–Do）」或「含升降」（加五個黑鍵，鋼琴排列）；題目可選一個音或兩個音（依序作答，兩個都對才算對，答完標出 1、2 順序）。設定存在 `pr_ear`。
 6. 錄音回放：同吉他。
 7. 每日暖聲清單：5 項勾選清單。
 
@@ -85,7 +85,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 分頁：`.mode` 按鈕切換 `body[data-mode]`，CSS 變數 `--accent` 隨模式在琥珀（吉他）與鈷藍（歌唱）間切換。切換時會停止另一邊的節拍器、調音器、麥克風、呼吸練習與錄音。
 - 吉他：`CH` 和弦資料表（`f` 為六弦品位，-1 不彈、0 空弦；`fg` 為手指編號；`b` 為橫按 `[品位, 起弦, 終弦]`；`s` 為圖上起始品位，品位一律寫絕對值）、`renderChord(svg, 名稱)` 可畫進任何 svg、`GROUPS`、`drawChord()`、`strum()`；調音器 `tunerLoop/startTuner/stopTuner`；跟拍播放 `scheduler()` 與節拍器 `mScheduler()` 都每 25ms 預排未來 120ms，UI 用 setTimeout 對齊；刷法資料 `PATS`（`beats`、`sub` 每拍格數、`slots` 為 D/U/X/空字串），`click(時間, 等級 0–2)`、`chuck()` 切音。
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
-- 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`KEYS`、`answer()`。
+- 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`WHITE`／`BLACK`、`SOLF`、`answer()`。
 - 子分頁：吉他與歌唱都分「常用／專案」，`showSub(panel, sub)` 共用；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」列出 `VSONGS`（目前：篇章，YouTube 影片），`ytPlayer()` 先顯示縮圖，點了才載入 youtube-nocookie 播放器，另附「在 YouTube 開啟」連結。
 - 跟唱比對（`karaPanel()`）：歌曲有 `melody` 時出現。用 YouTube IFrame API 的 `getCurrentTime()` 當時間軸，目標音符來自 `songs/*-melody.json`（`notes: [[開始秒, 長度秒, MIDI]]`），麥克風音高摺到目標的八度後比對，±50 音分算準；計分以時間加權、每個音前 80ms 不計；可升降 Key（±7）；停止後列出最不準的音，點了跳回前 2 秒。
 - 篇章的旋律是從原曲錄音自動辨識（Melodia 式諧波顯著度 + Viterbi 追蹤，濾掉 C3 以下的貝斯），378 個音、B 大調、調音偏差約 +1 音分，可能有錯音或漏音。原曲 MP3 只在使用者電腦，不進倉庫。
