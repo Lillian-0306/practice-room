@@ -365,6 +365,20 @@ section.panel[hidden]{display:none}
 .sheet img{display:block;width:100%;height:auto}
 .sheet figcaption{font-size:.8rem;color:var(--muted);text-align:center;padding:4px;background:var(--surface)}
 .player .row{margin-top:8px}
+.player .spd{display:block}
+.spd-dial{align-items:baseline;gap:10px}
+.spd-val{font-family:var(--num,var(--serif));font-size:1.6rem;color:var(--accent);min-width:4.2ch;text-align:center;font-variant-numeric:tabular-nums}
+.spd-step{min-width:40px;justify-content:center}
+.player input[type=range]{margin-top:4px}
+/* collapsible sections inside song cards (段落循環, 用到的和弦) */
+.fold-sec{margin-top:10px}
+.player .fold-sec{margin-top:14px}
+.fold-h{display:flex;align-items:center;gap:6px;width:100%;border:0;background:transparent;padding:4px 0;font:inherit;font-size:.8rem;font-weight:700;letter-spacing:.04em;color:var(--muted);text-align:left;cursor:pointer}
+.fold-h:hover{color:var(--ink)}
+.fold-h svg{flex:none;transition:transform .2s}
+.fold-h[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.fold-body[hidden]{display:none}
+.fold-body>.row:first-child{margin-top:2px}
 .player .pill{min-height:36px;padding:4px 12px}
 .player .tracks{margin:0 0 10px}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
@@ -1201,7 +1215,6 @@ const PROGS=[
 const PATS=[
   {n:"民謠基本",beats:4,sub:2,s:"D-DU-UDU"},
   {n:"四分下刷",beats:4,sub:2,s:"D-D-D-D-"},
-  {n:"八分下刷",beats:4,sub:2,s:"DDDDDDDD"},
   {n:"下上交替",beats:4,sub:2,s:"DUDUDUDU"},
   {n:"流行切音",beats:4,sub:2,s:"D-XU-UXU"},
   {n:"搖滾",beats:4,sub:2,s:"DDDUDDDU"},
@@ -1220,7 +1233,9 @@ if(savedCustom&&CE_METERS[savedCustom.meter]&&[8,16].includes(savedCustom.grid)&
 }
 PATS.push(custom);
 const LOOKAHEAD=0.12,TICK_MS=25;
-let pat=PATS[Math.max(0,Math.min(PATS.length-1,load("pr_pattern",0)|0))];
+// remembered by name; older saves stored a list position (from before 八分下刷 was removed)
+const OLD_PAT_ORDER=["民謠基本","四分下刷","八分下刷","下上交替","流行切音","搖滾","反拍上刷","十六分切分","3/4 華爾滋","6/8 抒情","自訂"];
+let pat=(v=>PATS.find(p=>p.n===(typeof v==="number"?OLD_PAT_ORDER[v]:v))||PATS[0])(load("pr_pattern","民謠基本"));
 // custom progression: chords picked by the user, saved in the browser
 const customProg=(()=>{const v=load("pr_custom_prog",null);return Array.isArray(v)&&v.every(c=>CH[c])?v.slice(0,16):["C","Am","F","G"]})();
 const PROG_ALL=[...PROGS,customProg];
@@ -1290,7 +1305,7 @@ function renderPattern(){
 function saveCustom(){save("pr_custom",{meter:custom.meter,grid:custom.grid,slots:custom.slots})}
 function setPattern(p){
   const was=playing;stopPlayer();
-  pat=p;save("pr_pattern",PATS.indexOf(p));
+  pat=p;save("pr_pattern",p.n);
   $("#patPicker").querySelectorAll(".pill").forEach((b,i)=>b.setAttribute("aria-pressed",PATS[i]===p));
   $("#patEdit").hidden=!p.custom;
   renderPattern();if(was)startPlayer();
@@ -1513,28 +1528,44 @@ const SONGS=[
    file:"組曲吉他譜(詞曲版).pdf",
    pages:[1,2,3,4,5].map(n=>"sheets/sun-medley/"+n+".jpg"),
    audio:[{src:"生命的太陽+凝眸+幸福時刻.mp3",label:"示範 4:54"},{src:"生命的太陽+凝眸+幸福時刻(Click).mp3",label:"含節拍器 4:49"}],
-   audioNote:"Guitar Pro 示範音檔（點選要聽的版本）"},
+   bpm:70,audioNote:"Guitar Pro 示範音檔（點選要聽的版本）"},
   {title:"勇悍行",by:"鋼弦吉他・編曲 真如",
    meta:["標準調音","♩=96","全程悶音（P.M.）八分音符","譜 3 頁","音檔 1:50"],
    chords:["C#m7","Aadd9","Bsus4","G#m7(#5)","C#m","E"],
    file:"勇悍行(AG1003).pdf",
    pages:[1,2,3].map(n=>"sheets/yong-han-xing/"+n+".jpg"),
-   audio:"勇悍行1003.mp3",audioNote:"Guitar Pro 示範音檔"},
+   audio:"勇悍行1003.mp3",bpm:96,audioNote:"Guitar Pro 示範音檔"},
   {title:"相思湖畔",by:"鋼弦吉他・編曲 真如",
    meta:["標準調音","移調夾第 2 格","♩=110","全程 let ring","譜 1 頁"],
    chords:["C","F","G","Am","Fadd9"],
    file:"相思湖畔(AG1003).pdf",
    pages:["sheets/xiang-si-hu-pan/1.jpg"],
    audio:[{src:"相思湖畔(AG1003).mp3",label:"吉他示範 0:41"},{src:"相思湖畔 vocC.mp3",label:"人聲 C 調 4:06"},{src:"相思湖畔 voc升C.mp3",label:"人聲 #C 調 4:06"}],
-   audioNote:"示範音檔（點選要聽的版本）"}
+   bpm:110,audioNote:"示範音檔（點選要聽的版本）"}
 ];
+// Collapsible section in a song card; the open/closed state is shared by all cards of that kind
+const cardFold=load("pr_card_fold",{});let foldSeq=0;
+function foldSection(kind,label,...content){
+  const wrap=el("div","fold-sec"),btn=el("button","fold-h"),body=el("div","fold-body");
+  btn.type="button";btn.dataset.kind=kind;body.id="fold-"+(++foldSeq);btn.setAttribute("aria-controls",body.id);
+  btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  btn.append(label);body.append(...content);
+  btn._set=c=>{body.hidden=c;btn.setAttribute("aria-expanded",String(!c))};
+  btn._set(!!cardFold[kind]);
+  btn.onclick=()=>{const c=!body.hidden;cardFold[kind]=c;save("pr_card_fold",cardFold);
+    document.querySelectorAll('.fold-h[data-kind="'+kind+'"]').forEach(b=>b._set(c))};
+  wrap.append(btn,body);return wrap;
+}
 // Audio player with practice speed and an A-B loop. `src` is a file name, or a list of
 // {src, label} tracks that share one player and are switched with pills above it.
-function player(src){
-  const box=el("div","player"),au=el("audio"),speeds=el("div","row"),loop=el("div","row"),info=el("span","note");
+// With `bpm` (the recording’s original tempo) the speed is set and shown in BPM; pitch stays the same.
+function player(src,bpm){
+  const box=el("div","player"),au=el("audio"),speeds=el("div","spd"),loop=el("div","row"),info=el("span","note");
   const tracks=Array.isArray(src)?src:[{src}];
   // file names may contain "#", so encode them before using them as URLs
-  const use=t=>{au.src=encodeURIComponent(t.src);au.playbackRate=au.defaultPlaybackRate};
+  let ratio=1; // playback speed, kept when switching tracks
+  const use=t=>{au.src=encodeURIComponent(t.src);au.playbackRate=au.defaultPlaybackRate=ratio};
+  au.preservesPitch=true;
   au.controls=true;au.preload="none";use(tracks[0]);
   if(tracks.length>1){
     const pick=el("div","row tracks");pick.setAttribute("role","group");pick.setAttribute("aria-label","選擇音檔");
@@ -1542,7 +1573,7 @@ function player(src){
       const b=el("button","pill",t.label);b.setAttribute("aria-pressed",i===0);
       b.onclick=()=>{
         if(b.getAttribute("aria-pressed")==="true")return;
-        const was=!au.paused;au.pause();use(t);A=B=null;show();if(was)au.play();
+        const was=!au.paused;au.pause();cur=t;use(t);A=B=null;show();showSpeed();if(was)au.play();
         pick.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
       };
       pick.append(b);
@@ -1550,11 +1581,31 @@ function player(src){
     box.append(pick);
   }
   const fmt=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
-  [0.5,0.75,1].forEach(r=>{
-    const b=el("button","pill",r===1?"原速":r+"×");b.setAttribute("aria-pressed",r===1);
-    b.onclick=()=>{au.playbackRate=r;au.defaultPlaybackRate=r;speeds.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b))};
-    speeds.append(b);
-  });
+  // speed: 40%–125% of the original; with a known tempo the controls step by 1 BPM
+  let cur=tracks[0];
+  const base=()=>cur.bpm||bpm||0,R_MIN=0.4,R_MAX=1.25;
+  const val=el("b","spd-val"),minus=el("button","pill spd-step","−"),plus=el("button","pill spd-step","＋"),range=el("input"),presets=el("div","row spd-presets");
+  minus.setAttribute("aria-label","慢一點");plus.setAttribute("aria-label","快一點");
+  range.type="range";range.min=R_MIN;range.max=R_MAX;range.step=0.01;range.setAttribute("aria-label","播放速度");
+  function setRatio(r){
+    ratio=Math.round(Math.max(R_MIN,Math.min(R_MAX,r))*1000)/1000;
+    au.playbackRate=au.defaultPlaybackRate=ratio;showSpeed();
+  }
+  function showSpeed(){
+    const b=base();range.value=ratio;
+    val.textContent=b?"♩="+Math.round(b*ratio):Math.round(ratio*100)+"%";
+    const t=b?(ratio===1?"原速":"原速 ♩="+b+"・"+Math.round(ratio*100)+"%"):(ratio===1?"原速":"");
+    sub.textContent=t;range.setAttribute("aria-valuetext",val.textContent);
+    presets.innerHTML="";
+    [0.6,0.75,1].forEach(p=>{const x=el("button","pill",p===1?(b?"原速 "+b:"原速"):(b?String(Math.round(b*p)):Math.round(p*100)+"%"));
+      x.setAttribute("aria-pressed",Math.abs(ratio-p)<0.004);x.onclick=()=>setRatio(p);presets.append(x)});
+  }
+  const sub=el("span","note spd-sub");
+  minus.onclick=()=>setRatio(base()?(Math.round(base()*ratio)-1)/base():ratio-0.05);
+  plus.onclick=()=>setRatio(base()?(Math.round(base()*ratio)+1)/base():ratio+0.05);
+  range.addEventListener("input",()=>setRatio(+range.value));
+  const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
+  speeds.append(dial,range,presets);showSpeed();
   let A=null,B=null;
   const show=()=>{info.textContent=A===null?"":"循環 "+fmt(A)+" – "+(B===null?"…":fmt(B))};
   const setA=el("button","pill","設 A 點"),setB=el("button","pill","設 B 點"),clr=el("button","pill","取消循環");
@@ -1563,8 +1614,8 @@ function player(src){
   clr.onclick=()=>{A=B=null;show()};
   au.addEventListener("timeupdate",()=>{if(A!==null&&B!==null&&au.currentTime>=B)au.currentTime=A});
   loop.append(setA,setB,clr,info);
-  speeds.prepend(el("span","note","速度"));
-  box.append(au,speeds,loop);
+  speeds.prepend(el("span","grp-label","播放速度"));
+  box.append(au,speeds,foldSection("loop","段落循環（A-B 重複播放）",loop));
   return box;
 }
 function renderSongs(){
@@ -1616,8 +1667,8 @@ function renderSongs(){
     };
     open.onclick=toggle;
     card.append(el("h3","",s.title),el("p","by",s.by),meta);
-    if(s.audio)card.append(el("span","grp-label",s.audioNote||"示範音檔"),player(s.audio));
-    card.append(el("span","grp-label","用到的和弦（點一下看按法）"),chords,cp);
+    if(s.audio)card.append(el("span","grp-label",s.audioNote||"示範音檔"),player(s.audio,s.bpm));
+    card.append(foldSection("chords","用到的和弦（點一下看按法）",chords,cp));
     if(s.pages)card.append(actions,sheet);
     box.append(card);
   });
