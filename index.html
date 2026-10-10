@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>彈唱練習室 — 吉他與歌唱互動學習</title>
-<script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t)}catch(e){}</script>
+<script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t);var s=JSON.parse(localStorage.getItem("pr_style")||"null");if(s==="paper"||s==="neon"||s==="soft")document.documentElement.dataset.style=s}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=LXGW+WenKai+TC:wght@400;700&family=Special+Elite&family=Orbitron:wght@500;800&family=Huninn&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme:light; /* native scrollbars and controls follow the theme */
@@ -103,6 +103,168 @@ p{margin:0}
 }
 .theme-btn{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;padding:0}
 .theme-btn svg{width:22px;height:22px}
+/* ---------- page styles (風格) ----------
+   Each style: light + dark colour tokens, its own typefaces (--sans / --serif / --num),
+   then texture, card, button and heading treatments. 簡約 = no data-style attribute. */
+
+/* ===== 復古紙本 · music notebook ===== */
+:root[data-style="paper"]{
+  --bg:#EFE5D3; --surface:#FBF6EB; --ink:#3A2E24; --muted:#6F5F50; --line:#D8C9AE;
+  --gtr:#9C4A26; --gtr-soft:#F0D9C2; --gtr-on:#FFF9F0; --voc:#2C5A5F; --voc-soft:#D3E4E0; --voc-on:#F4FBF9; --ok:#3B7A4B; --warn:#B0502A;
+  --rule:rgba(110,140,170,.22); --margin:rgba(196,84,72,.45); --tape:rgba(222,203,160,.75);
+  --sans:"LXGW WenKai TC","Noto Sans TC",serif; --serif:"LXGW WenKai TC","Noto Serif TC",serif; --num:"Special Elite","LXGW WenKai TC",monospace;
+}
+@media (prefers-color-scheme:dark){:root[data-style="paper"]:not([data-theme="light"]){
+  --bg:#1A1612; --surface:#25201A; --ink:#EFE3CF; --muted:#B3A28B; --line:#43392E;
+  --gtr:#E39B69; --gtr-soft:#47301F; --gtr-on:#1C1009; --voc:#86BDB5; --voc-soft:#1E3533; --voc-on:#0B1D1B; --ok:#82C894; --warn:#EE9A69;
+  --rule:rgba(160,180,200,.09); --margin:rgba(220,110,95,.35); --tape:rgba(150,128,90,.55);}}
+:root[data-style="paper"][data-theme="dark"]{
+  --bg:#1A1612; --surface:#25201A; --ink:#EFE3CF; --muted:#B3A28B; --line:#43392E;
+  --gtr:#E39B69; --gtr-soft:#47301F; --gtr-on:#1C1009; --voc:#86BDB5; --voc-soft:#1E3533; --voc-on:#0B1D1B; --ok:#82C894; --warn:#EE9A69;
+  --rule:rgba(160,180,200,.09); --margin:rgba(220,110,95,.35); --tape:rgba(150,128,90,.55);}
+/* paper grain over the whole page */
+:root[data-style="paper"] body{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .18 0 0 0 1.4 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+:root[data-style="paper"] h1{font-weight:700;letter-spacing:.04em}
+:root[data-style="paper"] .lead{font-size:1.02rem}
+/* cards: ruled notebook page, red margin, masking tape */
+:root[data-style="paper"] .block{position:relative;border-radius:3px;border:1px solid var(--line);padding-left:42px;margin-bottom:26px;
+  background:linear-gradient(90deg,transparent 28px,var(--margin) 28px 29px,transparent 29px 31px,var(--margin) 31px 32px,transparent 32px),
+             repeating-linear-gradient(transparent 0 31px,var(--rule) 31px 32px),var(--surface);
+  box-shadow:0 1px 1px rgba(60,40,20,.08),0 14px 28px -18px rgba(60,40,20,.45)}
+:root[data-style="paper"] .block::before{content:"";position:absolute;top:-11px;left:50%;width:96px;height:22px;transform:translateX(-50%) rotate(-2.5deg);background:var(--tape);box-shadow:0 1px 2px rgba(0,0,0,.08);
+  -webkit-mask:linear-gradient(90deg,transparent,#000 4px calc(100% - 4px),transparent);mask:linear-gradient(90deg,transparent,#000 4px calc(100% - 4px),transparent)}
+:root[data-style="paper"] .block:nth-child(even)::before{transform:translateX(-50%) rotate(2deg);left:62%}
+:root[data-style="paper"] .block>header h2{display:inline;font-size:1.45rem;background:linear-gradient(transparent 58%,var(--accent-soft) 58% 92%,transparent 92%);padding:0 4px}
+:root[data-style="paper"] .block>header p{margin-top:8px}
+/* hand-drawn buttons and tags */
+:root[data-style="paper"] .btn{border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:2px 3px 0 var(--ink)}
+:root[data-style="paper"] .btn.ghost{background:transparent}
+:root[data-style="paper"] .btn:active{transform:translate(2px,3px);box-shadow:0 0 0 var(--ink)}
+:root[data-style="paper"] .pill{border:1.5px solid color-mix(in srgb,var(--ink) 45%,transparent);border-radius:40px 12px 36px 14px/14px 34px 12px 38px;background:transparent}
+:root[data-style="paper"] .pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-on);border-color:var(--ink);box-shadow:1px 2px 0 var(--ink)}
+:root[data-style="paper"] .mode{border-radius:4px;border:1.5px solid var(--line);border-top:7px solid var(--accent);background:var(--surface)}
+:root[data-style="paper"] .mode[data-for="guitar"]{border-top-color:var(--gtr)}
+:root[data-style="paper"] .mode[data-for="singing"]{border-top-color:var(--voc)}
+:root[data-style="paper"] .mode[aria-selected="true"]{transform:rotate(-.6deg);box-shadow:5px 5px 0 var(--ink)}
+:root[data-style="paper"] .mode[data-for="singing"][aria-selected="true"]{transform:rotate(.6deg)}
+:root[data-style="paper"] .subtabs{border-radius:4px;border:1.5px dashed var(--line);background:transparent}
+:root[data-style="paper"] .subtab[aria-selected="true"]{border-radius:255px 18px 225px 18px/18px 225px 18px 255px}
+:root[data-style="paper"] .grp-label,:root[data-style="paper"] .lbl{font-family:var(--num);letter-spacing:.06em}
+:root[data-style="paper"] .song{border-radius:3px;border:1.5px dashed var(--line);background:var(--surface)}
+:root[data-style="paper"] .theme-btn{border:2px solid var(--ink);border-radius:50% 46% 52% 48%/48% 52% 46% 50%}
+:root[data-style="paper"] .sidenav{background:var(--surface);border-right:2px solid var(--line)}
+:root[data-style="paper"] .nav-panel>b{font-size:1.15rem}
+:root[data-style="paper"] .chord-name,:root[data-style="paper"] .now .cur,:root[data-style="paper"] .metro-bpm b,:root[data-style="paper"] .pitch-note{font-family:var(--num);font-weight:400}
+
+/* ===== 霓虹舞台 · live stage ===== */
+:root[data-style="neon"]{
+  --bg:#F3F0FF; --surface:#FFFFFF; --ink:#140D2B; --muted:#5B5480; --line:#DCD3FB;
+  --gtr:#D61F73; --gtr-soft:#FCE4F1; --gtr-on:#FFFFFF; --voc:#0B7593; --voc-soft:#D2F6FD; --voc-on:#FFFFFF; --ok:#0B8A5C; --warn:#C2410C;
+  --glass:rgba(255,255,255,.72); --spot1:rgba(214,31,115,.16); --spot2:rgba(11,117,147,.14); --glow:.35;
+  --num:"Orbitron","Noto Sans TC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root[data-style="neon"]:not([data-theme="light"]){
+  --bg:#08051A; --surface:#120C2B; --ink:#F4F1FF; --muted:#A39DC9; --line:#2B2350;
+  --gtr:#FF4FA3; --gtr-soft:#3B0F31; --gtr-on:#1B0012; --voc:#22D3EE; --voc-soft:#09323E; --voc-on:#00161C; --ok:#34E3A0; --warn:#FF8A4C;
+  --glass:rgba(22,14,52,.62); --spot1:rgba(255,79,163,.28); --spot2:rgba(34,211,238,.2); --glow:.6;}}
+:root[data-style="neon"][data-theme="dark"]{
+  --bg:#08051A; --surface:#120C2B; --ink:#F4F1FF; --muted:#A39DC9; --line:#2B2350;
+  --gtr:#FF4FA3; --gtr-soft:#3B0F31; --gtr-on:#1B0012; --voc:#22D3EE; --voc-soft:#09323E; --voc-on:#00161C; --ok:#34E3A0; --warn:#FF8A4C;
+  --glass:rgba(22,14,52,.62); --spot1:rgba(255,79,163,.28); --spot2:rgba(34,211,238,.2); --glow:.6;}
+/* stage spotlights + faint floor grid */
+:root[data-style="neon"] body{background:
+  radial-gradient(900px 520px at 8% -8%,var(--spot1),transparent 62%),
+  radial-gradient(800px 520px at 102% 6%,var(--spot2),transparent 60%),
+  linear-gradient(transparent 70%,color-mix(in srgb,var(--gtr) 7%,transparent)),
+  var(--bg);background-attachment:fixed}
+:root[data-style="neon"] h1{background:linear-gradient(100deg,var(--gtr),#9B5CFF 50%,var(--voc));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 calc(14px*var(--glow)) color-mix(in srgb,var(--gtr) 60%,transparent));letter-spacing:.08em}
+/* frosted-glass cards with a pink→cyan edge */
+:root[data-style="neon"] .block,:root[data-style="neon"] .song{border:1px solid transparent;border-radius:18px;
+  background:linear-gradient(var(--glass),var(--glass)) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--gtr) 75%,transparent),transparent 45%,color-mix(in srgb,var(--voc) 75%,transparent)) border-box;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 18px 40px -24px color-mix(in srgb,var(--accent) 70%,transparent)}
+:root[data-style="neon"] .block>header h2{letter-spacing:.05em}
+:root[data-style="neon"] .block>header h2::after{content:"";display:block;width:44px;height:3px;margin-top:8px;border-radius:3px;background:linear-gradient(90deg,var(--gtr),var(--voc));box-shadow:0 0 calc(12px*var(--glow)) var(--gtr)}
+:root[data-style="neon"] .btn:not(.ghost){background:linear-gradient(120deg,var(--accent),color-mix(in srgb,var(--accent) 45%,#8B5CF6));color:#fff;
+  box-shadow:0 0 calc(22px*var(--glow)) color-mix(in srgb,var(--accent) 70%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
+:root[data-style="neon"] .btn.ghost{background:transparent;border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);color:var(--ink);box-shadow:inset 0 0 12px color-mix(in srgb,var(--accent) 22%,transparent)}
+:root[data-style="neon"] .pill{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:color-mix(in srgb,var(--surface) 40%,transparent)}
+:root[data-style="neon"] .pill[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 22%,transparent);border-color:var(--accent);color:var(--ink);
+  box-shadow:0 0 calc(16px*var(--glow)) color-mix(in srgb,var(--accent) 65%,transparent),inset 0 0 10px color-mix(in srgb,var(--accent) 25%,transparent)}
+:root[data-style="neon"] .mode{border-radius:20px;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1.5px solid var(--line)}
+:root[data-style="neon"] .mode[aria-selected="true"]{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 28%,var(--surface)),var(--glass));color:var(--ink);border-color:var(--accent);
+  box-shadow:0 0 calc(30px*var(--glow)) color-mix(in srgb,var(--accent) 60%,transparent),inset 0 0 18px color-mix(in srgb,var(--accent) 25%,transparent)}
+:root[data-style="neon"] .mode[aria-selected="true"] b{color:var(--accent);text-shadow:0 0 calc(14px*var(--glow)) var(--accent)}
+:root[data-style="neon"] .subtabs{background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+:root[data-style="neon"] .subtab[aria-selected="true"]{background:linear-gradient(120deg,var(--accent),color-mix(in srgb,var(--accent) 45%,#8B5CF6));color:#fff;box-shadow:0 0 calc(18px*var(--glow)) color-mix(in srgb,var(--accent) 70%,transparent)}
+:root[data-style="neon"] .chord-name,:root[data-style="neon"] .now .cur,:root[data-style="neon"] .metro-bpm b,:root[data-style="neon"] .pitch-note{font-family:var(--num);font-weight:800;text-shadow:0 0 calc(18px*var(--glow)) color-mix(in srgb,var(--accent) 80%,transparent)}
+:root[data-style="neon"] .grp-label,:root[data-style="neon"] .lbl{letter-spacing:.12em;color:color-mix(in srgb,var(--accent) 65%,var(--muted))}
+:root[data-style="neon"] .theme-btn{background:var(--glass);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 0 calc(14px*var(--glow)) color-mix(in srgb,var(--accent) 40%,transparent)}
+:root[data-style="neon"] .sidenav{background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-right:1px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
+:root[data-style="neon"] .nav-tool.cur{text-shadow:0 0 calc(10px*var(--glow)) var(--accent)}
+:root[data-style="neon"] .beats i.on{box-shadow:0 0 calc(18px*var(--glow)) var(--accent)}
+
+/* ===== 圓潤可愛 · candy shop ===== */
+:root[data-style="soft"]{
+  --bg:#FFF6EF; --surface:#FFFFFF; --ink:#3D2F44; --muted:#7D6C85; --line:#F2E2E8;
+  --gtr:#E07A26; --gtr-soft:#FFE6D1; --gtr-on:#FFFFFF; --voc:#7B5BE8; --voc-soft:#ECE6FF; --voc-on:#FFFFFF; --ok:#2E9C6A; --warn:#DD5B57;
+  --dot:rgba(224,122,38,.16); --blob1:rgba(255,183,148,.35); --blob2:rgba(184,160,255,.3);
+  --sans:"Huninn","Noto Sans TC",sans-serif; --serif:"Huninn","Noto Sans TC",sans-serif; --num:"Fredoka","Huninn",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root[data-style="soft"]:not([data-theme="light"]){
+  --bg:#211A27; --surface:#2C2433; --ink:#FBF0F7; --muted:#C7B5CC; --line:#41364A;
+  --gtr:#FFAA62; --gtr-soft:#4A2E18; --gtr-on:#2A1500; --voc:#B7A2FF; --voc-soft:#342A57; --voc-on:#170F35; --ok:#72DCA8; --warn:#FF8E88;
+  --dot:rgba(183,162,255,.12); --blob1:rgba(255,170,98,.14); --blob2:rgba(183,162,255,.16);}}
+:root[data-style="soft"][data-theme="dark"]{
+  --bg:#211A27; --surface:#2C2433; --ink:#FBF0F7; --muted:#C7B5CC; --line:#41364A;
+  --gtr:#FFAA62; --gtr-soft:#4A2E18; --gtr-on:#2A1500; --voc:#B7A2FF; --voc-soft:#342A57; --voc-on:#170F35; --ok:#72DCA8; --warn:#FF8E88;
+  --dot:rgba(183,162,255,.12); --blob1:rgba(255,170,98,.14); --blob2:rgba(183,162,255,.16);}
+/* polka dots + pastel blobs */
+:root[data-style="soft"] body{background:
+  radial-gradient(520px 420px at 0% 0%,var(--blob1),transparent 70%),
+  radial-gradient(560px 460px at 100% 100%,var(--blob2),transparent 70%),
+  radial-gradient(var(--dot) 1.6px,transparent 1.8px) 0 0/22px 22px,
+  var(--bg);background-attachment:fixed}
+:root[data-style="soft"] h1{font-weight:400;letter-spacing:.02em}
+:root[data-style="soft"] h2,:root[data-style="soft"] h3{font-weight:400}
+/* puffy cards, headings with a colour dot */
+:root[data-style="soft"] .block,:root[data-style="soft"] .song{border:0;border-radius:28px;background:var(--surface);
+  box-shadow:0 2px 0 color-mix(in srgb,var(--accent) 12%,var(--line)),0 18px 36px -18px color-mix(in srgb,var(--accent) 45%,transparent)}
+:root[data-style="soft"] .block>header h2::before{content:"";display:inline-block;width:.55em;height:.55em;margin-right:.45em;border-radius:50%;vertical-align:.12em;
+  background:var(--accent);box-shadow:.32em -.18em 0 -.12em color-mix(in srgb,var(--accent) 45%,var(--surface))}
+/* chunky buttons that press down */
+:root[data-style="soft"] .btn{border-radius:999px;padding:10px 22px;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 65%,#000);transition:transform .08s,box-shadow .08s}
+:root[data-style="soft"] .btn.ghost{background:var(--accent-soft);box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 30%,var(--accent-soft))}
+:root[data-style="soft"] .btn:active{transform:translateY(3px);box-shadow:0 1px 0 color-mix(in srgb,var(--accent) 65%,#000)}
+:root[data-style="soft"] .pill{border:2px solid transparent;background:color-mix(in srgb,var(--accent-soft) 70%,var(--surface))}
+:root[data-style="soft"] .pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-on);box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 65%,#000)}
+:root[data-style="soft"] .mode{border-radius:30px;border:0;background:var(--surface);box-shadow:0 3px 0 var(--line),0 14px 28px -18px rgba(0,0,0,.35);transition:transform .2s,background .2s}
+:root[data-style="soft"] .mode[aria-selected="true"]{transform:translateY(-4px);box-shadow:0 6px 0 color-mix(in srgb,var(--accent) 60%,#000),0 18px 30px -16px color-mix(in srgb,var(--accent) 70%,transparent)}
+:root[data-style="soft"] .subtabs{border:0;background:color-mix(in srgb,var(--accent-soft) 80%,var(--surface))}
+:root[data-style="soft"] .subtab[aria-selected="true"]{box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+:root[data-style="soft"] .key{border-radius:14px 14px 20px 20px}
+:root[data-style="soft"] .bk{border-radius:0 0 12px 12px}
+:root[data-style="soft"] .string-btn,:root[data-style="soft"] .pattern>*,:root[data-style="soft"] .prog>*{border-radius:14px}
+:root[data-style="soft"] .chord-name,:root[data-style="soft"] .now .cur,:root[data-style="soft"] .metro-bpm b,:root[data-style="soft"] .pitch-note{font-family:var(--num);font-weight:700}
+:root[data-style="soft"] .theme-btn{border:0;background:var(--surface);box-shadow:0 3px 0 var(--line)}
+:root[data-style="soft"] .sidenav{border-right:0;box-shadow:6px 0 24px -16px rgba(0,0,0,.35)}
+:root[data-style="soft"] .nav-page,:root[data-style="soft"] .nav-row{border-radius:999px}
+:root[data-style="soft"] .nav-tool{border-radius:999px;border-left:0}
+:root[data-style="soft"] .nav-tool.cur{background:var(--accent-soft)}
+:root[data-style="soft"] .beats i{border-radius:40% 60% 55% 45%/50% 45% 55% 50%}
+
+/* style picker */
+.top-actions{display:flex;gap:8px;flex:none;position:relative}
+.style-menu{position:absolute;top:52px;right:0;z-index:30;width:240px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.style-menu[hidden]{display:none}
+.style-opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;border-radius:10px;padding:8px;font:inherit;color:var(--ink)}
+.style-opt:hover{background:var(--bg)}
+.style-opt[aria-checked="true"]{background:var(--accent-soft)}
+.style-opt b{display:block;font-size:.95rem}
+.style-opt small{display:block;font-size:.78rem;color:var(--muted)}
+.swatch{flex:none;display:grid;grid-template-columns:1fr 1fr;width:36px;height:36px;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
+.swatch i:first-child{grid-row:span 2}
+
 .theme-btn .sun{display:none}
 :root[data-theme="dark"] .theme-btn .sun{display:block}
 :root[data-theme="dark"] .theme-btn .moon{display:none}
@@ -319,10 +481,16 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 <div class="wrap">
   <div class="top">
     <h1>彈唱練習室</h1>
+    <div class="top-actions">
+    <button class="theme-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="styleMenu" aria-label="切換網頁風格" title="切換網頁風格">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8l-.4-.9c-.5-1 .2-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-4.9-4-9-9-9z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7" r="1.2" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
+    </button>
+    <div class="style-menu" id="styleMenu" role="radiogroup" aria-label="網頁風格" hidden></div>
     <button class="theme-btn" id="themeBtn" type="button">
       <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     </button>
+    </div>
   </div>
   <p class="lead">選一邊開始。每個練習都能直接發出聲音、跟著做，不用另外裝東西。</p>
 
@@ -626,6 +794,34 @@ function micError(node,e){
     :"此環境無法使用麥克風，請改用正式網址開啟：");
   const a=el("a","",SITE);a.href=SITE;a.target="_blank";a.rel="noopener";node.append(a);
 }
+
+/* ---------- page style (風格) ---------- */
+// "minimal" = no data-style attribute (the original look); others swap the colour tokens and a few shapes
+const STYLE_OPTS=[
+  {k:"minimal",n:"簡約",d:"目前的樣子，乾淨好讀",sw:["#F1EFF6","#A8650A","#3454D1"]},
+  {k:"paper",n:"復古紙本",d:"手寫楷體、橫線筆記本、紙膠帶",sw:["#EFE5D3","#9C4A26","#2C5A5F"]},
+  {k:"neon",n:"霓虹舞台",d:"聚光燈、霓虹發光、毛玻璃",sw:["#08051A","#FF4FA3","#22D3EE"]},
+  {k:"soft",n:"圓潤可愛",d:"粉圓字體、圓點背景、按得下去的按鈕",sw:["#FFF6EF","#E07A26","#7B5BE8"]}
+];
+function applyStyle(k){
+  if(k==="minimal")delete document.documentElement.dataset.style;else document.documentElement.dataset.style=k;
+  save("pr_style",k);
+  $("#styleMenu").querySelectorAll(".style-opt").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.k===k)));
+  drawCurve();if(typeof kara!=="undefined"&&kara)drawKara(kara);
+}
+STYLE_OPTS.forEach(o=>{
+  const b=el("button","style-opt");b.type="button";b.dataset.k=o.k;b.setAttribute("role","radio");
+  const s=el("span","swatch");o.sw.forEach(c=>{const i=el("i");i.style.background=c;s.append(i)});
+  const t=el("span");t.append(el("b","",o.n),el("small","",o.d));b.append(s,t);
+  b.onclick=()=>{applyStyle(o.k);closeStyleMenu()};
+  $("#styleMenu").append(b);
+});
+function openStyleMenu(){$("#styleMenu").hidden=false;$("#styleBtn").setAttribute("aria-expanded","true");($("#styleMenu [aria-checked=true]")||$("#styleMenu .style-opt")).focus()}
+function closeStyleMenu(focusBtn){if($("#styleMenu").hidden)return;$("#styleMenu").hidden=true;$("#styleBtn").setAttribute("aria-expanded","false");if(focusBtn)$("#styleBtn").focus()}
+$("#styleBtn").onclick=e=>{e.stopPropagation();$("#styleMenu").hidden?openStyleMenu():closeStyleMenu()};
+document.addEventListener("click",e=>{if(!e.target.closest(".top-actions"))closeStyleMenu()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeStyleMenu(true)});
+{const s=document.documentElement.dataset.style;$("#styleMenu").querySelectorAll(".style-opt").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.k===(s||"minimal"))))}
 
 /* ---------- light / dark toggle ---------- */
 // follows the system until the button is pressed, then remembers the choice

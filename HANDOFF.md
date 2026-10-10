@@ -93,7 +93,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 
 ## 設計決策
 - 導覽清單：寬度 ≥1024px 時左側固定側欄（248px，`body` 左邊留白）；較窄時隱藏，右下角圓形 ☰ 按鈕打開抽屜（背景變暗，點項目／背景／Esc／× 關閉）。清單由頁面自動產生（`buildNav()`：常用取各 `.block` 的 h2，專案取 `.song` 的 h3），新增區塊或歌曲會自動出現；捲動時標示目前區塊（`navSpy()`），點選後暫時固定標示被選的項目。電腦版可收合：清單右上角「收合」按鈕隱藏側欄、內容回到置中，收合後左上角出現「展開」按鈕；狀態存在 `pr_nav_collapsed`（`body.nav-collapsed`）。電腦版可拖曳側欄右緣調整寬度 180–420px（`#navResize`，CSS 變數 `--navw`，存在 `pr_nav_w`），雙擊恢復 248px，鍵盤左右鍵每次 16px。清單裡每個「常用／專案」右邊有 ▾ 按鈕可展開／收起該組（`setFold()`，存在 `pr_nav_fold`）；點名稱會切換頁面並自動展開。深色模式下捲動條用 `color-scheme` 跟著變深，側欄捲動條為細的主題色。
-- 色彩用 CSS 變數，含淺色與深色（`prefers-color-scheme` + `data-theme`）。右上角按鈕切換亮／暗，選擇存在 `pr_theme`；沒選過就跟系統。`<head>` 裡有一小段 script 在畫面出現前套用，避免閃一下。
+- 色彩用 CSS 變數，含淺色與深色（`prefers-color-scheme` + `data-theme`）。右上角「風格」按鈕（調色盤圖示）切換網頁風格：簡約（預設，不加屬性）、復古紙本 `paper`、霓虹舞台 `neon`、圓潤可愛 `soft`；每種風格在 `:root[data-style]` 各有一組亮色與深色的色彩變數，各自有字體（`--sans`／`--serif`／數字用 `--num`）與質感：復古紙本＝霞鶩文楷 TC＋Special Elite、紙紋噪點、橫線筆記本＋紅色邊線、紙膠帶、手繪邊框按鈕；霓虹舞台＝Orbitron 發光數字、聚光燈背景、毛玻璃卡片＋桃紅青藍漸層邊、漸層發光按鈕；圓潤可愛＝粉圓體 Huninn＋Fredoka、圓點與色塊背景、無邊框柔影卡片、可按下的立體按鈕。字體都從 Google Fonts 按需載入。選擇存在 `pr_style`。右上角按鈕切換亮／暗，選擇存在 `pr_theme`；沒選過就跟系統。`<head>` 裡有一小段 script 在畫面出現前套用，避免閃一下。
 - 標題用 Noto Serif TC，內文用 Noto Sans TC。
 - 版面寬度上限 880px，手機優先，加入 safe-area 內距。
 - 尊重 `prefers-reduced-motion`。
