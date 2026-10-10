@@ -12,7 +12,7 @@
 
 ## 樂譜與音檔
 - 樂譜 PDF 與示範音檔 mp3 都放在專案根目錄並上傳公開（使用者同意）。
-- 新增歌曲：把檔案放進資料夾，在 `index.html` 的 `SONGS` 陣列加一筆（`file` 樂譜、`audio` 音檔）。`audio` 可以是單一檔名，或 `[{src, label}]` 多個版本（卡片內用按鈕切換，共用速度與 A-B 循環；檔名會 `encodeURIComponent`，可含 `#`）。
+- 新增歌曲：把檔案放進資料夾，在 `index.html` 的 `SONGS` 陣列加一筆（`file` 樂譜、`audio` 音檔）。`audio` 可以是單一檔名，或 `[{src, label}]` 多個版本（卡片內用按鈕切換，共用速度與 A-B 循環）。檔名不要含 `#`、`?`、`%`（artifact 無法存放這類檔名，例如 voc#C 改名為 voc升C）。
 - 目前歌曲：生命的太陽 + 凝眸 + 幸福時刻（5 頁，音檔有示範與含節拍器 Click 版）、勇悍行（3 頁）、相思湖畔（1 頁，移調夾 2 格，音檔有吉他示範、人聲 C 調、人聲 #C 調）。
 - PDF 轉圖：電腦沒有 pdftoppm 等工具時，可用 PowerShell 呼叫 Windows 內建的 `Windows.Data.Pdf` 繪製，再用 System.Drawing 縮成 1400px 寬 JPEG（注意 Windows 顯示比例會讓輸出變大，要再縮一次）。
 - 樂譜在網頁內顯示：每頁轉成 1400px 寬 JPEG 放在 `sheets/<歌曲>/`，`SONGS` 的 `pages` 列出路徑；「開啟樂譜」展開、點圖開大圖；原始 PDF 用 GitHub Pages 連結提供下載。
