@@ -1,0 +1,7 @@
+# Upload only what the site needs; everything else stays local.
+/*
+!index.html
+!sheets
+!songs
+!*.mp3
+!*.pdf

@@ -7,6 +7,7 @@
 - 單一檔案 `index.html`（HTML + CSS + JS 全部內嵌，無建置流程、無相依套件）。
 - 唯一外部資源：Google Fonts（Noto Sans TC、Noto Serif TC），有備援字型。
 - 已部署到 GitHub Pages：https://lillian-0306.github.io/practice-room/ （main 分支根目錄，推送後約一分鐘更新）。
+- 也部署到 Vercel：https://practice-room-one.vercel.app （用 Vercel CLI `vercel --prod` 從本機資料夾發布；`.vercelignore` 只上傳 index.html、sheets/、songs/、mp3、pdf。目前沒有連結 GitHub 自動發布，更新時要再執行一次 `vercel --prod`）。
 - 也發佈在 Claude 內嵌預覽，但**內嵌環境擋麥克風**，麥克風相關功能會顯示錯誤訊息並附上正式網址。
 
 ## 樂譜與音檔
