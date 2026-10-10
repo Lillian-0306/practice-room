@@ -464,6 +464,54 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .rec-actions{display:flex;gap:6px}
 .rec-actions a,.rec-actions button{font-size:.85rem;padding:4px 12px;min-height:34px;border:1.5px solid var(--line);border-radius:999px;background:transparent;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
 footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
+/* auto-scroll control for reading sheet music (guitar 專案 only), pinned bottom-right */
+.wrap.as-moving{will-change:transform} /* sub-pixel slide while auto-scrolling */
+/* a round button; tapping it opens the panel of controls above it */
+.ascroll{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:38;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ascroll[hidden],.as-panel[hidden],.as-mini[hidden]{display:none}
+/* shortcuts stacked above the button while scrolling with the panel closed */
+.as-mini{display:flex;flex-direction:column;gap:10px}
+.ascroll .as-mbtn{position:relative;width:48px;height:48px;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.as-mbtn:hover{background:var(--accent-soft)}
+.as-mbtn:disabled{opacity:.45;cursor:default}
+.as-mbtn .i-play,.as-mbtn.paused .i-pause{display:none}
+.as-mbtn.paused .i-play{display:block}
+.as-mbtn:hover .as-tip,.as-mbtn:focus-visible .as-tip{opacity:1}
+.ascroll button{border:0;display:grid;place-items:center;padding:0;border-radius:50%}
+.as-fab{position:relative;width:56px;height:56px;background:var(--accent);color:var(--accent-on);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.as-fab[aria-expanded="true"]{box-shadow:0 0 0 4px var(--accent-soft),0 6px 20px rgba(0,0,0,.3)}
+/* green dot while scrolling, so it shows even with the panel closed */
+/* "live" light: a small lit dot on the button's rim with a slow ripple */
+.as-fab.running::after{content:"";position:absolute;top:1px;right:1px;width:15px;height:15px;border-radius:50%;box-sizing:border-box;
+  border:2.5px solid var(--surface);
+  background:radial-gradient(circle at 35% 30%,#86D9A4,#2FA45E 55%,#1C7342);
+  box-shadow:0 1px 3px rgba(0,0,0,.25);animation:as-live 2.6s ease-out infinite}
+@keyframes as-live{
+  0%{box-shadow:0 1px 3px rgba(0,0,0,.25),0 0 0 0 rgba(47,164,94,.3)}
+  70%,100%{box-shadow:0 1px 3px rgba(0,0,0,.25),0 0 0 5px rgba(47,164,94,0)}}
+.as-tip{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);white-space:nowrap;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.85rem;font-weight:700;padding:5px 10px;border-radius:8px;opacity:0;transition:opacity .15s}
+.as-fab:hover .as-tip,.as-fab:focus-visible .as-tip{opacity:1}
+.as-fab[aria-expanded="true"] .as-tip{opacity:0}
+.as-panel{position:absolute;right:0;bottom:calc(100% + 12px);width:236px;padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.as-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px 4px}
+.as-head b{font-family:var(--serif);font-size:1rem}
+.as-close{width:32px;height:32px;background:transparent;color:var(--muted);font-size:1.3rem;line-height:1}
+.as-close:hover{background:var(--bg);color:var(--ink)}
+.as-ctrl{display:flex;align-items:center;gap:12px}
+.as-speed{flex:1;min-width:0}
+.as-speed label{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;color:var(--muted)}
+.as-speed label b{font-size:1.05rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.as-speed input{display:block;margin:0}
+.as-ends{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:-4px}
+.as-play{width:48px;height:48px;background:var(--accent);color:var(--accent-on)}
+.as-play .i-pause,.as-play[aria-pressed="true"] .i-play{display:none}
+.as-play[aria-pressed="true"] .i-pause{display:block}
+.ascroll .as-top{width:100%;margin-top:10px;border-radius:10px;min-height:42px;display:flex;justify-content:center;gap:6px;padding:8px 10px;text-align:center;line-height:1.35;background:var(--accent-soft);color:var(--ink);font-weight:700;font-size:.92rem}
+.ascroll .as-top:disabled{opacity:.45;cursor:default}
+.as-hint{font-size:.78rem;color:var(--muted);text-align:center;margin-top:6px}
+.as-hint:empty{display:none}
+/* on narrow screens the menu button owns the corner, so sit just above it */
+@media (max-width:1023px){.ascroll{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -478,6 +526,41 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 <button class="nav-btn" id="navBtn" type="button" aria-controls="sidenav" aria-expanded="false" aria-label="開啟選單">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
 </button>
+<div class="ascroll" id="aScroll" hidden>
+  <div class="as-panel" id="asPanel" role="group" aria-label="自動捲譜" hidden>
+    <div class="as-head"><b>自動捲譜</b><button class="as-close" id="asClose" type="button" aria-label="收起自動捲譜">×</button></div>
+    <div class="as-ctrl">
+      <button class="as-play" id="asPlay" type="button" aria-pressed="false" aria-label="開始自動捲動" title="開始自動捲動">
+        <svg class="i-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+        <svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>
+      </button>
+      <div class="as-speed">
+        <label for="asRange">速度<b id="asLv">4.0</b></label>
+        <input type="range" id="asRange" min="1" max="10" step="0.1" value="4">
+        <div class="as-ends" aria-hidden="true"><span>慢</span><span>快</span></div>
+      </div>
+    </div>
+    <button class="as-top" id="asTop" type="button">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14M12 20V9M7 13l5-5 5 5"/></svg><span id="asTopLbl">回到樂譜第一頁</span>
+    </button>
+    <p class="as-hint" id="asHint"></p>
+  </div>
+  <div class="as-mini" id="asMini" hidden>
+    <button class="as-mbtn" id="asMTop" type="button" aria-label="回到第一頁">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14M12 20V9M7 13l5-5 5 5"/></svg>
+      <span class="as-tip" id="asMTopTip" aria-hidden="true">回到第一頁</span>
+    </button>
+    <button class="as-mbtn" id="asMPause" type="button" aria-label="暫停自動捲動">
+      <svg class="i-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+      <svg class="i-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>
+      <span class="as-tip" id="asMPauseTip" aria-hidden="true">暫停</span>
+    </button>
+  </div>
+  <button class="as-fab" id="asFab" type="button" aria-expanded="false" aria-controls="asPanel" aria-label="自動捲譜">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9.5 11.5v6M7.5 15.5l2 2 2-2"/><path d="M13 10h3M13 13h3"/></svg>
+    <span class="as-tip" aria-hidden="true">自動捲譜</span>
+  </button>
+</div>
 <div class="wrap">
   <div class="top">
     <h1>彈唱練習室</h1>
@@ -1471,6 +1554,109 @@ function renderSongs(){
   });
 }
 renderSongs();
+
+/* ---------- guitar: auto-scroll for reading sheet music ---------- */
+// Shown only on 吉他 › 專案: a round button that opens the controls. Scrolls the page at a
+// steady speed; scrolling by hand while it runs just moves the starting point.
+// Keeps the screen awake where supported.
+(function(){
+  const box=$("#aScroll"),fab=$("#asFab"),panel=$("#asPanel"),play=$("#asPlay"),range=$("#asRange"),lvEl=$("#asLv"),
+        topBtn=$("#asTop"),topLbl=$("#asTopLbl"),hint=$("#asHint"),
+        mini=$("#asMini"),mTop=$("#asMTop"),mTopTip=$("#asMTopTip"),mPause=$("#asMPause"),mPauseTip=$("#asMPauseTip");
+  // speed 1–10 on a slider; px per second grows evenly by ratio from 6 (1) to 64 (10)
+  const pxs=l=>6*Math.pow(64/6,(l-1)/9);
+  let lv=Math.min(10,Math.max(1,+load("pr_autoscroll",4)||4)),on=false,raf=0,t0=0,pos=0,setY=0,lock=null;
+  const maxY=()=>document.documentElement.scrollHeight-innerHeight;
+  const wake=async()=>{try{if(navigator.wakeLock)lock=await navigator.wakeLock.request("screen")}catch(e){lock=null}};
+  function showLv(){lvEl.textContent=lv.toFixed(1);range.value=lv;range.setAttribute("aria-valuetext","速度 "+lv.toFixed(1))}
+  function setOn(v){
+    on=v;play.setAttribute("aria-pressed",String(v));fab.classList.toggle("running",v);
+    fab.setAttribute("aria-label",v?"自動捲譜（捲動中）":"自動捲譜");
+    const l=v?"暫停自動捲動":"開始自動捲動";play.setAttribute("aria-label",l);play.title=l;
+    syncMini();
+  }
+  // pause / 回到第一頁 shortcuts: once scrolling has started, shown whenever the panel is
+  // closed (also after pausing, where pause turns into 繼續) until 專案 is left
+  let armed=false;
+  function syncMini(){
+    const v=armed&&panel.hidden;mini.hidden=!v;
+    mPause.classList.toggle("paused",!on);
+    const l=on?"暫停自動捲動":"繼續自動捲動";mPause.setAttribute("aria-label",l);mPauseTip.textContent=on?"暫停":"繼續";
+    if(v)refreshTop();
+  }
+  // The page can only scroll in whole pixels, so at slow speeds it would sit still for a few
+  // frames and then hop 1px. Scroll the whole pixels and slide the content by the leftover
+  // fraction with a GPU transform, so every frame moves a little.
+  const wrap=$(".wrap");
+  const nudge=f=>{wrap.style.transform=Math.abs(f)>.01?"translate3d(0,"+(-f).toFixed(3)+"px,0)":""};
+  function tick(t){
+    if(!on)return;
+    const dt=Math.min(.1,(t-t0)/1000);t0=t;
+    if(Math.abs(scrollY-setY)>2)pos=scrollY; // moved by hand
+    pos+=pxs(lv)*dt;
+    const m=maxY();
+    if(pos>=m){nudge(0);window.scrollTo({top:m,behavior:"instant"});stop();return}
+    const whole=Math.floor(pos);
+    if(whole!==Math.floor(setY))window.scrollTo({top:whole,behavior:"instant"});
+    setY=scrollY;nudge(pos-setY);
+    raf=requestAnimationFrame(tick);
+  }
+  function start(){
+    if(scrollY>=maxY()-2)return; // already at the bottom
+    armed=true;setOn(true);pos=setY=scrollY;t0=performance.now();wrap.classList.add("as-moving");raf=requestAnimationFrame(tick);wake();
+  }
+  function stop(){
+    setOn(false);cancelAnimationFrame(raf);nudge(0);wrap.classList.remove("as-moving");
+    if(lock){lock.release().catch(()=>{});lock=null}
+  }
+  play.onclick=()=>on?stop():start();
+  // takes effect while dragging, even mid-scroll; saved when let go
+  range.addEventListener("input",()=>{lv=+range.value;showLv()});
+  range.addEventListener("change",()=>save("pr_autoscroll",lv));
+  // the browser drops the wake lock when the tab is hidden; take it back on return
+  document.addEventListener("visibilitychange",()=>{if(on&&document.visibilityState==="visible"&&(!lock||lock.released))wake()});
+  // open / close the panel
+  function setOpen(v){panel.hidden=!v;fab.setAttribute("aria-expanded",String(v));if(v)refreshTop();syncMini()}
+  mPause.onclick=()=>on?stop():start();
+  fab.onclick=()=>setOpen(panel.hidden);
+  $("#asClose").onclick=()=>{setOpen(false);fab.focus()};
+  document.addEventListener("click",e=>{if(!panel.hidden&&!box.contains(e.target))setOpen(false)});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
+  // 回到樂譜第一頁: the song card at mid-screen (or the last one above it) decides which
+  // sheet; if that song's sheet is closed, fall back to the nearest open sheet above it.
+  const openSheet=card=>{const s=card.querySelector(".sheet");return s&&!s.hidden?s:null};
+  function curSong(){
+    const cards=[...document.querySelectorAll("#songs .song")].filter(openSheet);
+    let pick=cards[0]||null;
+    cards.forEach(c=>{if(c.getBoundingClientRect().top<=innerHeight/2)pick=c});
+    return pick;
+  }
+  function refreshTop(){
+    const c=curSong();topBtn.disabled=mTop.disabled=!c;
+    // short name: a medley "A + B + C" is called by its first song
+    const t=c?"回到第一頁："+c.querySelector("h3").textContent.split(/\s*\+\s*/)[0]:"回到樂譜第一頁";
+    topLbl.textContent=mTopTip.textContent=t;
+    topBtn.setAttribute("aria-label",t);mTop.setAttribute("aria-label",t);
+    hint.textContent=c?"":"先在歌曲卡片按「開啟樂譜」";
+  }
+  // keep the song name current while the panel or the shortcuts are showing
+  let rq=0;
+  window.addEventListener("scroll",()=>{if((!panel.hidden||!mini.hidden)&&!rq)rq=requestAnimationFrame(()=>{rq=0;refreshTop()})},{passive:true});
+  ["pointerenter","focus"].forEach(e=>mTop.addEventListener(e,refreshTop)); // tooltip names the right song
+  topBtn.onclick=mTop.onclick=()=>{
+    const c=curSong(),fig=c&&openSheet(c).querySelector("figure");if(!fig)return;
+    // instant, so a running auto-scroll simply carries on from page 1
+    window.scrollTo({top:scrollY+fig.getBoundingClientRect().top-12,behavior:"instant"});
+  };
+  // visible only while 吉他 › 專案 is on screen
+  const gtr=$("#guitar"),proj=$("#g-projects");
+  function sync(){const v=!gtr.hidden&&!proj.hidden;box.hidden=!v;if(!v){if(on)stop();armed=false;setOpen(false)}}
+  const mo=new MutationObserver(sync);
+  [gtr,proj].forEach(n=>mo.observe(n,{attributes:true,attributeFilter:["hidden"]}));
+  // a sheet opened or closed in a song card
+  new MutationObserver(()=>{if(!panel.hidden)refreshTop()}).observe($("#songs"),{subtree:true,attributes:true,attributeFilter:["hidden"]});
+  showLv();sync();
+})();
 
 /* ---------- singing: projects (songs to sing) ---------- */
 // melody: JSON with notes [[start s, length s, midi]] extracted from the recording, timed to the YouTube video
