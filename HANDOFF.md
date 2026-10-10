@@ -28,7 +28,7 @@ npx http-server -p 8000 -c-1
 localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。用手機測試時需 https（用 Vercel 正式網址或預覽網址）。
 
 ## 功能清單
-**吉他**（分兩個子分頁：「常用」放下列 1–5 項；「專案」列出 `SONGS` 裡的歌曲卡片：歌名、編曲、調音與速度、用到的和弦（點了直接在卡片內顯示指法圖，可刷弦試聽）、開啟樂譜按鈕。上次選的子分頁存在 localStorage `pr_guitar_sub`）
+**吉他**（分三個子分頁：「常用」放下列 1–6 項；「學習」是民謠吉他學習地圖（`LEARN` 四個階段＋`LRES` 學習資源，內容來自使用者的學習地圖文件）：階段卡片可展開，技能與檢驗標準可打勾（`pr_learn`，展開狀態 `pr_learn_open`），「去練習」按鈕用 `learnGo()` 跳到常用的工具並設定好和弦／刷法／速度；「專案」列出 `SONGS` 裡的歌曲卡片：歌名、編曲、調音與速度、用到的和弦（點了直接在卡片內顯示指法圖，可刷弦試聽）、開啟樂譜按鈕。上次選的子分頁存在 localStorage `pr_guitar_sub`，可為 common／learn／projects）
 1. 和弦圖與試聽：34 個和弦，分五組（基本、七和弦、sus 掛留、封閉、色彩與高把位）。SVG 動態繪製指法，封閉和弦畫橫按長條，刷下、刷上、逐弦彈。
 2. 調音：六條弦參考音，加上麥克風調音器（自動判斷最接近的弦、顯示偏差音分與「轉緊/轉鬆」提示，±5 音分內算準）。
 3. 節拍器（獨立）：30–240 BPM、±1 與滑桿、點按測速、拍號 2/4・3/4・4/4・6/8（6/8 重音在 1、4 拍）、細分（無／八分／三連音／十六分）、拍點燈號、6 種合成音色（電子音、木魚、牛鈴、鼓組、拍手、邊擊；`MSOUNDS`，各自有 `k` 音量修正，經 `playSnd()` 播放；鼓組為大鼓／小鼓交替、細分拍用 Hi-hat）。設定存在 localStorage `pr_metro`。
@@ -54,7 +54,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 吉他：`CH` 和弦資料表（`f` 為六弦品位，-1 不彈、0 空弦；`fg` 為手指編號；`b` 為橫按 `[品位, 起弦, 終弦]`；`s` 為圖上起始品位，品位一律寫絕對值）、`renderChord(svg, 名稱)` 可畫進任何 svg、`GROUPS`、`drawChord()`、`strum()`；調音器 `tunerLoop/startTuner/stopTuner`；跟拍播放 `scheduler()` 與節拍器 `mScheduler()` 都每 25ms 預排未來 120ms，UI 用 setTimeout 對齊；刷法資料 `PATS`（`beats`、`sub` 每拍格數、`slots` 為 D/U/X/空字串），`click(時間, 等級 0–2)`、`chuck()` 切音。
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
 - 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`WHITE`／`BLACK`、`SOLF`、`answer()`。
-- 子分頁：吉他與歌唱都分「常用／專案」，`showSub(panel, sub)` 共用；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」列出 `VSONGS`（目前：篇章，YouTube 影片），`ytPlayer()` 先顯示縮圖，點了才載入 youtube-nocookie 播放器，另附「在 YouTube 開啟」連結。
+- 子分頁：吉他分「常用／學習／專案」、歌唱分「常用／專案」，`showSub(panel, sub)` 依該面板的 `.subtab` 切換對應的 `#g-…`／`#s-…` 區塊；左側清單的 `NAV[].subs` 決定每個面板列出哪些子分頁；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」列出 `VSONGS`（目前：篇章，YouTube 影片），`ytPlayer()` 先顯示縮圖，點了才載入 youtube-nocookie 播放器，另附「在 YouTube 開啟」連結。
 - 跟唱比對（`karaPanel()`）：歌曲有 `melody` 時出現。用 YouTube IFrame API 的 `getCurrentTime()` 當時間軸，目標音符來自 `songs/*-melody.json`（`notes: [[開始秒, 長度秒, MIDI]]`），麥克風音高摺到目標的八度後比對，±50 音分算準；計分以時間加權、每個音前 80ms 不計；可升降 Key（±7）；停止後列出最不準的音，點了跳回前 2 秒。
 - 篇章的旋律是從原曲錄音自動辨識（Melodia 式諧波顯著度 + Viterbi 追蹤，濾掉 C3 以下的貝斯），378 個音、B 大調、調音偏差約 +1 音分，可能有錯音或漏音。原曲 MP3 只在使用者電腦，不進倉庫。
 - localStorage 鍵：`pr_guitar`、`pr_singing`（皆為布林陣列）、`pr_guitar_sub`／`pr_singing_sub`（`common` 或 `projects`）。
