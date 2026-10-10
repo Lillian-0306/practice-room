@@ -6,8 +6,8 @@
 ## 目前狀態
 - 單一檔案 `index.html`（HTML + CSS + JS 全部內嵌，無建置流程、無相依套件）。
 - 唯一外部資源：Google Fonts（Noto Sans TC、Noto Serif TC），有備援字型。
-- 已部署到 GitHub Pages：https://lillian-0306.github.io/practice-room/ （main 分支根目錄，推送後約一分鐘更新）。
-- 也部署到 Vercel：https://practice-room-one.vercel.app （用 Vercel CLI `vercel --prod` 從本機資料夾發布；`.vercelignore` 只上傳 index.html、sheets/、songs/、mp3、pdf。目前沒有連結 GitHub 自動發布，更新時要再執行一次 `vercel --prod`）。
+- 正式網址（Vercel）：https://practice-room-one.vercel.app 。Vercel 專案已連結 GitHub 倉庫，推送到 main 會自動發布（約一分鐘）；也可用 Vercel CLI `vercel --prod` 從本機發布。`.vercelignore` 只上傳 index.html、sheets/、songs/、mp3、pdf。網頁裡的正式網址常數是 `SITE`。
+- GitHub Pages（https://lillian-0306.github.io/practice-room/ ）已關閉，改用 Vercel；要恢復可執行 `gh api -X POST repos/Lillian-0306/practice-room/pages -f "source[branch]=main" -f "source[path]=/"`。
 - 也發佈在 Claude 內嵌預覽，但**內嵌環境擋麥克風**，麥克風相關功能會顯示錯誤訊息並附上正式網址。
 
 ## 樂譜與音檔
@@ -23,7 +23,7 @@ npx http-server -p 8000 -c-1
 # 或 python3 -m http.server 8000
 # 開 http://localhost:8000
 ```
-localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。用手機測試時需 https（可用 GitHub Pages 或 ngrok）。
+localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。用手機測試時需 https（用 Vercel 正式網址或預覽網址）。
 
 ## 功能清單
 **吉他**（分兩個子分頁：「常用」放下列 1–5 項；「專案」列出 `SONGS` 裡的歌曲卡片：歌名、編曲、調音與速度、用到的和弦（點了直接在卡片內顯示指法圖，可刷弦試聽）、開啟樂譜按鈕。上次選的子分頁存在 localStorage `pr_guitar_sub`）
@@ -44,43 +44,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 7. 每日暖聲清單：5 項勾選清單。
 
 ## 程式結構（index.html 內 JS，單一 IIFE）
-- 工具：`# 彈唱練習室 — 開發交接文件
-
-## 專案目標
-互動式學習網頁，分兩大板塊：**吉他學習**與**歌唱學習**。繁體中文（zh-Hant），主要在手機 Chrome 使用。
-
-## 目前狀態
-- 單一檔案 `index.html`（HTML + CSS + JS 全部內嵌，無建置流程、無相依套件）。
-- 唯一外部資源：Google Fonts（Noto Sans TC、Noto Serif TC），有備援字型。
-- 已部署到 GitHub Pages：https://lillian-0306.github.io/practice-room/ （main 分支根目錄，推送後約一分鐘更新）。
-- 也發佈在 Claude 內嵌預覽，但**內嵌環境擋麥克風**，麥克風相關功能會顯示錯誤訊息並附上正式網址。
-
-## 本機執行
-```
-python3 -m http.server 8000
-# 開 http://localhost:8000
-```
-localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。用手機測試時需 https（可用 GitHub Pages 或 ngrok）。
-
-## 功能清單
-**吉他**
-1. 和弦圖與試聽：28 個和弦，分四組（基本、七和弦、sus 掛留、封閉）。SVG 動態繪製指法，封閉和弦畫橫按長條，刷下、刷上、逐弦彈。
-2. 調音：六條弦參考音，加上麥克風調音器（自動判斷最接近的弦、顯示偏差音分與「轉緊/轉鬆」提示，±5 音分內算準）。
-3. 跟拍換和弦：8 組和弦進行（含 8 小節卡農進行）、節拍器、八分音符刷弦節奏圖（↓ · ↓ ↑ · ↑ ↓ ↑）、50–140 BPM。用 Web Audio lookahead 排程，不會飄拍。
-4. 錄音回放：MediaRecorder 錄音，可播放、下載、刪除，最多保留 10 段（只在記憶體，重新整理就消失）。
-5. 入門路線：5 項勾選清單。
-
-**歌唱**
-1. 呼吸練習：3 種節奏（4-4-6、4-8、4-7-8），圓圈動畫引導。
-2. 音高偵測器：麥克風 + 自相關法，顯示音名、Hz、音分偏差、唱名，下方有最近 8 秒的音高曲線（canvas）。
-3. 目標音練習：選 Do–高 Do 其中一個目標音（可切換低八度），曲線上畫出目標線與 ±25 音分區間，計算「連續唱準秒數」與最佳紀錄。判斷時忽略八度差。
-4. 參考音跟唱：Do 到高 Do，不需麥克風（跟隨低八度設定）。
-5. 聽音辨唱名：先播 Do 再播目標音，選唱名並計分。
-6. 錄音回放：同吉他。
-7. 每日暖聲清單：5 項勾選清單。
-
-## 程式結構（index.html 內 JS，單一 IIFE）
-、`el`、`load/save`（localStorage，皆 try/catch）、`midiFreq/freqMidi/noteName`。
+- 工具：`$`、`el`、`load/save`（localStorage，皆 try/catch）、`midiFreq/freqMidi/noteName`。
 - 麥克風（調音器與音高偵測共用，一次只開一個）：`openMic/closeMic/readPitch/autoCorrelate`，錯誤訊息由 `micError()` 統一處理。
 - 音訊：`audio()` 懶建立 AudioContext；`pluck()` 用 Karplus-Strong 合成吉他聲；`tone()` 用振盪器加包絡；`click()` 節拍器。
 - 分頁：`.mode` 按鈕切換 `body[data-mode]`，CSS 變數 `--accent` 隨模式在琥珀（吉他）與鈷藍（歌唱）間切換。切換時會停止另一邊的節拍器、調音器、麥克風、呼吸練習與錄音。
