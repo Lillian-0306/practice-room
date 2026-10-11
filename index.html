@@ -406,6 +406,8 @@ section.panel[hidden]{display:none}
 .bar-row{align-items:center;gap:6px}
 .bar-row .lbl{font-size:.9rem}
 .bar-grp{display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.ci-chk{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);cursor:pointer;min-height:36px}
+.ci-chk input{width:18px;height:18px;margin:0;accent-color:var(--accent);cursor:pointer}
 .bar-now{font-variant-numeric:tabular-nums}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
 .block>header{margin-bottom:12px}
@@ -544,6 +546,27 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .rec-actions{display:flex;gap:6px}
 .rec-actions a,.rec-actions button{font-size:.85rem;padding:4px 12px;min-height:34px;border:1.5px solid var(--line);border-radius:999px;background:transparent;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
 footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
+/* release notes, shown once after an update */
+.rn{width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:0 20px 50px rgba(0,0,0,.35);overflow:hidden}
+.rn::backdrop{background:rgba(10,8,20,.5)}
+.rn-in{display:flex;flex-direction:column;max-height:calc(100dvh - 50px)}
+.rn-head{padding:20px 22px 6px}
+.rn-head small{display:block;font-size:.78rem;font-weight:700;letter-spacing:.06em;color:var(--accent)}
+.rn-head h2{margin:4px 0 0;font-family:var(--serif);font-size:1.3rem}
+.rn-body{padding:6px 22px 4px;overflow-y:auto}
+/* slim rounded scrollbar in the theme colours, no arrows */
+.rn-body::-webkit-scrollbar{width:10px}
+.rn-body::-webkit-scrollbar-track{background:transparent}
+.rn-body::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:999px;border:3px solid var(--surface)}
+.rn-body::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+.rn-body::-webkit-scrollbar-button{display:none}
+@supports not selector(::-webkit-scrollbar){.rn-body{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent) 45%,var(--line)) transparent}}
+.rn-body ul{margin:8px 0 0;padding-left:1.2em}
+.rn-body li{margin:0 0 10px;line-height:1.55}
+.rn-body li b{display:block}
+.rn-body li span{color:var(--muted);font-size:.92rem}
+.rn-foot{padding:12px 22px 20px}
+.rn-foot .btn{width:100%}
 /* auto-scroll control for reading sheet music (guitar 專案 only), pinned bottom-right */
 .wrap.as-moving{will-change:transform} /* sub-pixel slide while auto-scrolling */
 /* a round button; tapping it opens the panel of controls above it */
@@ -925,6 +948,8 @@ if(CLASS){
 /* ---------- storage ---------- */
 function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+// been here before? checked before anything below saves settings (used by the release notes)
+const RETURNING=(()=>{try{for(let i=0;i<localStorage.length;i++)if(/^pr_/.test(localStorage.key(i)))return true}catch(e){}return false})();
 
 /* ---------- audio ---------- */
 let ctx=null;
@@ -1639,6 +1664,10 @@ const SONGS=[
 ];
 // Collapsible section in a song card; the open/closed state is shared by all cards of that kind
 const cardFold=load("pr_card_fold",{});let foldSeq=0;
+// count-in before 跳到 / 小節循環 (on or off for each), shared by all songs
+const ciPref=Object.assign({jump:true,loop:true},load("pr_countin",{}));
+// sound of the song-card metronome and the count-in, shared by all songs (starts from the 常用 choice)
+let songSnd=(v=>MSOUNDS[v]?v:ms.snd)(load("pr_song_snd",ms.snd));
 function foldSection(kind,label,...content){
   const wrap=el("div","fold-sec"),btn=el("button","fold-h"),body=el("div","fold-body");
   btn.type="button";btn.dataset.kind=kind;body.id="fold-"+(++foldSeq);btn.setAttribute("aria-controls",body.id);
@@ -1667,7 +1696,7 @@ function player(src,bpm){
       const b=el("button","pill",t.label);b.setAttribute("aria-pressed",i===0);
       b.onclick=()=>{
         if(b.getAttribute("aria-pressed")==="true")return;
-        const was=!au.paused;au.pause();cur=t;use(t);A=B=null;show();showSpeed();syncBars();if(was)au.play();
+        const was=!au.paused;cancelCI();au.pause();cur=t;use(t);A=B=null;show();showSpeed();syncBars();if(was)au.play();
         pick.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
       };
       pick.append(b);
@@ -1720,7 +1749,7 @@ function player(src,bpm){
     const c=audio();if(pmNext<c.currentTime)pmNext=c.currentTime+0.02;
     while(pmNext<c.currentTime+LOOKAHEAD){
       const m=METERS[pmMeter],beat=pmTick%m.beats,t=pmNext;
-      playSnd(MSOUNDS[ms.snd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat);
+      playSnd(MSOUNDS[songSnd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat);
       const id=setTimeout(()=>{pmTimers=pmTimers.filter(x=>x!==id);
         if(pmOn)[...pmDots.children].forEach((d,i)=>d.classList.toggle("on",i===beat))},Math.max(0,(t-c.currentTime)*1000));
       pmTimers.push(id);pmNext+=60/pmBpm();pmTick++;
@@ -1742,6 +1771,12 @@ function player(src,bpm){
   METERS.forEach((m,i)=>{const b=el("button","pill",m.n);b.setAttribute("aria-pressed",i===pmMeter);
     b.onclick=()=>{pmMeter=i;pmTick=0;pmDraw();pmMeters.querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i))};pmMeters.append(b)});
   pmRow.append(pmBtn,pmTempo);pmDraw();
+  const pmSnds=el("div","row");
+  MSOUNDS.forEach((s,i)=>{const b=el("button","pill",s.n);b.dataset.snd=i;b.setAttribute("aria-pressed",i===songSnd);
+    b.onclick=()=>{songSnd=i;save("pr_song_snd",i);
+      document.querySelectorAll(".player button[data-snd]").forEach(x=>x.setAttribute("aria-pressed",+x.dataset.snd===i));
+      if(!pmOn){const t=audio().currentTime+0.03;playSnd(s,t,2,0);playSnd(s,t+0.3,1,1)}}; // short preview when stopped
+    pmSnds.append(b)});
   const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
   speeds.append(dial,range,presets);showSpeed();
   let A=null,B=null;
@@ -1791,17 +1826,37 @@ function player(src,bpm){
         nowEl=el("span","note bar-now"),barNote=el("p","note");
   jIn.value=1;jMinus.setAttribute("aria-label","前一小節");jPlus.setAttribute("aria-label","下一小節");
   jMinus.onclick=()=>{jIn.value=clampBar(+jIn.value-1)};jPlus.onclick=()=>{jIn.value=clampBar(+jIn.value+1)};
-  jGo.onclick=()=>{const n=clampBar(jIn.value);jIn.value=n;au.currentTime=barT(n);au.play()};
+  // 跳到: seek to the bar, give four count-in clicks at the current playback tempo, then play.
+  // Clicks are queued one by one just ahead of time so a cancel stops the rest.
+  let ciTimers=[],ciOwn=false;
+  const cancelCI=()=>{ciTimers.forEach(clearTimeout);ciTimers=[]};
+  const ciBox=kind=>{const l=el("label","ci-chk"),i=el("input");i.type="checkbox";i.checked=ciPref[kind];i.dataset.ci=kind;
+    i.onchange=()=>{ciPref[kind]=i.checked;save("pr_countin",ciPref);
+      document.querySelectorAll('input[data-ci="'+kind+'"]').forEach(x=>x.checked=i.checked)};
+    l.append(i,"先數 4 拍預備拍");return l};
+  // seek to bar n and play, with four count-in clicks first when that option is on
+  function startAt(n,kind){
+    cancelCI();au.pause();au.currentTime=barT(n);
+    if(!ciPref[kind]){au.play();return}
+    const c=audio(),beat=(barT(n+1)-barT(n))/4/ratio,t0=c.currentTime+0.15;
+    for(let k=0;k<4;k++){const t=t0+k*beat;
+      ciTimers.push(setTimeout(()=>{playSnd(MSOUNDS[songSnd],t,k?1:2,k);
+        ciTimers.push(setTimeout(()=>{nowEl.textContent="預備拍 "+"●".repeat(k+1)+"○".repeat(3-k)},Math.max(0,(t-c.currentTime)*1000)))},
+        Math.max(0,(t-c.currentTime-0.08)*1000)))}
+    ciTimers.push(setTimeout(()=>{ciTimers=[];ciOwn=true;au.play();ciOwn=false},Math.max(0,(t0+4*beat-c.currentTime)*1000)));
+  }
+  au.addEventListener("play",()=>{if(!ciOwn)cancelCI()}); // pressing play yourself skips the count-in
+  jGo.onclick=()=>{const n=clampBar(jIn.value);jIn.value=n;startAt(n,"jump")};
   jIn.onkeydown=e=>{if(e.key==="Enter")jGo.click()};
-  const jGrp=el("span","bar-grp");jGrp.append(el("span","lbl","第"),jMinus,jIn,jPlus,el("span","lbl","小節"));jumpRow.append(jGrp,jGo);
+  const jGrp=el("span","bar-grp");jGrp.append(el("span","lbl","第"),jMinus,jIn,jPlus,el("span","lbl","小節"));jumpRow.append(jGrp,jGo,ciBox("jump"));
   const nowRow=el("div","row");nowRow.append(nowEl);
   // loop by bars: from the start of bar a to the end of bar b
   const bloopRow=el("div","row bar-row"),bA=numIn("循環從第幾小節"),bB=numIn("循環到第幾小節"),bGo=el("button","pill","循環這幾小節");
   bA.value=1;bB.value=4;
   bGo.onclick=()=>{let a=clampBar(bA.value),b=clampBar(bB.value);if(b<a)[a,b]=[b,a];bA.value=a;bB.value=b;
-    A=barT(a);B=barT(b+1);if(cur.bars&&b>=cur.bars.n)B=Math.min(B,au.duration||B);au.currentTime=A;au.play();show()};
+    A=barT(a);B=barT(b+1);if(cur.bars&&b>=cur.bars.n)B=Math.min(B,au.duration||B);show();startAt(a,"loop")};
   [bA,bB].forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")bGo.click()});
-  const bGrp=el("span","bar-grp");bGrp.append(el("span","lbl","第"),bA,el("span","lbl","到"),bB,el("span","lbl","小節"));bloopRow.append(bGrp,bGo);
+  const bGrp=el("span","bar-grp");bGrp.append(el("span","lbl","第"),bA,el("span","lbl","到"),bB,el("span","lbl","小節"));bloopRow.append(bGrp,bGo,ciBox("loop"));
   function showNow(){
     const b=cur.bars&&barAt(au.currentTime);
     nowEl.textContent=!cur.bars?"":b?"現在：第 "+b.n+" 小節第 "+b.beat+" 拍"+(cur.bars.exact&&b.n>cur.bars.exact?"（約）":""):"現在：預備拍";
@@ -1815,7 +1870,7 @@ function player(src,bpm){
   au.addEventListener("timeupdate",showNow);au.addEventListener("seeked",showNow);
   const barSec=foldSection("bars","小節跳轉",jumpRow,nowRow,barNote);
   renderLoops();
-  box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
+  box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmSnds,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
   syncBars();
   return box;
 }
@@ -2828,7 +2883,40 @@ buildNav();navReady=true;navSync();
     else if(e.key==="ArrowLeft")go(i-1);
   },true);
   $("#helpBtn").onclick=begin;
-  if(!load(KEY,false))setTimeout(begin,600);
+  // first visit: open by itself, but after the 版本公告 dialog if that is showing
+  if(!load(KEY,false)){
+    const wait=()=>$("dialog.rn")?setTimeout(wait,300):begin(); // the dialog is removed once read
+    setTimeout(wait,600);
+  }
+})();
+
+/* ---------- release notes (版本公告) ---------- */
+// Shown once, the first time the page opens after an update. Add a new entry at the top of
+// RELEASES for each update; its v is remembered in pr_seen_ver when 我知道了 is pressed.
+// First-time visitors (no pr_ keys yet) skip it.
+const RELEASES=[
+  {v:"2026-10-11",title:"吉他專案練習更好用了",items:[
+    ["小節跳轉","輸入小節數就能跳到那裡，下方會顯示現在播到第幾小節第幾拍。"],
+    ["預備拍","跳到小節或循環之前，先用節拍器數 4 拍再開始，可以勾選要不要數。"],
+    ["用小節設循環","「第 17 到 24 小節」直接循環，不用邊聽邊抓 A、B 點。"],
+    ["段落可以存起來","循環的段落可以命名儲存，下次點一下就能再練。"],
+    ["播放器裡的節拍器","跟著歌曲速度，可以拖動調速、選拍號和音色；右下角也有節拍器按鈕可以快速開關。"],
+    ["和弦按法放進播放區","「用到的和弦」移到段落循環下面，練習的工具都在同一塊。"]
+  ]}
+];
+(function(){
+  const r=RELEASES[0];
+  if(load("pr_seen_ver",null)===r.v)return;
+  if(!RETURNING){save("pr_seen_ver",r.v);return} // brand-new visitor: nothing to announce
+  const d=el("dialog","rn"),inner=el("div","rn-in"),head=el("div","rn-head"),body=el("div","rn-body"),foot=el("div","rn-foot"),ul=el("ul"),ok=el("button","btn","我知道了");
+  d.setAttribute("aria-labelledby","rnTitle");
+  const t=el("h2","",r.title);t.id="rnTitle";head.append(el("small","","版本更新・"+r.v.replace(/-/g,"/")),t);
+  r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});
+  body.append(ul);foot.append(ok);inner.append(head,body,foot);d.append(inner);document.body.append(d);
+  // 我知道了 (or Esc) marks this version as read
+  const done=()=>{save("pr_seen_ver",r.v);if(d.open)d.close();d.remove()};
+  ok.onclick=done;d.addEventListener("close",done);
+  d.showModal();ok.focus();
 })();
 })();
 </script>
