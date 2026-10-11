@@ -2513,7 +2513,9 @@ renderSongs();
 // melody: JSON with notes [[start s, length s, midi]] extracted from the recording, timed to the YouTube video
 const VSONGS=[
   {title:"篇章",by:"張韶涵／王赫野 合唱",meta:["男女對唱","動態歌詞影片"],
-   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)",melody:"songs/pianzhang-melody.json",lyrics:"songs/pianzhang-lyrics.json"}
+   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)",melody:"songs/pianzhang-melody.json",lyrics:"songs/pianzhang-lyrics.json"},
+  {title:"暮色回響",by:"張韶涵（原唱：吉星出租）",meta:["《默殺》電影推廣曲","動態歌詞影片"],
+   yt:"tln-FPsf4tg",ytNote:"影片來源：YouTube 頻道 4K Music Make",lyrics:"songs/muse-huixiang-lyrics.json"}
 ];
 // YouTube IFrame API, loaded on first use
 let ytReady=null;
@@ -2561,9 +2563,11 @@ function lyricsPanel(song,yt){
   let lines=[],els=[],player=null,cur=-1,userScroll=0,cal=null;
   const own=()=>load("pr_lyric_times",{})[song.title]||null;
   const setOwn=a=>{const o=load("pr_lyric_times",{});if(a)o[song.title]=a;else delete o[song.title];save("pr_lyric_times",o)};
-  const times=()=>{const o=own();return lines.map((l,i)=>o&&o[i]!=null?o[i]:l.t)};
+  const times=()=>{const o=own();return lines.map((l,i)=>o&&o[i]!=null?o[i]:l.t)}; // null = not timed yet
+  const untimed=()=>times().some(t=>t==null);
   const r2=v=>Math.round(v*100)/100;
-  fetch(song.lyrics).then(r=>r.json()).then(j=>{lines=j.lines||[];build();renderTools()}).catch(()=>{list.textContent="歌詞載入失敗，請重新整理。"});
+  fetch(song.lyrics).then(r=>r.json()).then(j=>{lines=j.lines||[];build();renderTools();
+    if(untimed())msg.textContent="這首歌的歌詞還沒對時間。按「對時間」跟著影片每句按一下，歌詞就會跟著捲動。"}).catch(()=>{list.textContent="歌詞載入失敗，請重新整理。"});
   function build(){
     list.innerHTML="";
     els=lines.map((l,i)=>{const b=el("button","lyr-line"+(l.gap?" gap":""),l.s);b.type="button";b.onclick=()=>seek(i);list.append(b);return b});
@@ -2576,8 +2580,9 @@ function lyricsPanel(song,yt){
   }
   async function seek(i){
     if(cal){cal.i=i;calShow();return}
+    const t=times()[i];if(t==null){msg.textContent="這句還沒對時間。";return}
     const p=await getPlayer(true);if(!p)return;
-    p.seekTo(Math.max(0,times()[i]-0.3),true);p.playVideo();
+    p.seekTo(Math.max(0,t-0.3),true);p.playVideo();
   }
   // reading the lyrics by hand pauses the auto-scroll for a moment
   ["wheel","touchmove"].forEach(e=>list.addEventListener(e,()=>{userScroll=Date.now()},{passive:true}));
@@ -2586,7 +2591,7 @@ function lyricsPanel(song,yt){
     if(!player){getPlayer(false);return}
     let t=0;try{t=player.getCurrentTime()||0}catch(e){return}
     const ts=times();let k=-1;
-    for(let i=0;i<ts.length;i++)if(ts[i]<=t+0.15)k=i;
+    for(let i=0;i<ts.length;i++)if(ts[i]!=null&&ts[i]<=t+0.15)k=i;
     if(k!==cur){
       if(els[cur])els[cur].classList.remove("on");
       cur=k;
@@ -2619,7 +2624,7 @@ function lyricsPanel(song,yt){
   async function calStart(){
     const p=await getPlayer(true);if(!p){msg.textContent="影片還沒準備好，請先播放影片再試一次。";return}
     cal={i:0,arr:times().slice()};renderTools();calShow();
-    p.seekTo(Math.max(0,cal.arr[0]-4),true);p.playVideo();
+    p.seekTo(Math.max(0,(cal.arr[0]==null?0:cal.arr[0])-4),true);p.playVideo();
   }
   function calMark(){
     if(!cal||!player)return;
@@ -3417,18 +3422,23 @@ buildNav();navReady=true;navSync();
 /* ---------- release notes (版本公告) ---------- */
 // Shown once, the first time the page opens after an update. Add a new entry at the top of
 // RELEASES for each update (v = date, plus ".2", ".3"… for more on the same day); its v is
-// remembered in pr_seen_ver when 我知道了 is pressed.
+// remembered in pr_seen_ver when 我知道了 is pressed. Add class:true when the update is about the
+// guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12",title:"新的練唱歌曲：暮色回響",items:[
+    ["暮色回響","張韶涵版本的《暮色回響》加進唱歌專案了，有影片和歌詞。"],
+    ["歌詞跟著影片","每首練唱歌曲都可以顯示歌詞，唱到的那句會亮起來，點一句就跳過去。"]
+  ]},
   {v:"2026-10-11.4",title:"唱歌專案有歌詞了",items:[
     ["跟著影片的歌詞","《篇章》的歌詞會跟著影片捲動，唱到的那句會亮起來。"],
     ["點歌詞就跳過去","想練哪一句，點那句歌詞，影片就會跳到那裡開始播。"]
   ]},
-  {v:"2026-10-11.3",title:"樂譜筆記可以打字了",items:[
+  {v:"2026-10-11.3",class:true,title:"樂譜筆記可以打字了",items:[
     ["文字筆記","選工具列上的「T」，在譜上點一下就能打字，有紅、藍、綠、黑 4 種顏色和小、中、大三種大小。"],
     ["修改文字","點寫好的字可以直接修改，清空就刪除，改錯了也能按上一步復原。"]
   ]},
-  {v:"2026-10-11.2",title:"樂譜可以寫筆記了",items:[
+  {v:"2026-10-11.2",class:true,title:"樂譜可以寫筆記了",items:[
     ["樂譜筆記","打開樂譜就能用筆刷和螢光筆寫筆記，有橡皮擦，也可以上一步、下一步。"],
     ["框出重點段落","把要加強的地方框起來，可以取名、換顏色，點一下就能單獨放大來看。"],
     ["下載含筆記的 PDF","把寫好的筆記和框選的段落一起存成 PDF，帶到別的地方看。"],
@@ -3436,7 +3446,7 @@ const RELEASES=[
     ["右下角播放音檔","不用捲回播放器，就能播放、暫停、跳到第幾小節。"],
     ["使用說明","右上角的「？」可以隨時再看一次網站怎麼用。"]
   ]},
-  {v:"2026-10-11",title:"吉他專案練習更好用了",items:[
+  {v:"2026-10-11",class:true,title:"吉他專案練習更好用了",items:[
     ["小節跳轉","輸入小節數就能跳到那裡，下方會顯示現在播到第幾小節第幾拍。"],
     ["預備拍","跳到小節或循環之前，先用節拍器數 4 拍再開始，可以勾選要不要數。"],
     ["用小節設循環","「第 17 到 24 小節」直接循環，不用邊聽邊抓 A、B 點。"],
@@ -3460,13 +3470,16 @@ function sheetDialog(kicker,title,content,buttons,onClose){
 }
 const relList=r=>{const ul=el("ul");r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});return ul};
 const verDate=v=>v.split(".")[0].replace(/-/g,"/");
+// 讚頌吉他班 only gets entries marked class:true (guitar 專案 changes) and remembers them separately.
 (function(){
-  const r=RELEASES[0];
-  if(load("pr_seen_ver",null)===r.v)return;
-  if(!RETURNING){save("pr_seen_ver",r.v);return} // brand-new visitor: nothing to announce
+  const r=(CLASS?RELEASES.filter(x=>x.class):RELEASES)[0],KEY=CLASS?"pr_seen_ver_class":"pr_seen_ver";
+  // class visitors used to share pr_seen_ver; whatever they already saw there counts as read
+  const seen=load(KEY,null)||(CLASS?load("pr_seen_ver",null):null);
+  if(!r||(seen&&seen>=r.v))return;
+  if(!RETURNING){save(KEY,r.v);return} // brand-new visitor: nothing to announce
   const ok=el("button","btn","我知道了");
   // 我知道了 (or Esc) marks this version as read
-  const dl=sheetDialog("版本更新・"+verDate(r.v),r.title,[relList(r)],[ok],()=>save("pr_seen_ver",r.v));
+  const dl=sheetDialog("版本更新・"+verDate(r.v),r.title,[relList(r)],[ok],()=>save(KEY,r.v));
   ok.onclick=dl.close;ok.focus();
 })();
 
