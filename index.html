@@ -330,6 +330,18 @@ section.panel[hidden]{display:none}
 .lgoal h3{font-size:.95rem;margin-bottom:4px}
 .ldir{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
 .lres h3{margin:16px 0 6px;font-size:1rem}
+/* 歌唱 › 學習 video cards */
+.vcard{padding:14px 0;border-top:1px solid var(--line)}
+.vcard:first-of-type{border-top:0;padding-top:4px}
+.vcard h3{margin:4px 0 2px;font-size:1.05rem}
+.vorig{margin:0 0 4px;font-size:.8rem;color:var(--muted)}
+.vmeta{margin:0 0 6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.86rem}
+.vch{font-weight:700}
+.vlang{font-size:.75rem;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--ink);font-weight:700}
+.vdesc{margin:0 0 6px}
+.vrow{gap:10px;align-items:center}
+.vdone{display:inline-flex;align-items:center;gap:6px;font-weight:700;cursor:pointer}
+.vdone input{width:18px;height:18px;accent-color:var(--accent)}
 .lres ul{list-style:none;margin:0;padding:0}
 .lres li{padding:7px 0;border-top:1px solid var(--line)}
 .lres li:first-child{border-top:0}
@@ -963,6 +975,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 
     <div class="subtabs" role="tablist" aria-label="歌唱分類">
       <button class="subtab" role="tab" id="ssub-common" data-sub="common" aria-selected="true" aria-controls="s-common">常用</button>
+      <button class="subtab" role="tab" id="ssub-learn" data-sub="learn" aria-selected="false" aria-controls="s-learn">學習</button>
       <button class="subtab" role="tab" id="ssub-projects" data-sub="projects" aria-selected="false" aria-controls="s-projects">專案</button>
     </div>
 
@@ -1020,6 +1033,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       </ul>
     </div>
     </div>
+
+    <!-- 歌唱 › 學習: recommended teaching videos, filled in by renderSLearn() -->
+    <div id="s-learn" role="tabpanel" aria-labelledby="ssub-learn" hidden></div>
 
     <div id="s-projects" role="tabpanel" aria-labelledby="ssub-projects" hidden>
       <div class="block">
@@ -3185,10 +3201,67 @@ function renderLearn(){
 }
 renderLearn();
 
+/* ---------- singing: learning resources (學習) ---------- */
+// Other people's teaching videos picked by the user, grouped by topic. Each topic is a .block, so the
+// side list shows it. 我看過了 is saved in pr_slearn; go = the h2 of a 歌唱 › 常用 block to practise with.
+const SLEARN=[
+ {t:"放鬆發聲",d:"唱歌先求不用力。喉嚨放鬆了，高音和音色才有辦法往上練。",videos:[
+   {id:"afUn40xTerI",zh:"一唱歌喉嚨就發緊？讓聲音變輕鬆又通透",title:"为什么你一唱歌喉咙就发紧？这条视频能让你唱歌变得轻松又通透！",ch:"Jason-老湿",lang:"中文",
+    d:"很多人一唱歌喉嚨就緊、聲音卡住。這支說明為什麼會緊，以及怎麼讓聲音放鬆、通透。",go:"呼吸練習"}]},
+ {t:"音色與共鳴",d:"同樣唱準，為什麼有人的聲音特別好聽？",videos:[
+   {id:"Nivrsg5LBk4",zh:"「好聽的歌聲」其實就是泛音",title:"\"いい歌声\"の正体は「倍音」です。【歌うのが楽しくなるボイトレ講座】",ch:"しらスタ【歌唱力向上委員会】",lang:"日語",
+    d:"從「泛音」解釋好聽的歌聲是怎麼來的，讓你知道練共鳴、練音色到底在練什麼。",go:"錄音回放"}]},
+ {t:"音準",d:"先知道自己哪裡不準，再對著目標音修正。",videos:[
+   {id:"GStQlcAQPzI",zh:"大幅提升音準的方法（解說＋跟練）",title:"【200万回】音程正確率を劇的にアップさせる方法！【解説+トレーニング】【しゃくり加点の疑問!?】",ch:"ラニー歌うま相談室 | MASAYAH",lang:"日語",
+    d:"超過 200 萬次觀看。先講解為什麼會唱不準，再帶著練；也聊到 KTV 評分裡的滑音加分。",go:"音高偵測器"}]},
+ {t:"聽音與音感",d:"耳朵聽得出來，嗓子才唱得出來。",videos:[
+   {id:"-nIZuBcWToY",zh:"每天聽就能大幅提升音感的鋼琴與歌",title:"【イヤトレ】毎日聴くだけで圧倒的に音感が良くなるピアノと歌",ch:"farm music",lang:"日語",
+    d:"練耳朵用的鋼琴與歌唱，每天聽一點，慢慢建立音感。",go:"聽音辨唱名"}]}
+];
+const SCHANNELS=[
+ {n:"しらスタ【歌唱力向上委員会】",u:"https://www.youtube.com/@shira-sta",lang:"日語",d:"日本的歌唱教學頻道，講解發聲、音色與歌唱技巧。上面「好聽的歌聲其實就是泛音」就是他們的影片。"}
+];
+const sLearnDone=load("pr_slearn",{});
+function sLearnProgress(){
+  const all=SLEARN.flatMap(s=>s.videos),n=all.filter(v=>sLearnDone[v.id]).length;
+  $("#sLearnBar").style.width=(all.length?n/all.length*100:0)+"%";$("#sLearnCount").textContent="已看完 "+n+" / "+all.length+" 支影片";
+}
+function renderSLearn(){
+  const box=$("#s-learn");box.innerHTML="";
+  const hero=el("div","block learn-hero");
+  hero.innerHTML='<header><h2>歌唱學習資源</h2><p>精選其他老師的教學影片，依主題排好。看完打勾，進度會存在這個瀏覽器；按「去練習」可以直接用練習室的工具練。</p></header><div class="bar"><i id="sLearnBar"></i></div><p class="note" id="sLearnCount"></p><p class="note">日語影片如果有字幕，可以在 YouTube 的字幕設定裡選「自動翻譯」成中文。</p>';
+  box.append(hero);
+  SLEARN.forEach(sec=>{
+    const b=el("div","block");b.innerHTML="<header><h2></h2><p></p></header>";
+    b.querySelector("h2").textContent=sec.t;b.querySelector("p").textContent=sec.d;
+    sec.videos.forEach(v=>{
+      const c=el("div","vcard"),yt=ytBox(v.id,v.zh);
+      const meta=el("p","vmeta");meta.append(el("span","vch",v.ch),el("span","vlang",v.lang));
+      const links=el("div","video-links");
+      const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+v.id;a.target="_blank";a.rel="noopener";links.append(a);
+      const row=el("div","row vrow");
+      const lab=el("label","vdone"),cb=el("input");cb.type="checkbox";cb.checked=!!sLearnDone[v.id];
+      cb.onchange=()=>{sLearnDone[v.id]=cb.checked;save("pr_slearn",sLearnDone);sLearnProgress()};
+      lab.append(cb,"我看過了");row.append(lab);
+      if(v.go){const g=el("button","ltool","去練習：「"+v.go+"」");g.type="button";
+        g.onclick=()=>navGo("singing","common",[...document.querySelectorAll("#s-common > .block")].find(x=>(x.querySelector("h2")||{}).textContent===v.go));row.append(g)}
+      c.append(yt.el,el("h3","",v.zh),el("p","vorig",v.title),meta,el("p","vdesc",v.d),links,row);
+      b.append(c);
+    });
+    box.append(b);
+  });
+  const ch=el("div","block lres");ch.innerHTML='<header><h2>推薦頻道</h2><p>整個頻道都值得追。</p></header>';
+  const ul=el("ul");SCHANNELS.forEach(c=>{const li=el("li"),a=el("a","",c.n);a.href=c.u;a.target="_blank";a.rel="noopener";
+    li.append(a," ",el("span","vlang",c.lang),el("small","",c.d));ul.append(li)});
+  ch.append(ul);box.append(ch);
+  sLearnProgress();
+}
+renderSLearn();
+
 /* ---------- side navigation ---------- */
 // Built from the page: each panel's 常用 blocks (by their h2) and 專案 song cards (by their h3).
 var navReady=false; // var: showSub runs during startup, before this line
-const NAV=[{panel:"guitar",name:"吉他",color:"var(--gtr)",subs:["common","learn","projects"]},{panel:"singing",name:"歌唱",color:"var(--voc)",subs:["common","projects"]}];
+const NAV=[{panel:"guitar",name:"吉他",color:"var(--gtr)",subs:["common","learn","projects"]},{panel:"singing",name:"歌唱",color:"var(--voc)",subs:["common","learn","projects"]}];
 if(CLASS)NAV.splice(0,NAV.length,{panel:"guitar",name:"吉他",color:"var(--gtr)",subs:["projects"]});
 const SUBN={common:"常用",learn:"學習",projects:"專案"};
 const navItems=[]; // {panel, sub, page button, fold button, group, tools:[{el, btn}]}
@@ -3426,6 +3499,11 @@ buildNav();navReady=true;navSync();
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.2",title:"歌唱多了「學習」分頁",items:[
+    ["推薦教學影片","歌唱 › 學習放了精選的教學影片，分成放鬆發聲、音色與共鳴、音準、聽音與音感四個主題。"],
+    ["看完就練","每支影片都可以直接在頁面上播放，看完打勾記錄，再按「去練習」用練習室的工具練。"],
+    ["推薦頻道","也整理了值得追的歌唱教學頻道。"]
+  ]},
   {v:"2026-10-12",title:"新的練唱歌曲：暮色回響",items:[
     ["暮色回響","張韶涵版本的《暮色回響》加進唱歌專案了，有影片和歌詞。"],
     ["歌詞跟著影片","每首練唱歌曲都可以顯示歌詞，唱到的那句會亮起來，點一句就跳過去。"]
