@@ -3255,9 +3255,18 @@ buildNav();navReady=true;navSync();
 
 /* ---------- release notes (版本公告) ---------- */
 // Shown once, the first time the page opens after an update. Add a new entry at the top of
-// RELEASES for each update; its v is remembered in pr_seen_ver when 我知道了 is pressed.
+// RELEASES for each update (v = date, plus ".2", ".3"… for more on the same day); its v is
+// remembered in pr_seen_ver when 我知道了 is pressed.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-11.2",title:"樂譜可以寫筆記了",items:[
+    ["樂譜筆記","打開樂譜就能用筆刷和螢光筆寫筆記，有橡皮擦，也可以上一步、下一步。"],
+    ["框出重點段落","把要加強的地方框起來，可以取名、換顏色，點一下就能單獨放大來看。"],
+    ["下載含筆記的 PDF","把寫好的筆記和框選的段落一起存成 PDF，帶到別的地方看。"],
+    ["隱藏筆記和工具列","筆記可以先藏起來；工具可以收成一行，也可以取消固定在畫面上方。"],
+    ["右下角播放音檔","不用捲回播放器，就能播放、暫停、跳到第幾小節。"],
+    ["使用說明","右上角的「？」可以隨時再看一次網站怎麼用。"]
+  ]},
   {v:"2026-10-11",title:"吉他專案練習更好用了",items:[
     ["小節跳轉","輸入小節數就能跳到那裡，下方會顯示現在播到第幾小節第幾拍。"],
     ["預備拍","跳到小節或循環之前，先用節拍器數 4 拍再開始，可以勾選要不要數。"],
@@ -3281,7 +3290,7 @@ function sheetDialog(kicker,title,content,buttons,onClose){
   return {d,close};
 }
 const relList=r=>{const ul=el("ul");r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});return ul};
-const verDate=v=>v.replace(/-/g,"/");
+const verDate=v=>v.split(".")[0].replace(/-/g,"/");
 (function(){
   const r=RELEASES[0];
   if(load("pr_seen_ver",null)===r.v)return;

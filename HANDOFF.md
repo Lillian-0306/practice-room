@@ -64,7 +64,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
 - 歌唱：`BREATHS`、`SCALE`、`singLoop/startSing/stopSing`、`drawCurve()`、`setTarget()`、`WHITE`／`BLACK`、`SOLF`、`answer()`。
 - 子分頁：吉他分「常用／學習／專案」、歌唱分「常用／專案」，`showSub(panel, sub)` 依該面板的 `.subtab` 切換對應的 `#g-…`／`#s-…` 區塊；左側清單的 `NAV[].subs` 決定每個面板列出哪些子分頁；離開「常用」時由 `SUB_STOP` 停止該邊正在跑的東西（吉他：跟拍、節拍器、調音器、錄音；歌唱：音高偵測、呼吸、錄音）。歌唱的「專案」列出 `VSONGS`（目前：篇章，YouTube 影片），`ytPlayer()` 先顯示縮圖，點了才載入 youtube-nocookie 播放器，另附「在 YouTube 開啟」連結。
-- 版本公告：`RELEASES`（script 結尾）第一筆是最新版本 `{v, title, items:[[標題, 說明]]}`。更新後第一次開啟網頁會跳出對話框（`<dialog class="rn">`），按「我知道了」或 Esc 關閉並把 `v` 存到 `pr_seen_ver`，之後不再出現。第一次來的訪客（載入前沒有任何 `pr_` 開頭的 localStorage，由最前面的 `RETURNING` 判斷）不顯示。同學版也會顯示。**每次要公告的更新，就在 `RELEASES` 最上面加一筆新的 `v`**；沒加新的就不會再跳。對話框共用 `sheetDialog(小字, 標題, 內容, 按鈕, onClose)`。
+- 版本公告：`RELEASES`（script 結尾）第一筆是最新版本 `{v, title, items:[[標題, 說明]]}`。更新後第一次開啟網頁會跳出對話框（`<dialog class="rn">`），按「我知道了」或 Esc 關閉並把 `v` 存到 `pr_seen_ver`，之後不再出現。第一次來的訪客（載入前沒有任何 `pr_` 開頭的 localStorage，由最前面的 `RETURNING` 判斷）不顯示。同學版也會顯示。**每次有使用者看得到的更新都要在 `RELEASES` 最上面加一筆新的公告**（使用者要求自動產生）。`v` 用日期，同一天第二次更新寫 `.2`、`.3`…（畫面只顯示日期）；沒加新的就不會再跳。對話框共用 `sheetDialog(小字, 標題, 內容, 按鈕, onClose)`。
 - 回報問題（**待辦：收件信箱還沒決定**）：側欄最底下的「回報問題」（`#navFoot`、`openReport()`）會開對話框寫問題，按「用 Email 寄出」以 mailto 開郵件程式，自動附上目前頁面、網站版本、瀏覽器與螢幕大小。`CONTACT_EMAIL` 目前是空字串，所以入口隱藏；填入信箱後就會出現（信箱會公開在網站與倉庫上）。
 - 跟唱比對（`karaPanel()`）：歌曲有 `melody` 時出現。用 YouTube IFrame API 的 `getCurrentTime()` 當時間軸，目標音符來自 `songs/*-melody.json`（`notes: [[開始秒, 長度秒, MIDI]]`），麥克風音高摺到目標的八度後比對，±50 音分算準；計分以時間加權、每個音前 80ms 不計；可升降 Key（±7）；停止後列出最不準的音，點了跳回前 2 秒。
 - 篇章的旋律是從原曲錄音自動辨識（Melodia 式諧波顯著度 + Viterbi 追蹤，濾掉 C3 以下的貝斯），378 個音、B 大調、調音偏差約 +1 音分，可能有錯音或漏音。原曲 MP3 只在使用者電腦，不進倉庫。
