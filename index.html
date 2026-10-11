@@ -77,6 +77,14 @@ p{margin:0}
 .nav-tool.cur{color:var(--ink);font-weight:700;border-left-color:var(--accent)}
 .nav-page:hover,.nav-tool:hover{background:var(--bg)}
 .nav-btn,.nav-backdrop,.nav-show,.nav-resize{display:none}
+/* 回報問題 at the bottom of the side nav */
+.sidenav{display:flex;flex-direction:column}
+.nav-foot{margin-top:auto;padding-top:22px}
+.nav-foot[hidden]{display:none}
+.nav-foot-in{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:2px}
+.nav-link{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;font:inherit;font-size:.9rem;color:var(--muted);text-align:left;padding:8px 10px;border-radius:8px}
+.nav-link svg{flex:none}
+.nav-link:hover{background:var(--bg);color:var(--ink)}
 .nav-hide,.nav-show{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);place-items:center;padding:0}
 .block,.song{scroll-margin-top:16px}
 @media (min-width:1024px){
@@ -367,6 +375,50 @@ section.panel[hidden]{display:none}
 .sheet figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
 .sheet img{display:block;width:100%;height:auto}
 .sheet figcaption{font-size:.8rem;color:var(--muted);text-align:center;padding:4px;background:var(--surface)}
+/* sheet notes: toolbar, ink layer, practice boxes */
+.sn-bar{position:sticky;top:0;z-index:6;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.sn-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sn-title{display:flex;align-items:center;gap:6px;border:0;background:transparent;padding:2px 0;font:inherit;font-size:.8rem;font-weight:700;letter-spacing:.04em;color:var(--muted);cursor:pointer}
+.sn-title:hover{color:var(--ink)}
+.sn-title svg{transition:transform .2s}
+.sn-bar.folded .sn-title svg{transform:rotate(-90deg)}
+.sn-bar.folded>.sn-row{display:none}
+.sn-bar.unpinned{position:relative;top:auto;box-shadow:none}
+.sn-ic.sm{width:30px;height:30px;border-radius:8px;border-color:transparent;color:var(--muted)}
+.sn-ic.sm:hover{color:var(--ink)}
+.sn-ic.sm[aria-pressed="true"]{background:transparent;border-color:transparent;color:var(--accent)}
+@media (hover:hover){.sn-ic.sm[data-tip]:hover::after{left:auto;right:0;transform:none}}
+.sn-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sn-row[hidden]{display:none}
+.sheet>.sn-row .pill{min-height:34px;padding:3px 12px;font-size:.88rem}
+.sn-bar .pill{min-height:34px;padding:3px 12px;font-size:.88rem}
+.sn-bar .pill:disabled,.sheet>.sn-row .pill:disabled,.sn-nav .pill:disabled{opacity:.45;cursor:default}
+.sn-bar>.sn-head+.sn-row{gap:4px;flex-wrap:nowrap}
+.sn-ic{position:relative;width:38px;height:38px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;padding:0;flex:none}
+.sn-ic:hover{background:var(--bg)}
+.sn-ic[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+.sn-ic:disabled{opacity:.35;cursor:default;background:transparent}
+@media (hover:hover){.sn-ic[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;pointer-events:none;z-index:7;
+  background:var(--ink);color:var(--bg);font-size:.78rem;font-weight:700;padding:4px 8px;border-radius:6px}}
+.sn-sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1.5px var(--line);padding:0}
+.sn-sw[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--accent)}
+.sn-hint{font-size:.82rem;color:var(--muted)}
+.sn-sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.sn-page{position:relative}
+.sn-page canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.sheet.sn-draw .sn-page canvas{pointer-events:auto;touch-action:none;cursor:crosshair}
+.sheet.sn-hide .sn-page canvas{visibility:hidden}
+.sn-box{position:absolute;border:2px dashed var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:4px;pointer-events:none}
+.sn-box span{position:absolute;left:-2px;bottom:100%;background:var(--accent);color:var(--accent-on);font-size:.72rem;font-weight:700;padding:1px 6px;border-radius:6px 6px 6px 0;white-space:nowrap}
+.sn-boxes{display:flex;flex-direction:column;gap:6px}
+.sn-boxes[hidden]{display:none}
+.sn-bsw{width:26px;height:26px;flex:none;margin-right:4px}
+.sn-pal{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px 34px}
+.sn-pal[hidden]{display:none}
+.sn-boxes .loop-go{border-width:2px}
+.rn.wide{width:min(980px,calc(100vw - 32px))}
+.sn-crop{display:block;width:100%;height:auto;border-radius:8px;background:#fff;border:1px solid var(--line)}
+.sn-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
 .player .row{margin-top:8px}
 .player .spd{display:block}
 .spd-dial{align-items:baseline;gap:10px}
@@ -567,6 +619,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .rn-body li span{color:var(--muted);font-size:.92rem}
 .rn-foot{padding:12px 22px 20px}
 .rn-foot .btn{width:100%}
+.rn-foot{display:flex;flex-direction:column;gap:8px}
+.rn-body p{margin:8px 0 12px;line-height:1.65}
+.rn-body textarea{width:100%;box-sizing:border-box;min-height:120px;resize:vertical;font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px}
+.rn-body textarea:focus{outline:none;border-color:var(--accent)}
+.rn-body a{color:var(--accent);font-weight:700}
+.rn-meta{font-size:.82rem;color:var(--muted)}
+
 /* auto-scroll control for reading sheet music (guitar 專案 only), pinned bottom-right */
 .wrap.as-moving{will-change:transform} /* sub-pixel slide while auto-scrolling */
 /* a round button; tapping it opens the panel of controls above it */
@@ -603,6 +662,17 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .mf-fab[aria-expanded="true"] .as-tip{opacity:0}
 .mf-song{font-size:.8rem;color:var(--muted);margin:-4px 0 10px 4px}
 .mf-song:empty{display:none}
+/* floating audio panel: play / pause and bar jump */
+.ascroll .ap-panel{width:272px}
+.ap-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ap-info b{font-variant-numeric:tabular-nums;font-size:1rem}
+.ap-info span{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.ap-jump{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.ap-jump[hidden]{display:none}
+.ap-jrow{display:flex;align-items:center;gap:5px;font-size:.88rem}
+.ascroll .ap-step{width:32px;height:32px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font-size:1.05rem;flex:none}
+.ascroll .ap-go{border-radius:999px;padding:0 12px;height:34px;margin-left:auto;background:var(--accent);color:var(--accent-on);font-weight:700;font-size:.88rem}
+.ap-jump .bar-in{width:3.6em;min-height:32px}
 .as-panel{position:absolute;right:0;bottom:calc(100% + 12px);width:236px;padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .as-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px 4px}
 .as-head b{font-family:var(--serif);font-size:1rem}
@@ -630,6 +700,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 <nav class="sidenav" id="sidenav" aria-label="頁面導覽">
   <div class="nav-head"><b>彈唱練習室</b><button class="nav-close" id="navClose" type="button" aria-label="關閉選單">×</button><button class="nav-hide" id="navHide" type="button" aria-label="收合選單" title="收合選單"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg></button></div>
   <div id="navTree"></div>
+  <div class="nav-foot" id="navFoot" hidden><div class="nav-foot-in">
+    <button class="nav-link" id="navReport" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>回報問題</button>
+  </div></div>
 </nav>
 <div class="nav-backdrop" id="navBackdrop" hidden></div>
 <div class="nav-resize" id="navResize" role="separator" aria-orientation="vertical" aria-controls="sidenav" aria-label="調整選單寬度（左右方向鍵，雙擊恢復預設）" aria-valuemin="180" aria-valuemax="420" tabindex="0"></div>
@@ -667,6 +740,25 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <span class="as-tip" id="asMPauseTip" aria-hidden="true">暫停</span>
     </button>
   </div>
+  <div class="as-panel ap-panel" id="apPanel" role="group" aria-label="播放音檔" hidden>
+    <div class="as-head"><b>播放音檔</b><button class="as-close" id="apClose" type="button" aria-label="收起播放音檔">×</button></div>
+    <p class="mf-song" id="apSong"></p>
+    <div class="as-ctrl">
+      <button class="as-play" id="apPlay" type="button" aria-pressed="false" aria-label="播放" title="播放">
+        <svg class="i-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+        <svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>
+      </button>
+      <div class="ap-info"><b id="apTime">0:00 / --:--</b><span id="apNow"></span></div>
+    </div>
+    <div class="ap-jump" id="apJump">
+      <div class="ap-jrow"><span>第</span><button class="ap-step" id="apMinus" type="button" aria-label="前一小節">−</button><input class="bar-in" id="apBar" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="要跳到第幾小節"><button class="ap-step" id="apPlus" type="button" aria-label="下一小節">＋</button><span>小節</span><button class="ap-go" id="apGo" type="button">跳到</button></div>
+      <label class="ci-chk"><input type="checkbox" data-ci="jump">先數 4 拍預備拍</label>
+    </div>
+  </div>
+  <button class="mf-fab" id="apFab" type="button" aria-expanded="false" aria-controls="apPanel" aria-label="播放音檔">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+    <span class="as-tip" aria-hidden="true">播放音檔</span>
+  </button>
   <div class="as-panel" id="mfPanel" role="group" aria-label="節拍器" hidden>
     <div class="as-head"><b>節拍器</b><button class="as-close" id="mfClose" type="button" aria-label="收起節拍器">×</button></div>
     <p class="mf-song" id="mfSong"></p>
@@ -1841,11 +1933,226 @@ function player(src,bpm){
     showNow();
   }
   au.addEventListener("timeupdate",showNow);au.addEventListener("seeked",showNow);
+  box._ctl={
+    playing:()=>!au.paused||ciTimers.length>0,
+    toggle:()=>{if(ciTimers.length){cancelCI();showNow();return}au.paused?au.play():au.pause()},
+    jump:n=>{if(cur.bars)startAt(clampBar(n),"jump")},
+    bars:()=>cur.bars?cur.bars.n:0,
+    now:()=>nowEl.textContent.replace(/^現在：/,""),
+    time:()=>fmt(au.currentTime)+" / "+(isFinite(au.duration)?fmt(au.duration):"--:--"),
+    label:()=>cur.label||""
+  };
   const barSec=foldSection("bars","小節跳轉",jumpRow,nowRow,barNote);
   renderLoops();
   box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmSnds,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
   syncBars();
   return box;
+}
+/* ---------- sheet notes: pen / highlighter / eraser, practice boxes, PDF ---------- */
+// Per song in pr_sheet_notes: ink {page: [stroke]} and boxes [{n, pg, x, y, w, h}], all as
+// fractions of the page so they line up at any width. A stroke is {c colour, a alpha, w width,
+// e eraser, p [x,y,…]}; eraser strokes are drawn with destination-out on the ink layer only.
+const SN_COLORS=[{n:"紅",c:"#E5484D"},{n:"藍",c:"#3E63DD"},{n:"綠",c:"#2F9E5B"},{n:"黑",c:"#1F1B2D"},{n:"螢光筆",c:"#FFD60A",a:.4,k:3.2}];
+// practice-box colours; a new box takes the next one so neighbours differ
+const SN_BOX=[{n:"橘",c:"#E8833A"},{n:"紅",c:"#E5484D"},{n:"藍",c:"#3E63DD"},{n:"綠",c:"#2F9E5B"},{n:"紫",c:"#8E4EC6"},{n:"粉",c:"#D6409F"}];
+const SN_SIZES=[{n:"細",w:.0022},{n:"中",w:.004},{n:"粗",w:.007}];
+const snAll=load("pr_sheet_notes",{});
+const snSave=()=>save("pr_sheet_notes",snAll);
+function snInk(ctx,W,H,strokes){
+  ctx.clearRect(0,0,W,H);
+  (strokes||[]).forEach(st=>{
+    const p=st.p;if(!p||!p.length)return;
+    ctx.save();ctx.globalCompositeOperation=st.e?"destination-out":"source-over";ctx.globalAlpha=st.e?1:(st.a||1);
+    ctx.strokeStyle=ctx.fillStyle=st.c||"#000";ctx.lineWidth=Math.max(1,st.w*W);ctx.lineCap=ctx.lineJoin="round";
+    ctx.beginPath();
+    if(p.length===2){ctx.arc(p[0]*W,p[1]*H,ctx.lineWidth/2,0,Math.PI*2);ctx.fill()}
+    else{
+      ctx.moveTo(p[0]*W,p[1]*H);
+      for(let i=2;i<p.length-2;i+=2){const x=p[i]*W,y=p[i+1]*H;ctx.quadraticCurveTo(x,y,(x+p[i+2]*W)/2,(y+p[i+3]*H)/2)}
+      ctx.lineTo(p[p.length-2]*W,p[p.length-1]*H);ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
+const snAccent=()=>getComputedStyle(document.body).getPropertyValue("--accent").trim()||"#E8A33D";
+// a sheet page (or part of it) with its ink and boxes, at the image's own resolution
+async function snCompose(src,strokes,opt){
+  const img=new Image();img.src=src;await img.decode();
+  const W=img.naturalWidth,H=img.naturalHeight,r=opt.crop||{x:0,y:0,w:1,h:1};
+  const ink=document.createElement("canvas");ink.width=W;ink.height=H;if(opt.ink)snInk(ink.getContext("2d"),W,H,strokes);
+  const sx=r.x*W,sy=r.y*H,cw=Math.max(1,Math.round(r.w*W)),ch=Math.max(1,Math.round(r.h*H));
+  const out=document.createElement("canvas");out.width=cw;out.height=ch;const o=out.getContext("2d");
+  o.fillStyle="#fff";o.fillRect(0,0,cw,ch);o.drawImage(img,sx,sy,cw,ch,0,0,cw,ch);o.drawImage(ink,sx,sy,cw,ch,0,0,cw,ch);
+  (opt.boxes||[]).forEach(b=>{
+    const c=b.c||snAccent(),x=b.x*W-sx,y=b.y*H-sy;o.save();o.strokeStyle=o.fillStyle=c;o.lineWidth=Math.max(2,W*.002);
+    o.setLineDash([W*.008,W*.005]);o.strokeRect(x,y,b.w*W,b.h*H);o.setLineDash([]);
+    o.font="bold "+Math.round(W*.014)+"px sans-serif";const tw=o.measureText(b.n).width+W*.012,th=W*.022;
+    o.fillRect(x,y-th,tw,th);o.fillStyle="#fff";o.textBaseline="middle";o.fillText(b.n,x+W*.006,y-th/2);o.restore();
+  });
+  return out;
+}
+let jsPdfReady=null;
+function loadJsPdf(){
+  if(window.jspdf)return Promise.resolve();
+  if(jsPdfReady)return jsPdfReady;
+  jsPdfReady=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    sc.onload=res;sc.onerror=()=>{jsPdfReady=null;rej(new Error("jspdf"))};document.head.append(sc)});
+  return jsPdfReady;
+}
+function sheetNotes(s,sheet,pages){
+  const data=snAll[s.title]||(snAll[s.title]={});data.ink=data.ink||{};data.boxes=data.boxes||[];
+  let mode="view",col=0,size=1;const hist=[],redo=[]; // {i page, st stroke}
+  const bar=el("div","sn-bar"),modes=el("div","sn-row"),tools=el("div","sn-row"),more=el("div","sn-row"),boxList=el("div","sn-boxes");
+  modes.setAttribute("role","group");modes.setAttribute("aria-label","樂譜工具");
+  const icBtn=(ic,tip)=>{const b=el("button","sn-ic");b.type="button";b.innerHTML=ic;b.dataset.tip=tip;b.setAttribute("aria-label",tip);return b};
+  [["view","檢視（可捲動、點圖放大）","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5.5a1.5 1.5 0 0 1 3 0V11\"/><path d=\"M11 10.5V4a1.5 1.5 0 0 1 3 0v7\"/><path d=\"M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.6a6 6 0 0 1-4.7-2.3L3.4 15.8a1.6 1.6 0 0 1 2.5-2L8 16\"/></svg>"],["pen","筆刷","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20l1.2-4.4L16.6 4.2a2.1 2.1 0 0 1 3 3L8.2 18.8z\"/><path d=\"M14.6 6.2l3 3\"/></svg>"],["erase","橡皮擦","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 20h11\"/><path d=\"M4.6 15.4l9.8-9.8a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L12 18.4a2 2 0 0 1-1.4.6H8.4a2 2 0 0 1-1.4-.6l-2.4-2.4a2 2 0 0 1 0-2.8z\"/><path d=\"M9.5 10.5l5.5 5.5\"/></svg>"],["box","框選練習段落","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8\"/><path d=\"M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8\"/><path d=\"M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16\"/><path d=\"M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16\"/><path d=\"M11 4h2M11 20h2M4 11v2M20 11v2\"/></svg>"]].forEach(([m,n,ic])=>{
+    const b=icBtn(ic,n);b.dataset.m=m;b.setAttribute("aria-pressed",m===mode);b.onclick=()=>setMode(m);modes.append(b)});
+  const undo=icBtn("<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 14L4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 0 11H11\"/></svg>","上一步"),redoB=icBtn("<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15 14l5-5-5-5\"/><path d=\"M20 9H9.5a5.5 5.5 0 0 0 0 11H13\"/></svg>","下一步");
+  modes.append(el("span","sn-sep"),undo,redoB);
+  const syncUR=()=>{undo.disabled=!hist.length;redoB.disabled=!redo.length};
+  function setMode(m){
+    mode=m;modes.querySelectorAll("[data-m]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===m));
+    sheet.classList.toggle("sn-draw",m!=="view");renderTools();
+  }
+  function renderTools(){
+    tools.innerHTML="";
+    if(mode==="pen"){
+      SN_COLORS.forEach((c,i)=>{const b=el("button","sn-sw");b.style.background=c.c;b.setAttribute("aria-label",c.n);b.title=c.n;
+        b.setAttribute("aria-pressed",i===col);b.onclick=()=>{col=i;renderTools()};tools.append(b)});
+      tools.append(el("span","sn-sep"));
+    }
+    if(mode==="pen"||mode==="erase")SN_SIZES.forEach((z,i)=>{const b=el("button","pill",z.n);b.setAttribute("aria-pressed",i===size);
+      b.onclick=()=>{size=i;renderTools()};tools.append(b)});
+    tools.hidden=mode==="view";
+    if(mode==="box")tools.append(el("span","sn-hint","在譜上拖出一個框，圈出要加強練習的段落。"));
+    hint.textContent=mode==="view"?"點圖可以放大。":"寫筆記時畫面不會捲動，選回「檢視」才能捲動。";
+  }
+  // undo / show / PDF / clear
+  const showL=el("label","ci-chk"),showC=el("input"),pdfB=el("button","pill","下載含筆記的 PDF"),clr=el("button","pill","清除筆記");
+  showC.type="checkbox";showC.checked=!data.hide;showL.append(showC,"顯示筆記");
+  const syncShow=()=>sheet.classList.toggle("sn-hide",!!data.hide);
+  showC.onchange=()=>{data.hide=!showC.checked;snSave();syncShow()};
+  undo.onclick=()=>{const h=hist.pop();if(h){const a=data.ink[h.i]||[],k=a.lastIndexOf(h.st);if(k>=0)a.splice(k,1);redo.push(h);snSave();pages[h.i].draw()}syncUR()};
+  redoB.onclick=()=>{const h=redo.pop();if(h){(data.ink[h.i]||(data.ink[h.i]=[])).push(h.st);hist.push(h);snSave();pages[h.i].draw()}syncUR()};
+  syncUR();
+  clr.onclick=()=>{
+    if(!Object.values(data.ink).some(a=>a&&a.length))return;
+    if(!confirm("要清除「"+s.title+"」所有的筆記嗎？框選的段落會保留。"))return;
+    data.ink={};hist.length=redo.length=0;syncUR();snSave();pages.forEach(p=>p.draw());
+  };
+  pdfB.onclick=async()=>{
+    const old=pdfB.textContent;pdfB.disabled=true;pdfB.textContent="製作中…";
+    try{
+      await loadJsPdf();
+      const pdf=new window.jspdf.jsPDF({unit:"pt",format:"a4",compress:true}),PW=pdf.internal.pageSize.getWidth(),PH=pdf.internal.pageSize.getHeight();
+      for(let i=0;i<pages.length;i++){
+        const cv=await snCompose(pages[i].src,data.ink[i],{ink:!data.hide,boxes:data.boxes.filter(b=>b.pg===i)});
+        const k=Math.min(PW/cv.width,PH/cv.height),w=cv.width*k,hh=cv.height*k;
+        if(i)pdf.addPage();
+        pdf.addImage(cv.toDataURL("image/jpeg",.9),"JPEG",(PW-w)/2,(PH-hh)/2,w,hh);
+      }
+      pdf.save(s.title+"（含筆記）.pdf");
+    }catch(e){alert("PDF 製作失敗，請確認網路連線後再試一次。")}
+    pdfB.disabled=false;pdfB.textContent=old;
+  };
+  const hint=el("span","sn-hint");
+  more.append(showL,pdfB,clr,hint);
+  // only the tools stay pinned while scrolling the pages; the rest sits under them
+  // header: 樂譜筆記 folds the tools away; the pin keeps the bar at the top of the screen.
+  // Both choices are shared by all songs (pr_sn_ui).
+  const ui=Object.assign({fold:false,unpin:false},load("pr_sn_ui",{}));
+  const head=el("div","sn-head"),ttl=el("button","sn-title"),pin=el("button","sn-ic sm");
+  ttl.type=pin.type="button";
+  ttl.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  ttl.append("樂譜筆記");
+  pin.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/></svg>';
+  const syncUi=()=>{
+    bar.classList.toggle("folded",ui.fold);bar.classList.toggle("unpinned",ui.unpin);
+    ttl.setAttribute("aria-expanded",String(!ui.fold));ttl.title=ui.fold?"展開工具":"收起工具";
+    pin.setAttribute("aria-pressed",String(!ui.unpin));
+    const t=ui.unpin?"釘選在畫面上方":"取消釘選";pin.dataset.tip=t;pin.setAttribute("aria-label",t);
+  };
+  const setUi=(k,v)=>{ui[k]=v;save("pr_sn_ui",ui);
+    document.querySelectorAll(".sn-bar").forEach(b=>b._syncUi&&b._syncUi())}; // other open sheets follow
+  ttl.onclick=()=>{if(!ui.fold&&mode!=="view")setMode("view");setUi("fold",!ui.fold)};
+  pin.onclick=()=>setUi("unpin",!ui.unpin);
+  bar._syncUi=()=>{Object.assign(ui,load("pr_sn_ui",{}));if(ui.fold&&mode!=="view")setMode("view");syncUi()};
+  head.append(ttl,pin);
+  bar.append(head,modes,tools);sheet.prepend(bar,more,boxList);syncUi();
+  // practice boxes: outlines on the pages, and a list to open each one on its own
+  function renderBoxes(){
+    pages.forEach(p=>p.wrap.querySelectorAll(".sn-box").forEach(b=>b.remove()));
+    data.boxes.forEach((b,i)=>{if(!b.c)b.c=SN_BOX[i%SN_BOX.length].c;const p=pages[b.pg];if(!p)return;const d=el("div","sn-box");
+      Object.assign(d.style,{left:b.x*100+"%",top:b.y*100+"%",width:b.w*100+"%",height:b.h*100+"%",borderColor:b.c,background:"color-mix(in srgb,"+b.c+" 9%,transparent)"});
+      const lb=el("span","",b.n);lb.style.background=b.c;lb.style.color="#fff";d.append(lb);p.wrap.append(d)});
+    boxList.innerHTML="";boxList.hidden=!data.boxes.length;
+    if(!data.boxes.length)return;
+    boxList.append(el("span","sn-hint","重點段落（點一下單獨檢視）"));
+    data.boxes.forEach((b,i)=>{
+      const row=el("div","loop-item"),go=el("button","pill loop-go"),ren=el("button","pill loop-ic","✎"),del=el("button","pill loop-ic","×");
+      go.append(el("span","",b.n),el("small","","第 "+(b.pg+1)+" 頁"));go.onclick=()=>openBox(i);go.style.borderColor=b.c;
+      // colour: a dot that opens a small palette under the row
+      const sw=el("button","sn-sw sn-bsw");sw.style.background=b.c;sw.setAttribute("aria-label","換「"+b.n+"」的顏色");sw.title="換顏色";
+      const pal=el("div","sn-pal");pal.hidden=true;
+      SN_BOX.forEach(o=>{const x=el("button","sn-sw");x.style.background=o.c;x.setAttribute("aria-label",o.n);x.title=o.n;x.setAttribute("aria-pressed",o.c===b.c);
+        x.onclick=()=>{b.c=o.c;snSave();renderBoxes()};pal.append(x)});
+      sw.onclick=()=>{pal.hidden=!pal.hidden};
+      ren.setAttribute("aria-label","重新命名「"+b.n+"」");del.setAttribute("aria-label","刪除「"+b.n+"」");
+      del.onclick=()=>{data.boxes.splice(i,1);snSave();renderBoxes()};
+      ren.onclick=()=>{
+        const inp=el("input");inp.type="text";inp.maxLength=30;inp.value=b.n;inp.setAttribute("aria-label","段落名稱");
+        let done=false;const fin=ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v){b.n=v;snSave()}renderBoxes()};
+        inp.onkeydown=e=>{if(e.key==="Enter")fin(true);else if(e.key==="Escape")fin(false)};inp.onblur=()=>fin(true);
+        go.replaceWith(inp);inp.focus();inp.select();
+      };
+      row.append(sw,go,ren,del);boxList.append(row,pal);
+    });
+  }
+  async function openBox(i){
+    const b=data.boxes[i];if(!b)return;
+    const cv=await snCompose(pages[b.pg].src,data.ink[b.pg],{ink:!data.hide,crop:b});cv.className="sn-crop";
+    const nav=el("div","sn-nav"),prev=el("button","pill","‹ 上一段"),next=el("button","pill","下一段 ›");
+    prev.disabled=i===0;next.disabled=i===data.boxes.length-1;nav.append(prev,el("span","sn-hint",(i+1)+" / "+data.boxes.length),next);
+    const ok=el("button","btn","關閉");
+    const dl=sheetDialog(s.title+"・第 "+(b.pg+1)+" 頁",b.n,data.boxes.length>1?[cv,nav]:[cv],[ok]);
+    dl.d.classList.add("wide");ok.onclick=dl.close;
+    prev.onclick=()=>{dl.close();openBox(i-1)};next.onclick=()=>{dl.close();openBox(i+1)};
+  }
+  // drawing on each page
+  pages.forEach((pg,i)=>{
+    const {wrap,cv}=pg,ctx=cv.getContext("2d");
+    pg.draw=()=>{const r=wrap.getBoundingClientRect(),d=window.devicePixelRatio||1,W=Math.round(r.width*d),H=Math.round(r.height*d);
+      if(!W||!H)return;if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}snInk(ctx,W,H,data.ink[i])};
+    new ResizeObserver(pg.draw).observe(wrap);
+    const at=e=>{const r=cv.getBoundingClientRect();return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))]};
+    let cur=null,box=null,b0=null;
+    cv.addEventListener("pointerdown",e=>{
+      if(mode==="view"||(e.pointerType==="mouse"&&e.button!==0))return;
+      e.preventDefault();cv.setPointerCapture(e.pointerId);const [x,y]=at(e);
+      if(mode==="box"){b0=[x,y];box=el("div","sn-box");wrap.append(box);return}
+      const c=SN_COLORS[col],z=SN_SIZES[size];
+      cur=mode==="erase"?{e:1,w:z.w*3,p:[x,y]}:{c:c.c,a:c.a,w:z.w*(c.k||1),p:[x,y]};
+      (data.ink[i]||(data.ink[i]=[])).push(cur);pg.draw();
+    });
+    cv.addEventListener("pointermove",e=>{
+      if(box){const [x,y]=at(e);
+        Object.assign(box.style,{left:Math.min(x,b0[0])*100+"%",top:Math.min(y,b0[1])*100+"%",width:Math.abs(x-b0[0])*100+"%",height:Math.abs(y-b0[1])*100+"%"});return}
+      if(!cur)return;
+      ((e.getCoalescedEvents&&e.getCoalescedEvents().length)?e.getCoalescedEvents():[e]).forEach(ev=>{const [x,y]=at(ev),p=cur.p,dx=x-p[p.length-2],dy=y-p[p.length-1];if(dx*dx+dy*dy>1e-6)p.push(x,y)});
+      pg.draw();
+    });
+    const end=e=>{
+      if(box){
+        const [x,y]=at(e),r4=v=>Math.round(v*1e4)/1e4;box.remove();box=null;
+        const r={x:r4(Math.min(x,b0[0])),y:r4(Math.min(y,b0[1])),w:r4(Math.abs(x-b0[0])),h:r4(Math.abs(y-b0[1]))};
+        if(r.w>.03&&r.h>.015){data.boxes.push(Object.assign({n:"重點 "+(data.boxes.length+1),pg:i,c:SN_BOX[data.boxes.length%SN_BOX.length].c},r));snSave();renderBoxes()}
+        return;
+      }
+      if(!cur)return;cur.p=cur.p.map(v=>Math.round(v*1e4)/1e4);hist.push({i,st:cur});redo.length=0;cur=null;syncUR();snSave();
+    };
+    cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);
+  });
+  renderTools();syncShow();renderBoxes();
 }
 function renderSongs(){
   const box=$("#songs");box.innerHTML="";
@@ -1881,12 +2188,16 @@ function renderSongs(){
     else actions.append(open);
     const toggle=()=>{
       if(!sheet.childElementCount){
+        const pgs=[];
         s.pages.forEach((src,i)=>{
           const fig=el("figure"),img=el("img");
           img.src=src;img.alt=s.title+" 樂譜第 "+(i+1)+" 頁";img.loading=i?"lazy":"eager";img.width=1400;img.height=1980;
           const big=el("a");big.href=src;big.target="_blank";big.rel="noopener";big.append(img);
-          fig.append(big,el("figcaption","","第 "+(i+1)+" / "+s.pages.length+" 頁・點圖放大"));sheet.append(fig);
+          const wrap=el("div","sn-page"),cv=el("canvas");wrap.append(big,cv);
+          fig.append(wrap,el("figcaption","","第 "+(i+1)+" / "+s.pages.length+" 頁"));sheet.append(fig);
+          pgs.push({wrap,cv,src});
         });
+        sheetNotes(s,sheet,pgs);
         const close=el("button","btn ghost","收起樂譜");close.onclick=()=>{toggle();open.scrollIntoView({block:"center"})};
         sheet.append(close);
       }
@@ -2036,6 +2347,7 @@ renderSongs();
   // only one of the two panels open at a time
   function setOpen(v){
     if(v&&!$("#asPanel").hidden)$("#asFab").click();
+    if(v&&!$("#apPanel").hidden)$("#apFab").click();
     panel.hidden=!v;fab.setAttribute("aria-expanded",String(v));if(v)render();
   }
   fab.onclick=()=>setOpen(panel.hidden);
@@ -2045,6 +2357,57 @@ renderSongs();
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
   let rq=0;
   window.addEventListener("scroll",()=>{if(!panel.hidden&&!rq)rq=requestAnimationFrame(()=>{rq=0;render()})},{passive:true});
+  new MutationObserver(()=>{if(box.hidden)setOpen(false)}).observe(box,{attributes:true,attributeFilter:["hidden"]});
+  render();
+})();
+
+/* ---------- guitar: floating audio button (專案) ---------- */
+// Above the metronome button: play / pause and bar jump for a song card's player — the one
+// playing, otherwise the song at mid-screen. Only one of the floating panels is open at a time.
+(function(){
+  const box=$("#aScroll"),fab=$("#apFab"),panel=$("#apPanel"),play=$("#apPlay"),song=$("#apSong"),timeEl=$("#apTime"),nowEl=$("#apNow"),
+        jump=$("#apJump"),inp=$("#apBar"),ci=panel.querySelector("input[data-ci]");
+  const players=()=>[...document.querySelectorAll("#songs .player")].filter(p=>p._ctl);
+  function target(){
+    const ps=players(),run=ps.find(p=>p._ctl.playing());if(run)return run;
+    let pick=ps[0]||null;
+    ps.forEach(p=>{if(p.closest(".song").getBoundingClientRect().top<=innerHeight/2)pick=p});
+    return pick;
+  }
+  function render(){
+    const p=target(),c=p&&p._ctl,on=!!c&&c.playing();
+    fab.classList.toggle("running",players().some(x=>x._ctl.playing()));
+    fab.setAttribute("aria-label",on?"播放音檔（播放中）":"播放音檔");
+    play.disabled=!p;play.setAttribute("aria-pressed",String(on));
+    const l=on?"暫停":"播放";play.setAttribute("aria-label",l);play.title=l;
+    if(!c){song.textContent="";timeEl.textContent="";nowEl.textContent="";jump.hidden=true;return}
+    const name=p.closest(".song").querySelector("h3").textContent.split(/\s*\+\s*/)[0];
+    song.textContent="「"+name+"」"+(c.label()?"・"+c.label():"");
+    timeEl.textContent=c.time();nowEl.textContent=c.now();
+    const n=c.bars();jump.hidden=!n;if(n){inp.max=n;if(+inp.value>n)inp.value=n}
+    ci.checked=ciPref.jump;
+  }
+  const clamp=v=>{const n=(target()||{_ctl:{bars:()=>1}})._ctl.bars()||1;return Math.max(1,Math.min(n,Math.round(+v)||1))};
+  play.onclick=()=>{const p=target();if(p){p._ctl.toggle();setTimeout(render,50)}};
+  $("#apMinus").onclick=()=>{inp.value=clamp(+inp.value-1)};
+  $("#apPlus").onclick=()=>{inp.value=clamp(+inp.value+1)};
+  $("#apGo").onclick=()=>{const p=target();if(!p)return;inp.value=clamp(inp.value);p._ctl.jump(+inp.value);setTimeout(render,50)};
+  inp.onkeydown=e=>{if(e.key==="Enter")$("#apGo").click()};
+  // same setting as the 先數 4 拍預備拍 box in each player
+  ci.onchange=()=>{ciPref.jump=ci.checked;save("pr_countin",ciPref);document.querySelectorAll('input[data-ci="jump"]').forEach(x=>x.checked=ci.checked)};
+  let tick=0;
+  function setOpen(v){
+    if(v){if(!$("#asPanel").hidden)$("#asFab").click();if(!$("#mfPanel").hidden)$("#mfFab").click()}
+    panel.hidden=!v;fab.setAttribute("aria-expanded",String(v));
+    clearInterval(tick);if(v){render();tick=setInterval(render,250)} // follows playback and the count-in
+  }
+  fab.onclick=()=>setOpen(panel.hidden);
+  ["#asFab","#mfFab"].forEach(s=>$(s).addEventListener("click",()=>{if(!panel.hidden)setOpen(false)}));
+  $("#apClose").onclick=()=>{setOpen(false);fab.focus()};
+  document.addEventListener("click",e=>{if(!panel.hidden&&!box.contains(e.target))setOpen(false)});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
+  // the running dot while the panel is closed
+  document.addEventListener("play",render,true);document.addEventListener("pause",render,true);
   new MutationObserver(()=>{if(box.hidden)setOpen(false)}).observe(box,{attributes:true,attributeFilter:["hidden"]});
   render();
 })();
@@ -2747,20 +3110,57 @@ const RELEASES=[
     ["和弦按法放進播放區","「用到的和弦」移到段落循環下面，練習的工具都在同一塊。"]
   ]}
 ];
+// A centred dialog in the site's style: small kicker line, title, scrolling body, buttons at the bottom.
+// Closing (button or Esc) removes it and calls onClose.
+let dlgSeq=0;
+function sheetDialog(kicker,title,content,buttons,onClose){
+  const d=el("dialog","rn"),inner=el("div","rn-in"),head=el("div","rn-head"),body=el("div","rn-body"),foot=el("div","rn-foot"),t=el("h2","",title);
+  t.id="rnTitle"+(++dlgSeq);d.setAttribute("aria-labelledby",t.id);
+  head.append(el("small","",kicker),t);body.append(...content);foot.append(...buttons);
+  inner.append(head,body,foot);d.append(inner);document.body.append(d);
+  let closed=false;
+  const close=()=>{if(closed)return;closed=true;if(onClose)onClose();if(d.open)d.close();d.remove()};
+  d.addEventListener("close",close);d.showModal();
+  return {d,close};
+}
+const relList=r=>{const ul=el("ul");r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});return ul};
+const verDate=v=>v.replace(/-/g,"/");
 (function(){
   const r=RELEASES[0];
   if(load("pr_seen_ver",null)===r.v)return;
   if(!RETURNING){save("pr_seen_ver",r.v);return} // brand-new visitor: nothing to announce
-  const d=el("dialog","rn"),inner=el("div","rn-in"),head=el("div","rn-head"),body=el("div","rn-body"),foot=el("div","rn-foot"),ul=el("ul"),ok=el("button","btn","我知道了");
-  d.setAttribute("aria-labelledby","rnTitle");
-  const t=el("h2","",r.title);t.id="rnTitle";head.append(el("small","","版本更新・"+r.v.replace(/-/g,"/")),t);
-  r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});
-  body.append(ul);foot.append(ok);inner.append(head,body,foot);d.append(inner);document.body.append(d);
+  const ok=el("button","btn","我知道了");
   // 我知道了 (or Esc) marks this version as read
-  const done=()=>{save("pr_seen_ver",r.v);if(d.open)d.close();d.remove()};
-  ok.onclick=done;d.addEventListener("close",done);
-  d.showModal();ok.focus();
+  const dl=sheetDialog("版本更新・"+verDate(r.v),r.title,[relList(r)],[ok],()=>save("pr_seen_ver",r.v));
+  ok.onclick=dl.close;ok.focus();
 })();
+
+/* ---------- side nav: 回報問題 ---------- */
+// The entry stays hidden until CONTACT_EMAIL is filled in (mailbox not decided yet).
+const CONTACT_EMAIL="";
+// where the reader is, for the report: 吉他 › 專案 etc.
+function wherePage(){
+  const m=document.body.dataset.mode==="singing"?"singing":"guitar",tab=$("#"+m+" .subtab[aria-selected=\"true\"]");
+  return (m==="singing"?"歌唱":"吉他")+(tab?" › "+tab.textContent.trim():"");
+}
+function openReport(){
+  const intro=el("p","","哪裡怪怪的、壞掉了，或是有想要的功能，都可以告訴我。寫好之後按「用 Email 寄出」，會打開你的郵件程式，內容已經幫你填好，再按寄出就好。");
+  const ta=el("textarea");ta.placeholder="發生了什麼事？例如：在勇悍行按「跳到」第 17 小節，位置差了半拍。";ta.setAttribute("aria-label","問題描述");
+  const info=["頁面："+wherePage()+(CLASS?"（同學版）":""),"網站版本："+RELEASES[0].v,"裝置："+navigator.userAgent,"螢幕："+innerWidth+"×"+innerHeight].join("\n");
+  const meta=el("p","rn-meta","會一起附上：目前頁面、網站版本、瀏覽器和螢幕大小，方便找問題。");
+  const alt=el("p","rn-meta");const a=el("a","",CONTACT_EMAIL);a.href="mailto:"+CONTACT_EMAIL;alt.append("沒有郵件程式的話，也可以直接寄信到 ",a,"。");
+  const send=el("button","btn","用 Email 寄出"),cancel=el("button","btn ghost","取消");
+  const dl=sheetDialog("回報問題","告訴我哪裡需要改",[intro,ta,meta,alt],[send,cancel]);
+  send.onclick=()=>{
+    const body=(ta.value.trim()||"（請描述問題）")+"\n\n——\n"+info;
+    location.href="mailto:"+CONTACT_EMAIL+"?subject="+encodeURIComponent("［彈唱練習室］問題回報")+"&body="+encodeURIComponent(body);
+    dl.close();
+  };
+  cancel.onclick=dl.close;ta.focus();
+}
+// on phones the nav is a drawer: close it first
+$("#navReport").onclick=()=>{closeNav();openReport()};
+if(CONTACT_EMAIL)$("#navFoot").hidden=false; // shown once a mailbox is set
 })();
 </script>
 </body>
