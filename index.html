@@ -399,6 +399,14 @@ section.panel[hidden]{display:none}
 .loop-item .loop-go span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .loop-item .loop-go small{font-variant-numeric:tabular-nums;opacity:.75;flex:none}
 .loop-item .loop-ic{width:36px;padding:0;flex:none;color:var(--muted)}
+/* bar jump / bar loop */
+.bar-in{width:4.2em;font:inherit;font-size:.95rem;font-variant-numeric:tabular-nums;text-align:center;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:5px 6px;min-height:36px;-moz-appearance:textfield}
+.bar-in::-webkit-inner-spin-button,.bar-in::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.bar-in:focus{outline:none;border-color:var(--accent)}
+.bar-row{align-items:center;gap:6px}
+.bar-row .lbl{font-size:.9rem}
+.bar-grp{display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.bar-now{font-variant-numeric:tabular-nums}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
 .block>header{margin-bottom:12px}
 .block>header p{color:var(--muted);font-size:.93rem;margin-top:4px}
@@ -1583,20 +1591,23 @@ const SONGS=[
    chords:["C","G","F","Am","Dm7","Em","D","D7","Bm"],
    file:"組曲吉他譜(詞曲版).pdf",
    pages:[1,2,3,4,5].map(n=>"sheets/sun-medley/"+n+".jpg"),
-   audio:[{src:"生命的太陽+凝眸+幸福時刻.mp3",label:"示範 4:54"},{src:"生命的太陽+凝眸+幸福時刻(Click).mp3",label:"含節拍器 4:49"}],
+   audio:[{src:"生命的太陽+凝眸+幸福時刻.mp3",label:"示範 4:54",bars:{t1:3.449,len:240/70,n:85,exact:82,end:294.5}},
+          {src:"生命的太陽+凝眸+幸福時刻(Click).mp3",label:"含節拍器 4:49",bpm:72,bars:{t1:3.355,len:240/72,n:85,exact:82,end:290}}],
    bpm:70,audioNote:"Guitar Pro 示範音檔（點選要聽的版本）"},
   {title:"勇悍行",by:"鋼弦吉他・編曲 真如",
    meta:["標準調音","♩=96","全程悶音（P.M.）八分音符","譜 3 頁","音檔 1:50"],
    chords:["C#m7","Aadd9","Bsus4","G#m7(#5)","C#m","E"],
    file:"勇悍行(AG1003).pdf",
    pages:[1,2,3].map(n=>"sheets/yong-han-xing/"+n+".jpg"),
-   audio:"勇悍行1003.mp3",bpm:96,audioNote:"Guitar Pro 示範音檔"},
+   audio:[{src:"勇悍行1003.mp3",bars:{t1:2.526,len:2.5,n:43}}],bpm:96,audioNote:"Guitar Pro 示範音檔"},
   {title:"相思湖畔",by:"鋼弦吉他・編曲 真如",
    meta:["標準調音","移調夾第 2 格","♩=110","全程 let ring","譜 1 頁"],
    chords:["C","F","G","Am","Fadd9"],
    file:"相思湖畔(AG1003).pdf",
    pages:["sheets/xiang-si-hu-pan/1.jpg"],
-   audio:[{src:"相思湖畔(AG1003).mp3",label:"吉他示範 0:41"},{src:"相思湖畔 vocC.mp3",label:"人聲 C 調 4:06"},{src:"相思湖畔 voc升C.mp3",label:"人聲 #C 調 4:06"}],
+   audio:[{src:"相思湖畔(AG1003).mp3",label:"吉他示範 0:41",bars:{t1:2.215,len:240/110,n:18}},
+          {src:"相思湖畔 vocC.mp3",label:"人聲 C 調 4:06",bars:{t1:2.215,len:240/110,n:112,sheet:18}},
+          {src:"相思湖畔 voc升C.mp3",label:"人聲 #C 調 4:06",bars:{t1:2.215,len:240/110,n:112,sheet:18}}],
    bpm:110,audioNote:"示範音檔（點選要聽的版本）"}
 ];
 // Collapsible section in a song card; the open/closed state is shared by all cards of that kind
@@ -1629,7 +1640,7 @@ function player(src,bpm){
       const b=el("button","pill",t.label);b.setAttribute("aria-pressed",i===0);
       b.onclick=()=>{
         if(b.getAttribute("aria-pressed")==="true")return;
-        const was=!au.paused;au.pause();cur=t;use(t);A=B=null;show();showSpeed();if(was)au.play();
+        const was=!au.paused;au.pause();cur=t;use(t);A=B=null;show();showSpeed();syncBars();if(was)au.play();
         pick.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
       };
       pick.append(b);
@@ -1637,6 +1648,13 @@ function player(src,bpm){
     box.append(pick);
   }
   const fmt=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
+  // bars: start time of bar n (1…n+1) and the bar/beat playing at time t
+  const barT=n=>{const g=cur.bars;if(!g)return 0;const lin=k=>g.t1+(k-1)*g.len;
+    if(!g.exact||n<=g.exact+1)return lin(n);const s=lin(g.exact+1);return s+(n-g.exact-1)*(g.end-s)/(g.n-g.exact)};
+  const barAt=t=>{const g=cur.bars;if(!g||t<barT(1)-0.05)return null;let n=Math.min(g.n,Math.max(1,Math.floor((t-g.t1)/g.len)+1));
+    while(n>1&&barT(n)>t+0.05)n--;while(n<g.n&&barT(n+1)<=t+0.05)n++;
+    return {n,beat:Math.min(4,Math.floor((t-barT(n))/(barT(n+1)-barT(n))*4)+1)}};
+  const barRange=(a,b)=>{if(!cur.bars)return "";const x=barAt(a+0.06),y=barAt(b-0.06);return x&&y?(x.n===y.n?"第 "+x.n+" 小節":"第 "+x.n+"–"+y.n+" 小節"):""};
   // speed: 40%–125% of the original; with a known tempo the controls step by 1 BPM
   let cur=tracks[0];
   const base=()=>cur.bpm||bpm||0,R_MIN=0.4,R_MAX=1.25;
@@ -1700,7 +1718,7 @@ function player(src,bpm){
   const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
   speeds.append(dial,range,presets);showSpeed();
   let A=null,B=null;
-  const show=()=>{info.textContent=A===null?"":"循環 "+fmt(A)+" – "+(B===null?"…":fmt(B));if(typeof renderLoops==="function")renderLoops()};
+  const show=()=>{info.textContent=A===null?"":"循環 "+(B!==null&&barRange(A,B)?barRange(A,B)+"（"+fmt(A)+" – "+fmt(B)+"）":fmt(A)+" – "+(B===null?"…":fmt(B)));if(typeof renderLoops==="function")renderLoops()};
   const setA=el("button","pill","設 A 點"),setB=el("button","pill","設 B 點"),clr=el("button","pill","取消循環");
   setA.onclick=()=>{A=au.currentTime;if(B!==null&&B<=A)B=null;show()};
   setB.onclick=()=>{if(A===null||au.currentTime<=A){info.textContent="先在要開始的地方按「設 A 點」";return}B=au.currentTime;au.currentTime=A;au.play();show()};
@@ -1716,7 +1734,7 @@ function player(src,bpm){
     const a=myLoops();list.innerHTML="";saveBtn.disabled=A===null||B===null;
     a.forEach((L,i)=>{
       const row=el("div","loop-item"),go=el("button","pill loop-go"),ren=el("button","pill loop-ic","✎"),del=el("button","pill loop-ic","×");
-      go.append(el("span","",L.n),el("small","",fmt(L.a)+" – "+fmt(L.b)));
+      go.append(el("span","",L.n),el("small","",barRange(L.a,L.b)||fmt(L.a)+" – "+fmt(L.b)));
       go.setAttribute("aria-pressed",A===L.a&&B===L.b);
       go.onclick=()=>{A=L.a;B=L.b;au.currentTime=A;au.play();show()};
       ren.setAttribute("aria-label","重新命名「"+L.n+"」");del.setAttribute("aria-label","刪除「"+L.n+"」");
@@ -1740,8 +1758,38 @@ function player(src,bpm){
   };
   nameIn.onkeydown=e=>{if(e.key==="Enter")saveBtn.click()};
   speeds.prepend(el("span","grp-label","播放速度"));
+  const numIn=(lbl)=>{const i=el("input","bar-in");i.type="number";i.inputMode="numeric";i.min=1;i.step=1;i.setAttribute("aria-label",lbl);return i};
+  const clampBar=v=>Math.max(1,Math.min(cur.bars?cur.bars.n:1,Math.round(+v)||1));
+  const jumpRow=el("div","row bar-row"),jIn=numIn("要跳到第幾小節"),jMinus=el("button","pill spd-step","−"),jPlus=el("button","pill spd-step","＋"),jGo=el("button","pill","跳到"),
+        nowEl=el("span","note bar-now"),barNote=el("p","note");
+  jIn.value=1;jMinus.setAttribute("aria-label","前一小節");jPlus.setAttribute("aria-label","下一小節");
+  jMinus.onclick=()=>{jIn.value=clampBar(+jIn.value-1)};jPlus.onclick=()=>{jIn.value=clampBar(+jIn.value+1)};
+  jGo.onclick=()=>{const n=clampBar(jIn.value);jIn.value=n;au.currentTime=barT(n);au.play()};
+  jIn.onkeydown=e=>{if(e.key==="Enter")jGo.click()};
+  const jGrp=el("span","bar-grp");jGrp.append(el("span","lbl","第"),jMinus,jIn,jPlus,el("span","lbl","小節"));jumpRow.append(jGrp,jGo);
+  const nowRow=el("div","row");nowRow.append(nowEl);
+  // loop by bars: from the start of bar a to the end of bar b
+  const bloopRow=el("div","row bar-row"),bA=numIn("循環從第幾小節"),bB=numIn("循環到第幾小節"),bGo=el("button","pill","循環這幾小節");
+  bA.value=1;bB.value=4;
+  bGo.onclick=()=>{let a=clampBar(bA.value),b=clampBar(bB.value);if(b<a)[a,b]=[b,a];bA.value=a;bB.value=b;
+    A=barT(a);B=barT(b+1);if(cur.bars&&b>=cur.bars.n)B=Math.min(B,au.duration||B);au.currentTime=A;au.play();show()};
+  [bA,bB].forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")bGo.click()});
+  const bGrp=el("span","bar-grp");bGrp.append(el("span","lbl","第"),bA,el("span","lbl","到"),bB,el("span","lbl","小節"));bloopRow.append(bGrp,bGo);
+  function showNow(){
+    const b=cur.bars&&barAt(au.currentTime);
+    nowEl.textContent=!cur.bars?"":b?"現在：第 "+b.n+" 小節第 "+b.beat+" 拍"+(cur.bars.exact&&b.n>cur.bars.exact?"（約）":""):"現在：預備拍";
+  }
+  function syncBars(){
+    const g=cur.bars;barSec.hidden=bloopRow.hidden=!g;if(!g)return;
+    [jIn,bA,bB].forEach(i=>{i.max=g.n;i.value=clampBar(i.value)});
+    barNote.textContent="共 "+g.n+" 小節"+(g.sheet?"，樂譜只有前 "+g.sheet+" 小節，之後依序往下數":"")+(g.exact?"；第 "+(g.exact+1)+" 小節之後漸慢，位置是大約的":"")+"。";
+    showNow();
+  }
+  au.addEventListener("timeupdate",showNow);au.addEventListener("seeked",showNow);
+  const barSec=foldSection("bars","小節跳轉",jumpRow,nowRow,barNote);
   renderLoops();
-  box.append(au,speeds,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,saveRow,list));
+  box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
+  syncBars();
   return box;
 }
 function renderSongs(){
