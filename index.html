@@ -384,6 +384,9 @@ section.panel[hidden]{display:none}
 .fold-body>.row:first-child{margin-top:2px}
 .player .pill{min-height:36px;padding:4px 12px}
 .player .tracks{margin:0 0 10px}
+.player .pm-beats{justify-content:flex-start;gap:8px;margin:10px 0 2px}
+.player .pm-beats i{width:16px;height:16px}
+.player .pm-tempo{font-weight:700;color:var(--ink)}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
 .block>header{margin-bottom:12px}
 .block>header p{color:var(--muted);font-size:.93rem;margin-top:4px}
@@ -1408,6 +1411,7 @@ function playSnd(s,t,lv,beat){sndGain=s.k;s.fn(t,lv,beat);sndGain=1}
 const ms=Object.assign({bpm:80,meter:2,sub:0,snd:0},load("pr_metro",{}));
 ms.bpm=Math.max(30,Math.min(240,ms.bpm|0||80));if(!METERS[ms.meter])ms.meter=2;if(!SUBS[ms.sub])ms.sub=0;if(!MSOUNDS[ms.snd])ms.snd=0;
 let mOn=false,mSched=null,mNext=0,mTick=0,mTimers=[],taps=[];
+let songMetroOff=null; // stops whichever song-card metronome is running
 function mSave(){save("pr_metro",ms)}
 function mSetBpm(v){ms.bpm=Math.max(30,Math.min(240,Math.round(v)));$("#mBpm").textContent=ms.bpm;$("#mRange").value=ms.bpm;mSave()}
 function mRenderBeats(){
@@ -1441,6 +1445,7 @@ function startMetro(){
   $("#mBtn").textContent="停止";mScheduler();mSched=setInterval(mScheduler,TICK_MS);
 }
 function stopMetro(){
+  if(songMetroOff)songMetroOff();
   if(mSched)clearInterval(mSched);mSched=null;mTimers.forEach(clearTimeout);mTimers=[];
   mOn=false;$("#mBtn").textContent="開始";[...$("#mBeats").children].forEach(d=>d.classList.remove("on"));
 }
@@ -1521,6 +1526,7 @@ function showSub(panel,sub,init){
   $("#"+panel).querySelectorAll(".subtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.sub===sub));
   $("#"+panel).querySelectorAll(".subtab").forEach(b=>{$("#"+pre+"-"+b.dataset.sub).hidden=b.dataset.sub!==sub});
   if(sub!=="common"&&!init)SUB_STOP[panel]();
+  if(sub!=="projects"&&songMetroOff)songMetroOff();
   if(!CLASS)save("pr_"+panel+"_sub",sub);
   if(panel==="singing"&&sub==="common"&&!init)drawCurve();
   if(navReady)navSync();
@@ -1606,7 +1612,7 @@ function player(src,bpm){
     const b=base();range.value=ratio;
     val.textContent=b?"♩="+Math.round(b*ratio):Math.round(ratio*100)+"%";
     const t=b?(ratio===1?"原速":"原速 ♩="+b+"・"+Math.round(ratio*100)+"%"):(ratio===1?"原速":"");
-    sub.textContent=t;range.setAttribute("aria-valuetext",val.textContent);
+    sub.textContent=t;range.setAttribute("aria-valuetext",val.textContent);pmShow();
     presets.innerHTML="";
     [0.6,0.75,1].forEach(p=>{const x=el("button","pill",p===1?(b?"原速 "+b:"原速"):(b?String(Math.round(b*p)):Math.round(p*100)+"%"));
       x.setAttribute("aria-pressed",Math.abs(ratio-p)<0.004);x.onclick=()=>setRatio(p);presets.append(x)});
@@ -1615,6 +1621,40 @@ function player(src,bpm){
   minus.onclick=()=>setRatio(base()?(Math.round(base()*ratio)-1)/base():ratio-0.05);
   plus.onclick=()=>setRatio(base()?(Math.round(base()*ratio)+1)/base():ratio+0.05);
   range.addEventListener("input",()=>setRatio(+range.value));
+  const pmRow=el("div","row"),pmBtn=el("button","pill","開始"),pmTempo=el("span","note pm-tempo"),pmRange=el("input"),pmMeters=el("div","row"),pmDots=el("div","beats pm-beats");
+  pmDots.setAttribute("aria-hidden","true");pmBtn.setAttribute("aria-pressed",false);
+  let pmOn=false,pmT=null,pmNext=0,pmTick=0,pmMeter=2,pmTimers=[];
+  let pmVal=80;const pmBpm=()=>pmVal;
+  const pmSet=v=>{pmVal=Math.max(30,Math.min(240,Math.round(v)));pmTempo.textContent="♩="+pmVal;pmRange.value=pmVal;pmRange.setAttribute("aria-valuetext",pmTempo.textContent)};
+  function pmShow(){pmSet((base()||80)*ratio)} // follow the playback speed whenever it changes
+  pmRange.type="range";pmRange.min=30;pmRange.max=240;pmRange.step=1;pmRange.setAttribute("aria-label","節拍器速度");
+  pmRange.addEventListener("input",()=>pmSet(+pmRange.value));
+  function pmDraw(){const m=METERS[pmMeter];pmDots.innerHTML="";
+    for(let i=0;i<m.beats;i++)pmDots.append(el("i",i===0||(m.acc||[]).includes(i)?"acc":""))}
+  function pmSchedule(){
+    const c=audio();if(pmNext<c.currentTime)pmNext=c.currentTime+0.02;
+    while(pmNext<c.currentTime+LOOKAHEAD){
+      const m=METERS[pmMeter],beat=pmTick%m.beats,t=pmNext;
+      playSnd(MSOUNDS[ms.snd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat);
+      const id=setTimeout(()=>{pmTimers=pmTimers.filter(x=>x!==id);
+        if(pmOn)[...pmDots.children].forEach((d,i)=>d.classList.toggle("on",i===beat))},Math.max(0,(t-c.currentTime)*1000));
+      pmTimers.push(id);pmNext+=60/pmBpm();pmTick++;
+    }
+  }
+  function pmStop(){
+    if(pmT)clearInterval(pmT);pmT=null;pmTimers.forEach(clearTimeout);pmTimers=[];pmOn=false;
+    pmBtn.textContent="開始";pmBtn.setAttribute("aria-pressed",false);[...pmDots.children].forEach(d=>d.classList.remove("on"));
+    if(songMetroOff===pmStop)songMetroOff=null;
+  }
+  function pmStart(){
+    stopMetro();stopPlayer(); // also stops any other song's metronome
+    const c=audio();pmOn=true;pmTick=0;pmNext=c.currentTime+0.06;songMetroOff=pmStop;
+    pmBtn.textContent="停止";pmBtn.setAttribute("aria-pressed",true);pmSchedule();pmT=setInterval(pmSchedule,TICK_MS);
+  }
+  pmBtn.onclick=()=>pmOn?pmStop():pmStart();
+  METERS.forEach((m,i)=>{const b=el("button","pill",m.n);b.setAttribute("aria-pressed",i===pmMeter);
+    b.onclick=()=>{pmMeter=i;pmTick=0;pmDraw();pmMeters.querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i))};pmMeters.append(b)});
+  pmRow.append(pmBtn,pmTempo);pmDraw();
   const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
   speeds.append(dial,range,presets);showSpeed();
   let A=null,B=null;
@@ -1626,7 +1666,7 @@ function player(src,bpm){
   au.addEventListener("timeupdate",()=>{if(A!==null&&B!==null&&au.currentTime>=B)au.currentTime=A});
   loop.append(setA,setB,clr,info);
   speeds.prepend(el("span","grp-label","播放速度"));
-  box.append(au,speeds,foldSection("loop","段落循環（A-B 重複播放）",loop));
+  box.append(au,speeds,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop));
   return box;
 }
 function renderSongs(){
@@ -1678,8 +1718,10 @@ function renderSongs(){
     };
     open.onclick=toggle;
     card.append(el("h3","",s.title),el("p","by",s.by),meta);
-    if(s.audio)card.append(el("span","grp-label",s.audioNote||"示範音檔"),player(s.audio,s.bpm));
-    card.append(foldSection("chords","用到的和弦（點一下看按法）",chords,cp));
+    // Chords sit inside the player box, under the loop, so practice tools stay together
+    const chordSec=foldSection("chords","用到的和弦（點一下看按法）",chords,cp);
+    if(s.audio){const p=player(s.audio,s.bpm);p.append(chordSec);card.append(el("span","grp-label",s.audioNote||"示範音檔"),p)}
+    else card.append(chordSec);
     if(s.pages)card.append(actions,sheet);
     box.append(card);
   });
