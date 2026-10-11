@@ -394,7 +394,7 @@ section.panel[hidden]{display:none}
 .sn-bar .pill{min-height:34px;padding:3px 12px;font-size:.88rem}
 .sn-bar .pill:disabled,.sheet>.sn-row .pill:disabled,.sn-nav .pill:disabled{opacity:.45;cursor:default}
 .sn-bar>.sn-head+.sn-row{gap:4px;flex-wrap:nowrap}
-.sn-ic{position:relative;width:38px;height:38px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;padding:0;flex:none}
+.sn-ic{position:relative;width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;padding:0;flex:none}
 .sn-ic:hover{background:var(--bg)}
 .sn-ic[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
 .sn-ic:disabled{opacity:.35;cursor:default;background:transparent}
@@ -403,6 +403,8 @@ section.panel[hidden]{display:none}
 .sn-sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1.5px var(--line);padding:0}
 .sn-sw[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--accent)}
 .sn-hint{font-size:.82rem;color:var(--muted)}
+.sn-tin{position:absolute;z-index:3;margin:0;padding:0 2px;border:1.5px dashed var(--accent);border-radius:4px;background:rgba(255,255,255,.92);
+  font-weight:700;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.25;resize:none;overflow:hidden;white-space:pre;outline:none}
 .sn-sep{width:1px;height:22px;background:var(--line);margin:0 2px}
 .sn-page{position:relative}
 .sn-page canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -1982,12 +1984,21 @@ function player(src,bpm){
 const SN_COLORS=[{n:"紅",c:"#E5484D"},{n:"藍",c:"#3E63DD"},{n:"綠",c:"#2F9E5B"},{n:"黑",c:"#1F1B2D"},{n:"螢光筆",c:"#FFD60A",a:.4,k:3.2}];
 // practice-box colours; a new box takes the next one so neighbours differ
 const SN_BOX=[{n:"橘",c:"#E8833A"},{n:"紅",c:"#E5484D"},{n:"藍",c:"#3E63DD"},{n:"綠",c:"#2F9E5B"},{n:"紫",c:"#8E4EC6"},{n:"粉",c:"#D6409F"}];
+const SN_TSIZES=[{n:"小",s:.018},{n:"中",s:.026},{n:"大",s:.038}];
+const snFont=px=>"bold "+px+'px "Noto Sans TC","Microsoft JhengHei",sans-serif';
 const SN_SIZES=[{n:"細",w:.0022},{n:"中",w:.004},{n:"粗",w:.007}];
 const snAll=load("pr_sheet_notes",{});
-const snSave=()=>save("pr_sheet_notes",snAll);
+const snSave=()=>save("pr_sheet_notes",snAll); // (the temporary .hide flag on a text being edited is harmless)
 function snInk(ctx,W,H,strokes){
   ctx.clearRect(0,0,W,H);
   (strokes||[]).forEach(st=>{
+    if(st.hide)return;
+    if(st.k==="t"){ // text: white halo so it stays readable over the staff lines
+      ctx.save();ctx.font=snFont(st.s*W);ctx.textBaseline="top";ctx.lineJoin="round";
+      ctx.lineWidth=Math.max(2,st.s*W*.22);ctx.strokeStyle="rgba(255,255,255,.9)";ctx.fillStyle=st.c;
+      st.t.split("\n").forEach((ln,j)=>{const y=st.y*H+j*st.s*W*1.25;ctx.strokeText(ln,st.x*W,y);ctx.fillText(ln,st.x*W,y)});
+      ctx.restore();return;
+    }
     const p=st.p;if(!p||!p.length)return;
     ctx.save();ctx.globalCompositeOperation=st.e?"destination-out":"source-over";ctx.globalAlpha=st.e?1:(st.a||1);
     ctx.strokeStyle=ctx.fillStyle=st.c||"#000";ctx.lineWidth=Math.max(1,st.w*W);ctx.lineCap=ctx.lineJoin="round";
@@ -2028,11 +2039,11 @@ function loadJsPdf(){
 }
 function sheetNotes(s,sheet,pages){
   const data=snAll[s.title]||(snAll[s.title]={});data.ink=data.ink||{};data.boxes=data.boxes||[];
-  let mode="view",col=0,size=1;const hist=[],redo=[]; // {i page, st stroke}
+  let mode="view",col=0,size=1,tcol=0,tsize=1;const hist=[],redo=[]; // {i page, st stroke, kind add|edit|del}
   const bar=el("div","sn-bar"),modes=el("div","sn-row"),tools=el("div","sn-row"),more=el("div","sn-row"),boxList=el("div","sn-boxes");
   modes.setAttribute("role","group");modes.setAttribute("aria-label","樂譜工具");
   const icBtn=(ic,tip)=>{const b=el("button","sn-ic");b.type="button";b.innerHTML=ic;b.dataset.tip=tip;b.setAttribute("aria-label",tip);return b};
-  [["view","檢視（可捲動、點圖放大）","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5.5a1.5 1.5 0 0 1 3 0V11\"/><path d=\"M11 10.5V4a1.5 1.5 0 0 1 3 0v7\"/><path d=\"M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.6a6 6 0 0 1-4.7-2.3L3.4 15.8a1.6 1.6 0 0 1 2.5-2L8 16\"/></svg>"],["pen","筆刷","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20l1.2-4.4L16.6 4.2a2.1 2.1 0 0 1 3 3L8.2 18.8z\"/><path d=\"M14.6 6.2l3 3\"/></svg>"],["erase","橡皮擦","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 20h11\"/><path d=\"M4.6 15.4l9.8-9.8a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L12 18.4a2 2 0 0 1-1.4.6H8.4a2 2 0 0 1-1.4-.6l-2.4-2.4a2 2 0 0 1 0-2.8z\"/><path d=\"M9.5 10.5l5.5 5.5\"/></svg>"],["box","框選練習段落","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8\"/><path d=\"M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8\"/><path d=\"M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16\"/><path d=\"M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16\"/><path d=\"M11 4h2M11 20h2M4 11v2M20 11v2\"/></svg>"]].forEach(([m,n,ic])=>{
+  [["view","檢視（可捲動、點圖放大）","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5.5a1.5 1.5 0 0 1 3 0V11\"/><path d=\"M11 10.5V4a1.5 1.5 0 0 1 3 0v7\"/><path d=\"M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.6a6 6 0 0 1-4.7-2.3L3.4 15.8a1.6 1.6 0 0 1 2.5-2L8 16\"/></svg>"],["pen","筆刷","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20l1.2-4.4L16.6 4.2a2.1 2.1 0 0 1 3 3L8.2 18.8z\"/><path d=\"M14.6 6.2l3 3\"/></svg>"],["erase","橡皮擦","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 20h11\"/><path d=\"M4.6 15.4l9.8-9.8a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L12 18.4a2 2 0 0 1-1.4.6H8.4a2 2 0 0 1-1.4-.6l-2.4-2.4a2 2 0 0 1 0-2.8z\"/><path d=\"M9.5 10.5l5.5 5.5\"/></svg>"],["text","文字","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 7V4.5h14V7\"/><path d=\"M12 4.5v15\"/><path d=\"M9 19.5h6\"/></svg>"],["box","框選練習段落","<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8\"/><path d=\"M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8\"/><path d=\"M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16\"/><path d=\"M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16\"/><path d=\"M11 4h2M11 20h2M4 11v2M20 11v2\"/></svg>"]].forEach(([m,n,ic])=>{
     const b=icBtn(ic,n);b.dataset.m=m;b.setAttribute("aria-pressed",m===mode);b.onclick=()=>setMode(m);modes.append(b)});
   const undo=icBtn("<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 14L4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 0 11H11\"/></svg>","上一步"),redoB=icBtn("<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15 14l5-5-5-5\"/><path d=\"M20 9H9.5a5.5 5.5 0 0 0 0 11H13\"/></svg>","下一步");
   modes.append(el("span","sn-sep"),undo,redoB);
@@ -2048,6 +2059,13 @@ function sheetNotes(s,sheet,pages){
         b.setAttribute("aria-pressed",i===col);b.onclick=()=>{col=i;renderTools()};tools.append(b)});
       tools.append(el("span","sn-sep"));
     }
+    if(mode==="text"){
+      SN_COLORS.forEach((c,i)=>{if(c.a)return;const b=el("button","sn-sw");b.style.background=c.c;b.setAttribute("aria-label",c.n);b.title=c.n;
+        b.setAttribute("aria-pressed",i===tcol);b.onclick=()=>{tcol=i;renderTools()};tools.append(b)});
+      tools.append(el("span","sn-sep"));
+      SN_TSIZES.forEach((z,i)=>{const b=el("button","pill",z.n);b.setAttribute("aria-pressed",i===tsize);b.onclick=()=>{tsize=i;renderTools()};tools.append(b)});
+      tools.append(el("span","sn-hint","點譜上要寫字的地方；點寫好的字可以修改，清空就刪除。"));
+    }
     if(mode==="pen"||mode==="erase")SN_SIZES.forEach((z,i)=>{const b=el("button","pill",z.n);b.setAttribute("aria-pressed",i===size);
       b.onclick=()=>{size=i;renderTools()};tools.append(b)});
     tools.hidden=mode==="view";
@@ -2059,8 +2077,15 @@ function sheetNotes(s,sheet,pages){
   showC.type="checkbox";showC.checked=!data.hide;showL.append(showC,"顯示筆記");
   const syncShow=()=>sheet.classList.toggle("sn-hide",!!data.hide);
   showC.onchange=()=>{data.hide=!showC.checked;snSave();syncShow()};
-  undo.onclick=()=>{const h=hist.pop();if(h){const a=data.ink[h.i]||[],k=a.lastIndexOf(h.st);if(k>=0)a.splice(k,1);redo.push(h);snSave();pages[h.i].draw()}syncUR()};
-  redoB.onclick=()=>{const h=redo.pop();if(h){(data.ink[h.i]||(data.ink[h.i]=[])).push(h.st);hist.push(h);snSave();pages[h.i].draw()}syncUR()};
+  const inkOf=i=>data.ink[i]||(data.ink[i]=[]);
+  const unAdd=h=>{const a=inkOf(h.i),k=a.lastIndexOf(h.st);if(k>=0)a.splice(k,1)};
+  undo.onclick=()=>{const h=hist.pop();if(h){
+      if(h.kind==="edit")Object.assign(h.st,h.prev);else if(h.kind==="del")inkOf(h.i).splice(h.idx,0,h.st);else unAdd(h);
+      redo.push(h);snSave();pages[h.i].draw()}syncUR()};
+  redoB.onclick=()=>{const h=redo.pop();if(h){
+      if(h.kind==="edit")Object.assign(h.st,h.next);else if(h.kind==="del")unAdd(h);else inkOf(h.i).push(h.st);
+      hist.push(h);snSave();pages[h.i].draw()}syncUR()};
+  const record=h=>{hist.push(h);redo.length=0;syncUR();snSave()};
   syncUR();
   clr.onclick=()=>{
     if(!Object.values(data.ink).some(a=>a&&a.length))return;
@@ -2157,6 +2182,7 @@ function sheetNotes(s,sheet,pages){
       if(mode==="view"||(e.pointerType==="mouse"&&e.button!==0))return;
       e.preventDefault();cv.setPointerCapture(e.pointerId);const [x,y]=at(e);
       if(mode==="box"){b0=[x,y];box=el("div","sn-box");wrap.append(box);return}
+      if(mode==="text"){textAt(x,y);return}
       const c=SN_COLORS[col],z=SN_SIZES[size];
       cur=mode==="erase"?{e:1,w:z.w*3,p:[x,y]}:{c:c.c,a:c.a,w:z.w*(c.k||1),p:[x,y]};
       (data.ink[i]||(data.ink[i]=[])).push(cur);pg.draw();
@@ -2175,9 +2201,44 @@ function sheetNotes(s,sheet,pages){
         if(r.w>.03&&r.h>.015){data.boxes.push(Object.assign({n:"重點 "+(data.boxes.length+1),pg:i,c:SN_BOX[data.boxes.length%SN_BOX.length].c},r));snSave();renderBoxes()}
         return;
       }
-      if(!cur)return;cur.p=cur.p.map(v=>Math.round(v*1e4)/1e4);hist.push({i,st:cur});redo.length=0;cur=null;syncUR();snSave();
+      if(!cur)return;cur.p=cur.p.map(v=>Math.round(v*1e4)/1e4);record({i,st:cur});cur=null;
     };
     cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);
+    // text: hit an existing one (topmost first) or start a new one; Enter or tapping elsewhere saves
+    const meas=document.createElement("canvas").getContext("2d");
+    function hitText(x,y){
+      const r=wrap.getBoundingClientRect(),W=r.width,H=r.height,a=data.ink[i]||[];
+      for(let k=a.length-1;k>=0;k--){const t=a[k];if(t.k!=="t")continue;meas.font=snFont(t.s*W);
+        const lines=t.t.split("\n"),w=Math.max(...lines.map(l=>meas.measureText(l).width))/W,hh=t.s*W*1.25*lines.length/H;
+        if(x>=t.x-.005&&x<=t.x+w+.005&&y>=t.y-.005&&y<=t.y+hh+.005)return t}
+      return null;
+    }
+    let editing=null;
+    function textAt(x,y){
+      if(editing)return;
+      const old=hitText(x,y),c=SN_COLORS[tcol],z=SN_TSIZES[tsize];
+      const st=old||{k:"t",t:"",x:Math.round(x*1e4)/1e4,y:Math.round(Math.max(0,y-z.s*.6*wrap.clientWidth/wrap.clientHeight)*1e4)/1e4,s:z.s,c:c.c};
+      const prev=old?{t:old.t}:null,r=wrap.getBoundingClientRect();
+      const inp=el("textarea","sn-tin");inp.rows=1;inp.value=st.t;inp.setAttribute("aria-label","筆記文字");
+      Object.assign(inp.style,{left:st.x*100+"%",top:st.y*100+"%",fontSize:st.s*r.width+"px",color:st.c});
+      const fit=()=>{inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";inp.style.width="1px";inp.style.width=Math.max(60,inp.scrollWidth+8)+"px"};
+      inp.addEventListener("input",fit);
+      if(old){old.hide=1;pg.draw()} // hide the canvas copy while editing
+      editing=inp;wrap.append(inp);fit();setTimeout(()=>{inp.focus();inp.select()},0);
+      let done=false;
+      const fin=ok=>{
+        if(done)return;done=true;editing=null;inp.remove();delete st.hide;
+        const v=ok?inp.value.replace(/\s+$/,""):(prev?prev.t:"");
+        const a=inkOf(i);
+        if(old){
+          if(!v){const idx=a.indexOf(old);if(idx>=0){a.splice(idx,1);old.t=prev.t;record({i,st:old,kind:"del",idx})}}
+          else if(v!==prev.t){old.t=v;record({i,st:old,kind:"edit",prev,next:{t:v}})}
+        }else if(v){st.t=v;a.push(st);record({i,st})}
+        pg.draw();
+      };
+      inp.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();fin(true)}else if(e.key==="Escape")fin(false)};
+      inp.onblur=()=>fin(true);
+    }
   });
   renderTools();syncShow();renderBoxes();
 }
@@ -3259,6 +3320,10 @@ buildNav();navReady=true;navSync();
 // remembered in pr_seen_ver when 我知道了 is pressed.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-11.3",title:"樂譜筆記可以打字了",items:[
+    ["文字筆記","選工具列上的「T」，在譜上點一下就能打字，有紅、藍、綠、黑 4 種顏色和小、中、大三種大小。"],
+    ["修改文字","點寫好的字可以直接修改，清空就刪除，改錯了也能按上一步復原。"]
+  ]},
   {v:"2026-10-11.2",title:"樂譜可以寫筆記了",items:[
     ["樂譜筆記","打開樂譜就能用筆刷和螢光筆寫筆記，有橡皮擦，也可以上一步、下一步。"],
     ["框出重點段落","把要加強的地方框起來，可以取名、換顏色，點一下就能單獨放大來看。"],
