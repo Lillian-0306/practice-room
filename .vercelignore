@@ -1,6 +1,7 @@
 # Upload only what the site needs; everything else stays local.
 /*
 !index.html
+!vercel.json
 !sheets
 !songs
 !*.mp3

@@ -7,6 +7,7 @@
 - 單一檔案 `index.html`（HTML + CSS + JS 全部內嵌，無建置流程、無相依套件）。
 - 唯一外部資源：Google Fonts（Noto Sans TC、Noto Serif TC），有備援字型。
 - 正式網址（Vercel）：https://practice-room-one.vercel.app 。Vercel 專案已連結 GitHub 倉庫，推送到 main 會自動發布（約一分鐘）；也可用 Vercel CLI `vercel --prod` 從本機發布。`.vercelignore` 只上傳 index.html、sheets/、songs/、mp3、pdf。網頁裡的正式網址常數是 `SITE`。
+- **同學版**（給吉他班同學用）：https://practice-room-one.vercel.app/class 。同一份 `index.html`，`vercel.json` 把 `/class` 改寫到 index.html（`trailingSlash:false` 讓 `/class/` 轉回 `/class`，相對路徑的樂譜與音檔才找得到）。`<head>` 的小 script 判斷網址後設定 `html[data-edition="class"]`，JS 常數 `CLASS`：只顯示吉他「專案」（隱藏吉他／歌唱切換與子分頁，側欄只列專案歌曲），標題改為「讚頌吉他班」，且不寫入 `pr_guitar_sub`。本機測試用 `http://localhost:8000/class`（`.claude/serve.js` 有同樣的改寫）或 `?class`。新增到 `SONGS` 的歌會同時出現在同學版。
 - GitHub Pages（https://lillian-0306.github.io/practice-room/ ）已關閉，改用 Vercel；要恢復可執行 `gh api -X POST repos/Lillian-0306/practice-room/pages -f "source[branch]=main" -f "source[path]=/"`。
 - 也發佈在 Claude 內嵌預覽，但**內嵌環境擋麥克風**，麥克風相關功能會顯示錯誤訊息並附上正式網址。
 

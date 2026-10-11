@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>彈唱練習室 — 吉他與歌唱互動學習</title>
+<script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 課堂曲目"}</script>
 <script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t);var s=JSON.parse(localStorage.getItem("pr_style")||"null");if(s==="paper"||s==="neon"||s==="soft")document.documentElement.dataset.style=s}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,6 +53,8 @@ h2{font-size:1.35rem;font-weight:700}
 h3{font-size:1.05rem;font-weight:700}
 p{margin:0}
 .lead{color:var(--muted);margin-top:8px;max-width:34em}
+:root[data-edition="class"] .modes,:root[data-edition="class"] #guitar .subtabs{display:none}
+:root[data-edition="class"] .lead{margin-bottom:22px}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 /* side navigation: fixed on desktop, slide-out drawer on narrow screens */
 .sidenav{position:fixed;top:0;bottom:0;left:0;width:var(--navw,248px);z-index:40;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent;background:var(--surface);border-right:1px solid var(--line);padding:20px 12px 32px}
@@ -833,6 +836,14 @@ const $=s=>document.querySelector(s);
 const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
 const AC=window.AudioContext||window.webkitAudioContext;
 const SITE="https://practice-room-one.vercel.app/";
+// 同學版（/class）：只有吉他「專案」，不顯示歌唱、常用與學習，也不改動完整版存的分頁
+const CLASS=document.documentElement.dataset.edition==="class";
+if(CLASS){
+  $(".top h1").textContent="讚頌吉他班";
+  $(".nav-head b").textContent="讚頌吉他班";
+  $(".lead").textContent="課堂上的曲子都在這裡：看樂譜、聽示範、放慢速度、用 A-B 循環練難的段落。";
+  $("#g-projects .block header p").textContent="點「開啟樂譜」看譜；右下角的按鈕可以讓樂譜自動往下捲。";
+}
 
 /* ---------- storage ---------- */
 function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
@@ -1510,13 +1521,13 @@ function showSub(panel,sub,init){
   $("#"+panel).querySelectorAll(".subtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.sub===sub));
   $("#"+panel).querySelectorAll(".subtab").forEach(b=>{$("#"+pre+"-"+b.dataset.sub).hidden=b.dataset.sub!==sub});
   if(sub!=="common"&&!init)SUB_STOP[panel]();
-  save("pr_"+panel+"_sub",sub);
+  if(!CLASS)save("pr_"+panel+"_sub",sub);
   if(panel==="singing"&&sub==="common"&&!init)drawCurve();
   if(navReady)navSync();
 }
 ["guitar","singing"].forEach(panel=>{
   $("#"+panel).querySelectorAll(".subtab").forEach(b=>b.addEventListener("click",()=>showSub(panel,b.dataset.sub)));
-  const subs=[...$("#"+panel).querySelectorAll(".subtab")].map(b=>b.dataset.sub),saved=load("pr_"+panel+"_sub","common");
+  const subs=[...$("#"+panel).querySelectorAll(".subtab")].map(b=>b.dataset.sub),saved=CLASS&&panel==="guitar"?"projects":load("pr_"+panel+"_sub","common");
   showSub(panel,subs.includes(saved)?saved:"common",true);
 });
 
@@ -2362,6 +2373,7 @@ renderLearn();
 // Built from the page: each panel's 常用 blocks (by their h2) and 專案 song cards (by their h3).
 var navReady=false; // var: showSub runs during startup, before this line
 const NAV=[{panel:"guitar",name:"吉他",color:"var(--gtr)",subs:["common","learn","projects"]},{panel:"singing",name:"歌唱",color:"var(--voc)",subs:["common","projects"]}];
+if(CLASS)NAV.splice(0,NAV.length,{panel:"guitar",name:"吉他",color:"var(--gtr)",subs:["projects"]});
 const SUBN={common:"常用",learn:"學習",projects:"專案"};
 const navItems=[]; // {panel, sub, page button, fold button, group, tools:[{el, btn}]}
 const navFold=load("pr_nav_fold",{}); // "guitar-common": true when that group is collapsed
