@@ -360,6 +360,15 @@ section.panel[hidden]{display:none}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .video-links{display:flex;flex-wrap:wrap;gap:12px;font-size:.88rem;margin-bottom:6px}
 .video>div,.video>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* lyrics following the video */
+.lyr-list{position:relative;max-height:300px;overflow-y:auto;padding:40px 6px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.lyr-line{border:0;background:transparent;font:inherit;font-size:1rem;line-height:1.5;text-align:center;color:var(--muted);padding:6px 10px;border-radius:8px;transition:color .2s,background .2s}
+.lyr-line:hover{color:var(--ink)}
+.lyr-line.gap{margin-top:16px}
+.lyr-line.on{color:var(--ink);font-weight:700;font-size:1.1rem;background:var(--accent-soft)}
+.lyr-line.cal{outline:2px dashed var(--accent);outline-offset:-2px}
+.lyr-tools{margin-top:8px}
+.lyr-msg:empty{display:none}
 .kara{margin-top:12px;padding:12px;border-radius:10px;background:var(--bg)}
 .kara canvas{display:block;width:100%;height:220px;border-radius:8px;background:var(--surface);border:1px solid var(--line);margin:10px 0 8px}
 .kara-stat{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:.92rem}
@@ -2504,7 +2513,7 @@ renderSongs();
 // melody: JSON with notes [[start s, length s, midi]] extracted from the recording, timed to the YouTube video
 const VSONGS=[
   {title:"篇章",by:"張韶涵／王赫野 合唱",meta:["男女對唱","動態歌詞影片"],
-   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)",melody:"songs/pianzhang-melody.json"}
+   yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)",melody:"songs/pianzhang-melody.json",lyrics:"songs/pianzhang-lyrics.json"}
 ];
 // YouTube IFrame API, loaded on first use
 let ytReady=null;
@@ -2539,7 +2548,97 @@ function ytBox(id,title){
     return made;
   };
   box.onclick=()=>make(true);
-  return {el:box,player:()=>make(false)};
+  return {el:box,player:()=>make(false),current:()=>made}; // current: the player if already created, else null
+}
+
+/* ---------- singing: lyrics that follow the video ---------- */
+// songs/…-lyrics.json: lines [{t start in seconds, s text, gap starts a new section}]. The line being
+// sung lights up and scrolls to the middle; tap a line to jump the video there. 對時間 re-times the
+// lines by tapping along with the video; the result stays in this browser (pr_lyric_times) and
+// 複製時間 copies it out so it can be put into the file.
+function lyricsPanel(song,yt){
+  const wrap=el("div","lyr"),list=el("div","lyr-list"),tools=el("div","row lyr-tools"),msg=el("p","note lyr-msg");
+  let lines=[],els=[],player=null,cur=-1,userScroll=0,cal=null;
+  const own=()=>load("pr_lyric_times",{})[song.title]||null;
+  const setOwn=a=>{const o=load("pr_lyric_times",{});if(a)o[song.title]=a;else delete o[song.title];save("pr_lyric_times",o)};
+  const times=()=>{const o=own();return lines.map((l,i)=>o&&o[i]!=null?o[i]:l.t)};
+  const r2=v=>Math.round(v*100)/100;
+  fetch(song.lyrics).then(r=>r.json()).then(j=>{lines=j.lines||[];build();renderTools()}).catch(()=>{list.textContent="歌詞載入失敗，請重新整理。"});
+  function build(){
+    list.innerHTML="";
+    els=lines.map((l,i)=>{const b=el("button","lyr-line"+(l.gap?" gap":""),l.s);b.type="button";b.onclick=()=>seek(i);list.append(b);return b});
+  }
+  async function getPlayer(create){
+    if(player)return player;
+    const pr=create?yt.player():yt.current();if(!pr)return null;
+    try{player=await pr}catch(e){player=null}
+    return player;
+  }
+  async function seek(i){
+    if(cal){cal.i=i;calShow();return}
+    const p=await getPlayer(true);if(!p)return;
+    p.seekTo(Math.max(0,times()[i]-0.3),true);p.playVideo();
+  }
+  // reading the lyrics by hand pauses the auto-scroll for a moment
+  ["wheel","touchmove"].forEach(e=>list.addEventListener(e,()=>{userScroll=Date.now()},{passive:true}));
+  const center=b=>list.scrollTo({top:b.offsetTop-list.clientHeight/2+b.offsetHeight/2,behavior:"smooth"});
+  function tick(){
+    if(!player){getPlayer(false);return}
+    let t=0;try{t=player.getCurrentTime()||0}catch(e){return}
+    const ts=times();let k=-1;
+    for(let i=0;i<ts.length;i++)if(ts[i]<=t+0.15)k=i;
+    if(k!==cur){
+      if(els[cur])els[cur].classList.remove("on");
+      cur=k;
+      if(els[k]){els[k].classList.add("on");if(!cal&&Date.now()-userScroll>3000)center(els[k])}
+    }
+  }
+  setInterval(tick,200);
+  // 對時間: play the video and tap at the start of each line (button or space bar)
+  function renderTools(){
+    tools.innerHTML="";
+    if(cal){
+      const mark=el("button","btn","這句開始了（空白鍵）"),back=el("button","btn ghost","上一句"),done=el("button","btn ghost","完成");
+      mark.onclick=calMark;back.onclick=()=>{cal.i=Math.max(0,cal.i-1);calShow()};done.onclick=calEnd;
+      tools.append(mark,back,done);return;
+    }
+    const start=el("button","btn ghost","對時間");start.onclick=calStart;tools.append(start);
+    if(own()){
+      const copy=el("button","btn ghost","複製時間"),reset=el("button","btn ghost","還原預設時間");
+      copy.onclick=()=>{const s=JSON.stringify(times());
+        (navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(()=>{msg.textContent="已複製，可以貼給 Claude 更新到網站。"},()=>{msg.textContent=s})};
+      reset.onclick=()=>{if(!confirm("要清掉這台裝置上自己對的時間，改回預設嗎？"))return;setOwn(null);renderTools();msg.textContent="已還原成預設時間。"};
+      tools.append(copy,reset);
+    }
+  }
+  function calShow(){
+    els.forEach((b,i)=>b.classList.toggle("cal",i===cal.i));
+    if(els[cal.i])center(els[cal.i]);
+    msg.textContent="第 "+(cal.i+1)+" / "+lines.length+" 句：影片唱到這句的第一個字時，按「這句開始了」或空白鍵。點歌詞可以換到那一句。";
+  }
+  async function calStart(){
+    const p=await getPlayer(true);if(!p){msg.textContent="影片還沒準備好，請先播放影片再試一次。";return}
+    cal={i:0,arr:times().slice()};renderTools();calShow();
+    p.seekTo(Math.max(0,cal.arr[0]-4),true);p.playVideo();
+  }
+  function calMark(){
+    if(!cal||!player)return;
+    let t=0;try{t=player.getCurrentTime()||0}catch(e){return}
+    cal.arr[cal.i]=r2(t);setOwn(cal.arr);
+    if(cal.i>=lines.length-1){calEnd();return}
+    cal.i++;calShow();
+  }
+  function calEnd(){
+    if(!cal)return;
+    cal=null;els.forEach(b=>b.classList.remove("cal"));renderTools();
+    msg.textContent=own()?"時間已存在這台裝置。要更新到網站給大家用，按「複製時間」貼給 Claude。":"";
+  }
+  document.addEventListener("keydown",e=>{
+    if(!cal||e.code!=="Space"||/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||"")))return;
+    e.preventDefault();calMark();
+  });
+  wrap.append(list,tools,msg);
+  return wrap;
 }
 
 /* ---------- singing: sing-along comparison (跟唱比對) ---------- */
@@ -2683,6 +2782,7 @@ function renderVSongs(){
       const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+s.yt;a.target="_blank";a.rel="noopener";
       links.append(a,el("span","note",s.ytNote||""));
       card.append(yt.el,links);
+      if(s.lyrics)card.append(foldSection("lyrics","歌詞（跟著影片捲動，點一句可以跳過去）",lyricsPanel(s,yt)));
       if(s.melody)card.append(karaPanel(s,yt));
     }
     box.append(card);
@@ -3320,6 +3420,10 @@ buildNav();navReady=true;navSync();
 // remembered in pr_seen_ver when 我知道了 is pressed.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-11.4",title:"唱歌專案有歌詞了",items:[
+    ["跟著影片的歌詞","《篇章》的歌詞會跟著影片捲動，唱到的那句會亮起來。"],
+    ["點歌詞就跳過去","想練哪一句，點那句歌詞，影片就會跳到那裡開始播。"]
+  ]},
   {v:"2026-10-11.3",title:"樂譜筆記可以打字了",items:[
     ["文字筆記","選工具列上的「T」，在譜上點一下就能打字，有紅、藍、綠、黑 4 種顏色和小、中、大三種大小。"],
     ["修改文字","點寫好的字可以直接修改，清空就刪除，改錯了也能按上一步復原。"]
