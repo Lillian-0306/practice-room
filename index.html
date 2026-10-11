@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>彈唱練習室 — 吉他與歌唱互動學習</title>
-<script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 美麗花季"}</script>
+<script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class\b/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 美麗花季"}</script>
 <script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t);var s=JSON.parse(localStorage.getItem("pr_style")||"null");if(s==="paper"||s==="neon"||s==="soft")document.documentElement.dataset.style=s}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -600,6 +600,30 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .as-hint:empty{display:none}
 /* on narrow screens the menu button owns the corner, so sit just above it */
 @media (max-width:1023px){.ascroll{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+/* guided tour (使用說明): a spotlight on the real control plus a card; transparent blockers
+   around the spotlight stop stray clicks, the spotlight itself lets clicks through */
+.tour{position:fixed;inset:0;z-index:60;pointer-events:none}
+.tour[hidden]{display:none}
+.tour-block{position:fixed;pointer-events:auto}
+.tour-spot{position:fixed;border-radius:12px;box-shadow:0 0 0 3px var(--accent),0 0 0 9999px rgba(10,8,20,.72)}
+.tour-spot.click{animation:tour-pulse 1.6s ease-in-out infinite}
+@keyframes tour-pulse{50%{box-shadow:0 0 0 6px var(--accent),0 0 0 9999px rgba(10,8,20,.72)}}
+.tour-spot.none{top:50%!important;left:50%!important;width:0!important;height:0!important;box-shadow:0 0 0 9999px rgba(10,8,20,.72)}
+.tour-card{position:fixed;width:min(340px,calc(100vw - 32px));pointer-events:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:16px 16px 12px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.tour-card:focus{outline:none}
+.tour-card.center{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px))}
+.tour-step{font-size:.75rem;font-weight:700;color:var(--accent);letter-spacing:.06em}
+.tour-card h2{font-size:1.15rem;margin:2px 0 6px}
+.tour-card p{font-size:.93rem;color:var(--muted);line-height:1.6}
+.tour-try{display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--accent-soft);color:var(--ink);font-size:.88rem;font-weight:700}
+.tour-try[hidden]{display:none}
+.tour-dots{display:flex;gap:5px;margin:12px 0 10px}
+.tour-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.tour-dots i.on{background:var(--accent);width:18px;border-radius:4px}
+.tour-nav{display:flex;align-items:center;gap:8px}
+.tour-nav .tour-skip{margin-right:auto;border:0;background:transparent;color:var(--muted);font-size:.85rem;padding:8px 4px;min-height:40px}
+.tour-nav .tour-skip:hover{color:var(--ink)}
+.tour-nav .btn{min-height:40px;padding:8px 16px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -672,6 +696,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
   <div class="top">
     <h1>彈唱練習室</h1>
     <div class="top-actions">
+    <button class="theme-btn" id="helpBtn" type="button" aria-label="使用說明" title="使用說明">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><circle cx="12" cy="17.2" r=".9" fill="currentColor" stroke="none"/></svg>
+    </button>
     <button class="theme-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="styleMenu" aria-label="切換網頁風格" title="切換網頁風格">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8l-.4-.9c-.5-1 .2-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-4.9-4-9-9-9z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7" r="1.2" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
     </button>
@@ -2677,6 +2704,132 @@ rz.addEventListener("keydown",e=>{
 setNavW(load("pr_nav_w",NAVW_DEF));
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeNav()});
 buildNav();navReady=true;navSync();
+
+/* ---------- guided tour (使用說明) ---------- */
+// Opens by itself on the first visit (remembered per edition), and from the ？ button any time.
+// Each step lights up a real control; "click" steps wait for the user to press it.
+(function(){
+  const KEY=CLASS?"pr_tour_class":"pr_tour";
+  const shown=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=="hidden";
+  const song=()=>$("#songs .song");
+  const openBtn=()=>{const c=song();return c&&[...c.querySelectorAll(".btn")].find(b=>/樂譜$/.test(b.textContent))};
+  const toProjects=()=>{if(document.body.dataset.mode!=="guitar")$("#tab-guitar").click();if(curSub("guitar")!=="projects")showSub("guitar","projects")};
+  const narrow=()=>matchMedia("(max-width:1023px)").matches;
+  const navEl=()=>[$("#navBtn"),$("#navShow"),$("#sidenav")].find(shown);
+  const navText=()=>narrow()?"右下角的選單按鈕可以打開清單，直接跳到想練的地方。":"左邊的清單可以直接跳到想練的地方；拖動清單邊緣可以調寬度，也能收起來。";
+  const songSteps=[
+    {before:toProjects,el:()=>{const c=song();return c&&[c.querySelector("h3"),c.querySelector(".meta")]},
+     title:CLASS?"課堂上的曲子":"專案：正在練的歌",text:"每首歌一張卡片，寫著調音方式、速度和樂譜頁數。"},
+    {before:toProjects,el:()=>{const c=song();return c&&c.querySelector(".player audio")},
+     title:"示範音檔",text:"先聽一次示範。下面可以放慢速度、跳到某個小節、開節拍器，或用 A-B 循環重複練難的段落；用到的和弦也收在這裡，點一下就有按法圖。"},
+    {before:toProjects,el:openBtn,click:()=>/^開啟/.test((openBtn()||{}).textContent||""),
+     title:"開啟樂譜",text:"樂譜直接顯示在網頁上，點圖可以放大看。",try:"按一下「開啟樂譜」"},
+    {before:toProjects,el:()=>$("#mfFab"),title:"節拍器",text:"右下角的節拍器會帶入這首歌的速度，彈的時候跟著打拍子。"},
+    {before:toProjects,el:()=>$("#asFab"),title:"自動捲譜",text:"雙手在彈、沒空翻譜？按這裡讓樂譜自動往下捲，速度可以拖動調整，也能一鍵回到第一頁。"}
+  ];
+  const STEPS=CLASS?[
+    {title:"歡迎來到讚頌吉他班",text:"課堂上練的曲子都在這裡。花一分鐘看看怎麼用吧！",center:true},
+    ...songSteps,
+    {el:navEl,title:"曲目清單",text:navText},
+    {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」就可以。練習愉快！"}
+  ]:[
+    {title:"歡迎來到彈唱練習室",text:"這裡有吉他和歌唱的練習工具，每個練習都能直接發出聲音、跟著做。花一分鐘看看怎麼用吧！",center:true},
+    {before:()=>{if(document.body.dataset.mode!=="guitar")$("#tab-guitar").click()},el:()=>$("#tab-singing"),click:true,
+     title:"吉他・歌唱兩大板塊",text:"最上面這兩個大按鈕切換吉他和歌唱。",try:"點「歌唱」切換看看"},
+    {before:()=>{if(document.body.dataset.mode!=="singing")$("#tab-singing").click()},el:()=>$("#tab-guitar"),click:true,
+     title:"切回吉他",text:"換板塊時，正在播放的練習會自動停下來。",try:"再點「吉他」回來"},
+    {before:()=>{if(document.body.dataset.mode!=="guitar")$("#tab-guitar").click()},el:()=>$("#guitar .subtabs"),
+     title:"常用・學習・專案",text:"「常用」有和弦圖、調音、節拍器、跟拍換和弦和錄音；「學習」是民謠吉他學習地圖，會了就打勾；「專案」放正在練的歌和樂譜。"},
+    {el:navEl,title:"導覽清單",text:navText},
+    {el:()=>[$("#styleBtn"),$("#themeBtn")],title:"換個風格",text:"調色盤可以換網頁風格：簡約、復古紙本、霓虹舞台、圓潤可愛；月亮按鈕切換深色模式。"},
+    ...songSteps,
+    {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」就可以。祝練習愉快！"}
+  ];
+
+  const root=el("div","tour"),spot=el("div","tour-spot"),card=el("div","tour-card"),blocks=[0,1,2,3].map(()=>el("div","tour-block"));
+  root.hidden=true;card.tabIndex=-1;card.setAttribute("role","dialog");card.setAttribute("aria-modal","true");card.setAttribute("aria-labelledby","tourTitle");
+  const stepLbl=el("div","tour-step"),title=el("h2"),text=el("p"),tryBox=el("div","tour-try"),dots=el("div","tour-dots"),nav=el("div","tour-nav");
+  title.id="tourTitle";
+  const skip=el("button","tour-skip","略過說明"),prev=el("button","btn ghost","上一步"),next=el("button","btn","下一步");
+  [skip,prev,next].forEach(b=>b.type="button");
+  nav.append(skip,prev,next);card.append(stepLbl,title,text,tryBox,dots,nav);root.append(...blocks,spot,card);document.body.append(root);
+
+  let steps=[],i=0,raf=0,clickEl=null,start=null;
+  const targets=s=>{const t=s.el&&s.el();return (Array.isArray(t)?t:[t]).filter(shown)};
+  function onClicked(){clickEl=null;setTimeout(()=>go(i+1),350)}
+  function show(){
+    const s=steps[i];if(s.before)s.before();
+    const isClick=typeof s.click==="function"?s.click():!!s.click;
+    if(clickEl){clickEl.removeEventListener("click",onClicked);clickEl=null}
+    const t=targets(s);
+    if(isClick&&t[0]){clickEl=t[0];clickEl.addEventListener("click",onClicked,{once:true})}
+    if(t[0])t[0].scrollIntoView({block:"center",behavior:reducedMotion()?"auto":"smooth"});
+    stepLbl.textContent=i===0?"使用說明":"第 "+i+" / "+(steps.length-1)+" 步";
+    title.textContent=s.title;text.textContent=typeof s.text==="function"?s.text():s.text;
+    tryBox.hidden=!(isClick&&s.try);tryBox.textContent=isClick&&s.try?"動手試試："+s.try:"";
+    dots.innerHTML="";steps.forEach((_,k)=>dots.append(el("i",k===i?"on":"")));
+    prev.hidden=i===0;skip.hidden=i===steps.length-1;
+    next.textContent=i===0?"開始導覽":i===steps.length-1?"完成":isClick?"跳過這步":"下一步";
+    card.classList.toggle("center",!t[0]);spot.classList.toggle("none",!t[0]);spot.classList.toggle("click",isClick&&!!t[0]);
+    root.dataset.click=isClick&&t[0]?"1":"";
+    card.focus({preventScroll:true});
+    layout();
+  }
+  // follow the target every frame (smooth scrolling, opening panels, resizes)
+  // also on scroll / resize / each step, in case frames are throttled
+  function place(){raf=requestAnimationFrame(place);layout()}
+  ["scroll","resize"].forEach(e=>window.addEventListener(e,()=>{if(!root.hidden)layout()},{passive:true}));
+  function layout(){
+    const vw=innerWidth,vh=innerHeight,t=targets(steps[i]);
+    if(!t.length){blocks.forEach((b,k)=>Object.assign(b.style,k?{width:"0",height:"0"}:{left:"0",top:"0",width:vw+"px",height:vh+"px"}));return}
+    let L=Infinity,T=Infinity,R=-Infinity,B=-Infinity;
+    t.forEach(e=>{const r=e.getBoundingClientRect();L=Math.min(L,r.left);T=Math.min(T,r.top);R=Math.max(R,r.right);B=Math.max(B,r.bottom)});
+    L=Math.max(4,L-6);T=Math.max(4,T-6);R=Math.min(vw-4,R+6);B=Math.min(vh-4,B+6);
+    Object.assign(spot.style,{left:L+"px",top:T+"px",width:Math.max(0,R-L)+"px",height:Math.max(0,B-T)+"px"});
+    // blockers: everything outside the spotlight; on non-click steps the spotlight too
+    const hole=root.dataset.click==="1";
+    const rects=hole?[[0,0,vw,T],[0,B,vw,vh-B],[0,T,L,B-T],[R,T,vw-R,B-T]]:[[0,0,vw,vh],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+    blocks.forEach((b,k)=>{const[x,y,w,h]=rects[k];Object.assign(b.style,{left:x+"px",top:y+"px",width:Math.max(0,w)+"px",height:Math.max(0,h)+"px"})});
+    // card: below, above, right, left of the target, else pinned to the bottom
+    const cw=card.offsetWidth,ch=card.offsetHeight,g=14;let x,y;
+    if(B+g+ch<vh-8){y=B+g;x=(L+R)/2-cw/2}
+    else if(T-g-ch>8){y=T-g-ch;x=(L+R)/2-cw/2}
+    else if(R+g+cw<vw-8){x=R+g;y=(T+B)/2-ch/2}
+    else if(L-g-cw>8){x=L-g-cw;y=(T+B)/2-ch/2}
+    else{x=(vw-cw)/2;y=vh-ch-12}
+    card.style.left=Math.min(vw-cw-16,Math.max(16,x))+"px";card.style.top=Math.min(vh-ch-8,Math.max(8,y))+"px";
+  }
+  function go(n){
+    // skip steps whose control isn't on screen in this layout
+    while(n>0&&n<steps.length&&steps[n].el){if(steps[n].before)steps[n].before();if(targets(steps[n]).length)break;n+=n>i?1:-1}
+    if(n<0)n=0;if(n>=steps.length){end();return}
+    i=n;show();
+  }
+  function begin(){
+    if(!root.hidden)return;
+    closeNav();
+    start={mode:document.body.dataset.mode,sub:curSub("guitar"),y:scrollY};
+    steps=STEPS;i=0;root.hidden=false;show();place();
+  }
+  function end(){
+    if(root.hidden)return;
+    cancelAnimationFrame(raf);root.hidden=true;
+    if(clickEl){clickEl.removeEventListener("click",onClicked);clickEl=null}
+    save(KEY,true);
+    // put the page back the way it was
+    if(start){if(document.body.dataset.mode!==start.mode)$("#tab-"+start.mode).click();if(!CLASS&&curSub("guitar")!==start.sub)showSub("guitar",start.sub);window.scrollTo({top:0})}
+    $("#helpBtn").focus({preventScroll:true});
+  }
+  next.onclick=()=>go(i+1);prev.onclick=()=>go(i-1);skip.onclick=end;
+  document.addEventListener("keydown",e=>{
+    if(root.hidden)return;
+    if(e.key==="Escape"){e.stopImmediatePropagation();end()}
+    else if(e.key==="ArrowRight")go(i+1);
+    else if(e.key==="ArrowLeft")go(i-1);
+  },true);
+  $("#helpBtn").onclick=begin;
+  if(!load(KEY,false))setTimeout(begin,600);
+})();
 })();
 </script>
 </body>
