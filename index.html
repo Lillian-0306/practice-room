@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>彈唱練習室 — 吉他與歌唱互動學習</title>
-<script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 課堂曲目"}</script>
+<script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 美麗花季"}</script>
 <script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t);var s=JSON.parse(localStorage.getItem("pr_style")||"null");if(s==="paper"||s==="neon"||s==="soft")document.documentElement.dataset.style=s}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -387,6 +387,18 @@ section.panel[hidden]{display:none}
 .player .pm-beats{justify-content:flex-start;gap:8px;margin:10px 0 2px}
 .player .pm-beats i{width:16px;height:16px}
 .player .pm-tempo{font-weight:700;color:var(--ink)}
+/* saved A-B loops */
+.loop-save{flex-wrap:nowrap}
+.loop-save input,.loop-item input{flex:1;min-width:0;font:inherit;font-size:.9rem;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:6px 14px;min-height:36px}
+.loop-save input:focus,.loop-item input:focus{outline:none;border-color:var(--accent)}
+.loop-save button:disabled{opacity:.45;cursor:default}
+.loop-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.loop-list:empty{display:none}
+.loop-item{display:flex;align-items:center;gap:4px}
+.loop-item .loop-go{flex:1;min-width:0;display:flex;justify-content:space-between;gap:10px;text-align:left}
+.loop-item .loop-go span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.loop-item .loop-go small{font-variant-numeric:tabular-nums;opacity:.75;flex:none}
+.loop-item .loop-ic{width:36px;padding:0;flex:none;color:var(--muted)}
 .block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
 .block>header{margin-bottom:12px}
 .block>header p{color:var(--muted);font-size:.93rem;margin-top:4px}
@@ -542,7 +554,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .as-fab[aria-expanded="true"]{box-shadow:0 0 0 4px var(--accent-soft),0 6px 20px rgba(0,0,0,.3)}
 /* green dot while scrolling, so it shows even with the panel closed */
 /* "live" light: a small lit dot on the button's rim with a slow ripple */
-.as-fab.running::after{content:"";position:absolute;top:1px;right:1px;width:15px;height:15px;border-radius:50%;box-sizing:border-box;
+.as-fab.running::after,.mf-fab.running::after{content:"";position:absolute;top:1px;right:1px;width:15px;height:15px;border-radius:50%;box-sizing:border-box;
   border:2.5px solid var(--surface);
   background:radial-gradient(circle at 35% 30%,#86D9A4,#2FA45E 55%,#1C7342);
   box-shadow:0 1px 3px rgba(0,0,0,.25);animation:as-live 2.6s ease-out infinite}
@@ -552,6 +564,14 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .as-tip{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);white-space:nowrap;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.85rem;font-weight:700;padding:5px 10px;border-radius:8px;opacity:0;transition:opacity .15s}
 .as-fab:hover .as-tip,.as-fab:focus-visible .as-tip{opacity:1}
 .as-fab[aria-expanded="true"] .as-tip{opacity:0}
+/* floating metronome button (above 自動捲譜): drives the song-card metronome */
+.ascroll .mf-fab{position:relative;width:52px;height:52px;background:var(--surface);color:var(--accent);border:1.5px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.mf-fab:hover{background:var(--accent-soft)}
+.mf-fab[aria-expanded="true"]{box-shadow:0 0 0 4px var(--accent-soft),0 4px 14px rgba(0,0,0,.22)}
+.mf-fab:hover .as-tip,.mf-fab:focus-visible .as-tip{opacity:1}
+.mf-fab[aria-expanded="true"] .as-tip{opacity:0}
+.mf-song{font-size:.8rem;color:var(--muted);margin:-4px 0 10px 4px}
+.mf-song:empty{display:none}
 .as-panel{position:absolute;right:0;bottom:calc(100% + 12px);width:236px;padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .as-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px 4px}
 .as-head b{font-family:var(--serif);font-size:1rem}
@@ -616,6 +636,25 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <span class="as-tip" id="asMPauseTip" aria-hidden="true">暫停</span>
     </button>
   </div>
+  <div class="as-panel" id="mfPanel" role="group" aria-label="節拍器" hidden>
+    <div class="as-head"><b>節拍器</b><button class="as-close" id="mfClose" type="button" aria-label="收起節拍器">×</button></div>
+    <p class="mf-song" id="mfSong"></p>
+    <div class="as-ctrl">
+      <button class="as-play" id="mfPlay" type="button" aria-pressed="false" aria-label="開始節拍器" title="開始節拍器">
+        <svg class="i-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+        <svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>
+      </button>
+      <div class="as-speed">
+        <label for="mfRange">速度<b id="mfLv">♩=80</b></label>
+        <input type="range" id="mfRange" min="30" max="240" step="1" value="80">
+        <div class="as-ends" aria-hidden="true"><span>慢</span><span>快</span></div>
+      </div>
+    </div>
+  </div>
+  <button class="mf-fab" id="mfFab" type="button" aria-expanded="false" aria-controls="mfPanel" aria-label="節拍器">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 3h5l4 18h-13z"/><path d="M12 16l5-9"/><path d="M8 16h8"/></svg>
+    <span class="as-tip" aria-hidden="true">節拍器</span>
+  </button>
   <button class="as-fab" id="asFab" type="button" aria-expanded="false" aria-controls="asPanel" aria-label="自動捲譜">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9.5 11.5v6M7.5 15.5l2 2 2-2"/><path d="M13 10h3M13 13h3"/></svg>
     <span class="as-tip" aria-hidden="true">自動捲譜</span>
@@ -1624,8 +1663,9 @@ function player(src,bpm){
   const pmRow=el("div","row"),pmBtn=el("button","pill","開始"),pmTempo=el("span","note pm-tempo"),pmRange=el("input"),pmMeters=el("div","row"),pmDots=el("div","beats pm-beats");
   pmDots.setAttribute("aria-hidden","true");pmBtn.setAttribute("aria-pressed",false);
   let pmOn=false,pmT=null,pmNext=0,pmTick=0,pmMeter=2,pmTimers=[];
+  const pmNotify=()=>document.dispatchEvent(new CustomEvent("pmchange")); // keeps the floating button in step
   let pmVal=80;const pmBpm=()=>pmVal;
-  const pmSet=v=>{pmVal=Math.max(30,Math.min(240,Math.round(v)));pmTempo.textContent="♩="+pmVal;pmRange.value=pmVal;pmRange.setAttribute("aria-valuetext",pmTempo.textContent)};
+  const pmSet=v=>{pmVal=Math.max(30,Math.min(240,Math.round(v)));pmTempo.textContent="♩="+pmVal;pmRange.value=pmVal;pmRange.setAttribute("aria-valuetext",pmTempo.textContent);pmNotify()};
   function pmShow(){pmSet((base()||80)*ratio)} // follow the playback speed whenever it changes
   pmRange.type="range";pmRange.min=30;pmRange.max=240;pmRange.step=1;pmRange.setAttribute("aria-label","節拍器速度");
   pmRange.addEventListener("input",()=>pmSet(+pmRange.value));
@@ -1645,28 +1685,63 @@ function player(src,bpm){
     if(pmT)clearInterval(pmT);pmT=null;pmTimers.forEach(clearTimeout);pmTimers=[];pmOn=false;
     pmBtn.textContent="開始";pmBtn.setAttribute("aria-pressed",false);[...pmDots.children].forEach(d=>d.classList.remove("on"));
     if(songMetroOff===pmStop)songMetroOff=null;
+    pmNotify();
   }
   function pmStart(){
     stopMetro();stopPlayer(); // also stops any other song's metronome
     const c=audio();pmOn=true;pmTick=0;pmNext=c.currentTime+0.06;songMetroOff=pmStop;
-    pmBtn.textContent="停止";pmBtn.setAttribute("aria-pressed",true);pmSchedule();pmT=setInterval(pmSchedule,TICK_MS);
+    pmBtn.textContent="停止";pmBtn.setAttribute("aria-pressed",true);pmSchedule();pmT=setInterval(pmSchedule,TICK_MS);pmNotify();
   }
   pmBtn.onclick=()=>pmOn?pmStop():pmStart();
+  box._metro={on:()=>pmOn,bpm:()=>pmVal,set:pmSet,toggle:()=>pmOn?pmStop():pmStart()};
   METERS.forEach((m,i)=>{const b=el("button","pill",m.n);b.setAttribute("aria-pressed",i===pmMeter);
     b.onclick=()=>{pmMeter=i;pmTick=0;pmDraw();pmMeters.querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i))};pmMeters.append(b)});
   pmRow.append(pmBtn,pmTempo);pmDraw();
   const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
   speeds.append(dial,range,presets);showSpeed();
   let A=null,B=null;
-  const show=()=>{info.textContent=A===null?"":"循環 "+fmt(A)+" – "+(B===null?"…":fmt(B))};
+  const show=()=>{info.textContent=A===null?"":"循環 "+fmt(A)+" – "+(B===null?"…":fmt(B));if(typeof renderLoops==="function")renderLoops()};
   const setA=el("button","pill","設 A 點"),setB=el("button","pill","設 B 點"),clr=el("button","pill","取消循環");
   setA.onclick=()=>{A=au.currentTime;if(B!==null&&B<=A)B=null;show()};
   setB.onclick=()=>{if(A===null||au.currentTime<=A){info.textContent="先在要開始的地方按「設 A 點」";return}B=au.currentTime;au.currentTime=A;au.play();show()};
   clr.onclick=()=>{A=B=null;show()};
   au.addEventListener("timeupdate",()=>{if(A!==null&&B!==null&&au.currentTime>=B)au.currentTime=A});
   loop.append(setA,setB,clr,info);
+  const saveRow=el("div","row loop-save"),nameIn=el("input"),saveBtn=el("button","pill","儲存段落"),list=el("div","loop-list");
+  nameIn.type="text";nameIn.maxLength=30;nameIn.placeholder="幫這段取名字";nameIn.setAttribute("aria-label","段落名稱");
+  saveRow.append(nameIn,saveBtn);
+  const allLoops=()=>load("pr_loops",{}),myLoops=()=>allLoops()[cur.src]||[];
+  const putLoops=a=>{const o=allLoops();if(a.length)o[cur.src]=a;else delete o[cur.src];save("pr_loops",o)};
+  function renderLoops(){
+    const a=myLoops();list.innerHTML="";saveBtn.disabled=A===null||B===null;
+    a.forEach((L,i)=>{
+      const row=el("div","loop-item"),go=el("button","pill loop-go"),ren=el("button","pill loop-ic","✎"),del=el("button","pill loop-ic","×");
+      go.append(el("span","",L.n),el("small","",fmt(L.a)+" – "+fmt(L.b)));
+      go.setAttribute("aria-pressed",A===L.a&&B===L.b);
+      go.onclick=()=>{A=L.a;B=L.b;au.currentTime=A;au.play();show()};
+      ren.setAttribute("aria-label","重新命名「"+L.n+"」");del.setAttribute("aria-label","刪除「"+L.n+"」");
+      del.onclick=()=>{const x=myLoops();x.splice(i,1);putLoops(x);renderLoops()};
+      ren.onclick=()=>{
+        const inp=el("input");inp.type="text";inp.maxLength=30;inp.value=L.n;inp.setAttribute("aria-label","段落名稱");
+        let done=false;
+        const fin=ok=>{if(done)return;done=true;const v=inp.value.trim();
+          if(ok&&v){const x=myLoops();if(x[i])x[i].n=v;putLoops(x)}renderLoops()};
+        inp.onkeydown=e=>{if(e.key==="Enter")fin(true);else if(e.key==="Escape")fin(false)};
+        inp.onblur=()=>fin(true);
+        go.replaceWith(inp);inp.focus();inp.select();
+      };
+      row.append(go,ren,del);list.append(row);
+    });
+  }
+  saveBtn.onclick=()=>{
+    if(A===null||B===null)return;
+    const x=myLoops();x.push({n:nameIn.value.trim()||"段落 "+(x.length+1),a:A,b:B});
+    putLoops(x);nameIn.value="";renderLoops();
+  };
+  nameIn.onkeydown=e=>{if(e.key==="Enter")saveBtn.click()};
   speeds.prepend(el("span","grp-label","播放速度"));
-  box.append(au,speeds,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop));
+  renderLoops();
+  box.append(au,speeds,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,saveRow,list));
   return box;
 }
 function renderSongs(){
@@ -1829,6 +1904,46 @@ renderSongs();
   // a sheet opened or closed in a song card
   new MutationObserver(()=>{if(!panel.hidden)refreshTop()}).observe($("#songs"),{subtree:true,attributes:true,attributeFilter:["hidden"]});
   showLv();sync();
+})();
+
+/* ---------- guitar: floating metronome button (專案) ---------- */
+// Sits above 自動捲譜 and drives a song card's own metronome: the one that is running,
+// otherwise the song at mid-screen. Shown and hidden together with the auto-scroll button.
+(function(){
+  const box=$("#aScroll"),fab=$("#mfFab"),panel=$("#mfPanel"),play=$("#mfPlay"),range=$("#mfRange"),lv=$("#mfLv"),song=$("#mfSong");
+  const players=()=>[...document.querySelectorAll("#songs .player")].filter(p=>p._metro);
+  function target(){
+    const ps=players(),run=ps.find(p=>p._metro.on());if(run)return run;
+    let pick=ps[0]||null;
+    ps.forEach(p=>{if(p.closest(".song").getBoundingClientRect().top<=innerHeight/2)pick=p});
+    return pick;
+  }
+  function render(){
+    const p=target(),on=!!p&&p._metro.on();
+    fab.classList.toggle("running",players().some(x=>x._metro.on()));
+    fab.setAttribute("aria-label",on?"節拍器（播放中）":"節拍器");
+    play.disabled=range.disabled=!p;play.setAttribute("aria-pressed",String(on));
+    const l=on?"暫停節拍器":"開始節拍器";play.setAttribute("aria-label",l);play.title=l;
+    song.textContent=p?"「"+p.closest(".song").querySelector("h3").textContent.split(/\s*\+\s*/)[0]+"」":"";
+    if(p){range.value=p._metro.bpm();lv.textContent="♩="+p._metro.bpm();range.setAttribute("aria-valuetext",lv.textContent)}
+  }
+  play.onclick=()=>{const p=target();if(p)p._metro.toggle()};
+  range.addEventListener("input",()=>{const p=target();if(p)p._metro.set(+range.value)});
+  document.addEventListener("pmchange",render);
+  // only one of the two panels open at a time
+  function setOpen(v){
+    if(v&&!$("#asPanel").hidden)$("#asFab").click();
+    panel.hidden=!v;fab.setAttribute("aria-expanded",String(v));if(v)render();
+  }
+  fab.onclick=()=>setOpen(panel.hidden);
+  $("#asFab").addEventListener("click",()=>{if(!panel.hidden)setOpen(false)});
+  $("#mfClose").onclick=()=>{setOpen(false);fab.focus()};
+  document.addEventListener("click",e=>{if(!panel.hidden&&!box.contains(e.target))setOpen(false)});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
+  let rq=0;
+  window.addEventListener("scroll",()=>{if(!panel.hidden&&!rq)rq=requestAnimationFrame(()=>{rq=0;render()})},{passive:true});
+  new MutationObserver(()=>{if(box.hidden)setOpen(false)}).observe(box,{attributes:true,attributeFilter:["hidden"]});
+  render();
 })();
 
 /* ---------- singing: projects (songs to sing) ---------- */
