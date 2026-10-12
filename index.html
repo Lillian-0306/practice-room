@@ -458,6 +458,8 @@ section.panel[hidden]{display:none}
 .my-form input:focus,.my-form textarea:focus{outline:none;border-color:var(--accent)}
 .my-form .err{color:var(--warn);font-size:.88rem;margin:0}
 .my-form .err:empty{display:none}
+.my-form .yt-info{font-size:.82rem;color:var(--muted);margin:-6px 0 0;overflow-wrap:anywhere}
+.my-form .yt-info:empty{display:none}
 .my-form .tag-fld{display:flex;flex-direction:column;gap:6px;font-size:.88rem;font-weight:700;color:var(--muted)}
 .my-form .tag-fld small{font-weight:400}
 .tag-list{display:flex;flex-wrap:wrap;gap:6px}
@@ -3384,6 +3386,28 @@ function lineMap(oldL,newL){
   while(b<oldL.length-a&&b<newL.length-a&&oldL[oldL.length-1-b].s===newL[newL.length-1-b].s){t[newL.length-1-b]=oldL.length-1-b;b++}
   return t;
 }
+// YouTube title → {title, by}. Handles "歌手 - 歌名", "歌手【歌名】", and "… - Topic" channels;
+// drops 【高音質|動態歌詞】-style tags, (Official MV) and the like. Channel names are not trusted as singers.
+const YT_NOISE=/official|music\s*video|\bmv\b|\bm\/v\b|lyrics?|audio|video|\bhd\b|\b4k\b|\bhq\b|\blive\b|karaoke|ktv|cover|動態歌詞|歌詞|高音質|高畫質|官方|完整版|中字|字幕|伴奏|純音樂|首播|推廣曲|主題曲|片尾曲|片頭曲|插曲|原唱/i;
+function parseYtTitle(raw,author){
+  let s=(raw||"").replace(/\s+/g," ").trim();
+  const topic=(author||"").match(/^(.+?) - Topic$/);
+  const cut=x=>x.split(/[『【《「\[(（♫♪|｜·•]/)[0].replace(/\s+(official|lyrics?|mv)\b.*$/i,"").replace(/[\s\-–—:：]+$/,"").trim();
+  if(topic)return {title:cut(s)||s,by:topic[1]};
+  // brackets that are only tags go first
+  s=s.replace(/[【\[(（]([^】\])）]*)[】\])）]/g,(m,x)=>YT_NOISE.test(x)?" ":m).replace(/\s+/g," ").trim();
+  const dash=s.match(/^(.+?)\s+[-–—－]\s+(.+)$/)||s.match(/^([^-–—－]+?)[-–—－]([^-–—－]+)$/);
+  if(dash){let a=dash[1].trim(),b=cut(dash[2]);
+    // "歌名 - 歌手" when the second part is the channel name
+    if(author&&b&&author.toLowerCase().includes(b.toLowerCase())&&!author.toLowerCase().includes(a.toLowerCase()))[a,b]=[b,cut(a)];
+    if(a&&b)return {title:b,by:cut(a)||a}}
+  // 歌手【歌名】 / 歌手《歌名》 / 歌手『歌名』
+  const br=s.match(/^([^【《『「]+?)\s*[【《『「]([^】》』」]+)[】》』」]/);
+  if(br&&!YT_NOISE.test(br[2]))return {title:br[2].trim(),by:br[1].trim()};
+  return {title:cut(s)||s,by:""};
+}
+const ytInfo=id=>fetch("https://www.youtube.com/oembed?format=json&url="+encodeURIComponent("https://www.youtube.com/watch?v="+id))
+  .then(r=>r.ok?r.json():Promise.reject()).then(j=>({raw:j.title||"",author:j.author_name||""}));
 // add (o = null) or edit a song
 function songForm(o){
   const f=el("form","my-form");f.noValidate=true;
@@ -3404,8 +3428,23 @@ function songForm(o){
   tagAdd.onclick=addTags;tagIn.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addTags()}};
   const tagHead=el("span","","標籤");tagHead.append(el("small","","（最多 6 個，按 × 刪除）"));
   tagRow.append(tagIn,tagAdd);tagF.append(tagHead,tagList,tagRow);drawTags();
-  f.append(el("h3","",o?"編輯歌曲":"新增歌曲"),fld("歌名",null,title),fld("演唱者","（可以不填）",by),tagF,
-    fld("YouTube 連結","（影片網址、youtu.be 短網址或 Shorts 都可以）",url),fld("歌詞","（直接貼上，一行一句；空一行是新的段落）",ly),err,btns);
+  // 貼上連結就去 YouTube 查影片標題，填進還空著（或上次自動填的）歌名、演唱者
+  const ytNote=el("p","yt-info");let lastId=o?o.yt:null,auto={title:false,by:false},tm=0;
+  title.addEventListener("input",()=>{auto.title=false});by.addEventListener("input",()=>{auto.by=false});
+  const lookUp=()=>{
+    const id=ytId(url.value);if(!id||id===lastId)return;lastId=id;ytNote.textContent="正在查影片標題…";
+    ytInfo(id).then(({raw,author})=>{
+      if(ytId(url.value)!==id)return;
+      const p=parseYtTitle(raw,author),put=[];
+      if(p.title&&(!title.value.trim()||auto.title)){title.value=p.title.slice(0,40);auto.title=true;put.push("歌名")}
+      if(p.by&&(!by.value.trim()||auto.by)){by.value=p.by.slice(0,40);auto.by=true;put.push("演唱者")}
+      ytNote.textContent="影片標題：「"+raw+"」"+(put.length?"。已自動填入"+put.join("和")+"，不對可以自己改。":"");
+    },()=>{if(ytId(url.value)===id)ytNote.textContent="查不到影片標題，請自己填歌名。"});
+  };
+  url.addEventListener("input",()=>{clearTimeout(tm);tm=setTimeout(lookUp,400)});
+  f.append(el("h3","",o?"編輯歌曲":"新增歌曲"),
+    fld("YouTube 連結","（影片網址、youtu.be 短網址或 Shorts 都可以；貼上後會自動填歌名和演唱者）",url),ytNote,
+    fld("歌名",null,title),fld("演唱者","（可以不填）",by),tagF,fld("歌詞","（直接貼上，一行一句；空一行是新的段落）",ly),err,btns);
   cancel.onclick=()=>renderVSongs();
   f.onsubmit=e=>{
     e.preventDefault();
@@ -4579,6 +4618,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.11",title:"新增歌曲自動填歌名",items:[
+    ["貼連結就填好","新增歌曲時先貼 YouTube 連結，網站會查影片標題，自動填入歌名和演唱者；填錯可以自己改。"]
+  ]},
   {v:"2026-10-12.10",title:"歌唱專案可以錄音",items:[
     ["右下角錄音","唱歌 › 專案右下角多了麥克風按鈕，打開面板就能錄音、回聽和下載。"],
     ["跟著影片錄","勾「開始錄音時一起播放影片」，按下錄音會同時播放剛剛看的影片，停止時影片也會暫停。戴耳機錄比較清楚。"]
