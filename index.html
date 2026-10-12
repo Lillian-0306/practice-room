@@ -384,6 +384,64 @@ section.panel[hidden]{display:none}
 .lyr-line.cal{outline:2px dashed var(--accent);outline-offset:-2px}
 .lyr-tools{margin-top:8px}
 .lyr-msg:empty{display:none}
+.lyr-tools .ci-chk{margin-left:auto}
+/* 歌詞標記 */
+.mk{border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.mk-c{padding:1px 2px}
+.mk-legend .mk-edit-btn{min-height:28px;padding:2px 10px;font-size:.8rem}
+.mk-edit{display:flex;flex-direction:column;gap:8px}
+.mk-edit .sub-h{margin:6px 0 0;font-size:.95rem}
+.mk-erow{flex-wrap:nowrap}
+.mk-erow input[type=text]{flex:1;min-width:0;font:inherit;font-size:.92rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;min-height:36px}
+.mk-erow input[type=text]:focus{outline:none;border-color:var(--accent)}
+.mk-erow input.sym{flex:0 0 4.2em;text-align:center;font-weight:700;color:var(--accent)}
+.mk-erow input[type=color]{flex:0 0 40px;width:40px;height:36px;padding:0;border:1.5px solid var(--line);border-radius:10px;background:none;cursor:pointer}
+.mk-erow .pill{flex:0 0 auto;min-height:36px;padding:3px 12px}
+.mk-edit .err{color:var(--warn);font-size:.88rem;margin:0}
+.mk-edit .err:empty{display:none}
+.mk-u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.mk-sym{color:var(--accent);font-weight:700;margin:0 1px}
+.lyr-line .sel{outline:2px solid var(--accent);outline-offset:1px;border-radius:3px}
+.lyr.marking .lyr-line{color:var(--ink);cursor:text;-webkit-user-select:none;user-select:none}
+.mk-bar,.mk-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
+.mk-bar[hidden],.mk-legend:empty{display:none}
+.mk-bar .pill{min-height:34px;padding:3px 10px;font-size:.88rem}
+.mk-bar .pill:disabled{opacity:.4;cursor:default}
+.mk-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.mk-legend{gap:4px 12px;font-size:.82rem;color:var(--muted)}
+.mk-legend b{color:var(--accent)}
+/* songs people add themselves */
+.add-song{align-self:flex-start}
+.my-form{display:flex;flex-direction:column;gap:12px;border:1.5px dashed var(--accent);border-radius:12px;padding:16px}
+.my-form h3{font-size:1.1rem}
+.my-form label{display:flex;flex-direction:column;gap:4px;font-size:.88rem;font-weight:700;color:var(--muted)}
+.my-form label small{font-weight:400}
+.my-form input,.my-form textarea{font:inherit;font-size:.95rem;font-weight:400;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0}
+.my-form textarea{min-height:220px;resize:vertical;line-height:1.6}
+.my-form input:focus,.my-form textarea:focus{outline:none;border-color:var(--accent)}
+.my-form .err{color:var(--warn);font-size:.88rem;margin:0}
+.my-form .err:empty{display:none}
+.my-form .tag-fld{display:flex;flex-direction:column;gap:6px;font-size:.88rem;font-weight:700;color:var(--muted)}
+.my-form .tag-fld small{font-weight:400}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px}
+.tag-list:empty{display:none}
+.tag-chip{display:inline-flex;align-items:center;gap:2px;background:var(--accent-soft);color:var(--ink);border-radius:6px;padding:2px 2px 2px 10px;font-size:.85rem;font-weight:400}
+.tag-chip button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:1rem;line-height:1;width:26px;height:26px;border-radius:6px;cursor:pointer}
+.tag-chip button:hover{color:var(--ink);background:var(--surface)}
+.tag-add{flex-wrap:nowrap}
+.tag-add .pill{flex:0 0 auto;min-height:38px}
+.song-tools{margin-top:10px}
+.song-tools .pill{min-height:34px;padding:3px 12px;font-size:.86rem}
+.mel-setup{margin-top:12px;padding:12px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.mel-setup .sub-h{margin:0}
+.mel-setup p{margin:0}
+.mel-setup audio{width:100%}
+.mel-setup ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.mel-prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.mel-prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.kara-off{margin-top:8px}
+.kara-off .note{margin:0 0 6px}
+.kara-off .pill{min-height:34px;padding:3px 12px;font-size:.86rem}
 .kara{margin-top:12px;padding:12px;border-radius:10px;background:var(--bg)}
 .kara canvas{display:block;width:100%;height:220px;border-radius:8px;background:var(--surface);border:1px solid var(--line);margin:10px 0 8px}
 .kara-stat{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:.92rem}
@@ -902,7 +960,11 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     <button class="theme-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="styleMenu" aria-label="切換網頁風格" title="切換網頁風格">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8l-.4-.9c-.5-1 .2-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-4.9-4-9-9-9z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7" r="1.2" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
     </button>
+    <div class="style-menu" id="helpMenu" role="menu" aria-label="選擇導覽" hidden></div>
     <div class="style-menu" id="styleMenu" role="radiogroup" aria-label="網頁風格" hidden></div>
+    <button class="theme-btn" id="backupBtn" type="button" aria-label="資料備份（匯出、匯入）" title="資料備份（匯出、匯入）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M8 7l4-4 4 4M12 3v12"/></svg>
+    </button>
     <button class="theme-btn" id="themeBtn" type="button">
       <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -1255,7 +1317,7 @@ STYLE_OPTS.forEach(o=>{
 });
 function openStyleMenu(){$("#styleMenu").hidden=false;$("#styleBtn").setAttribute("aria-expanded","true");($("#styleMenu [aria-checked=true]")||$("#styleMenu .style-opt")).focus()}
 function closeStyleMenu(focusBtn){if($("#styleMenu").hidden)return;$("#styleMenu").hidden=true;$("#styleBtn").setAttribute("aria-expanded","false");if(focusBtn)$("#styleBtn").focus()}
-$("#styleBtn").onclick=e=>{e.stopPropagation();$("#styleMenu").hidden?openStyleMenu():closeStyleMenu()};
+$("#styleBtn").onclick=e=>{e.stopPropagation();if($("#helpMenu"))$("#helpMenu").hidden=true;$("#styleMenu").hidden?openStyleMenu():closeStyleMenu()};
 document.addEventListener("click",e=>{if(!e.target.closest(".top-actions"))closeStyleMenu()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeStyleMenu(true)});
 {const s=document.documentElement.dataset.style;$("#styleMenu").querySelectorAll(".style-opt").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.k===(s||"minimal"))))}
@@ -2758,9 +2820,9 @@ renderSongs();
 /* ---------- singing: projects (songs to sing) ---------- */
 // melody: JSON with notes [[start s, length s, midi]] extracted from the recording, timed to the YouTube video
 const VSONGS=[
-  {title:"篇章",by:"張韶涵／王赫野 合唱",meta:["男女對唱","動態歌詞影片"],
+  {title:"篇章",by:"張韶涵／王赫野 合唱",meta:["範本","男女對唱","動態歌詞影片"],
    yt:"jSLrqR8ypdg",ytNote:"影片來源：YouTube 頻道 XH Music Channel (New)",melody:"songs/pianzhang-melody.json",lyrics:"songs/pianzhang-lyrics.json"},
-  {title:"暮色回響",by:"張韶涵（原唱：吉星出租）",meta:["《默殺》電影推廣曲","動態歌詞影片"],
+  {title:"暮色回響",by:"張韶涵（原唱：吉星出租）",meta:["範本","《默殺》電影推廣曲","動態歌詞影片"],
    yt:"tln-FPsf4tg",ytNote:"影片來源：YouTube 頻道 4K Music Make",lyrics:"songs/muse-huixiang-lyrics.json"}
 ];
 // YouTube IFrame API, loaded on first use
@@ -2801,22 +2863,153 @@ function ytBox(id,title){
 
 /* ---------- singing: lyrics that follow the video ---------- */
 // songs/…-lyrics.json: lines [{t start in seconds, s text, gap starts a new section}]. The line being
-// sung lights up and scrolls to the middle; tap a line to jump the video there. 對時間 re-times the
-// lines by tapping along with the video; the result stays in this browser (pr_lyric_times) and
-// 複製時間 copies it out so it can be put into the file.
+// sung lights up and scrolls to the middle; tap a line to jump the video there. The built-in songs
+// are already timed (times in the JSON). Songs people add (song.my) carry their lines inline and get
+// 對時間: tap along with the video; the result stays in this browser (pr_lyric_times). They carry their
+// lines inline and keep their times under "my:<id>". 自動捲動 is one switch for all songs (pr_lyr_auto).
+let lyrAuto=load("pr_lyr_auto",true)!==false;
+const lyrKey=song=>song.my?"my:"+song.id:song.title;
+// 歌詞標記 (pr_lyric_marks: {song: {line: {c:[[from, to, colour]], u:[[from, to]], s:[[after char, text]]}}}),
+// character positions count code points; a mark at s position p sits after character p-1
+// The tags are shared by all songs and can be renamed, recoloured, added and deleted (pr_mk_tags: {c:[{id, n, bg}], s:[{t, n}]})
+const MK_DEF={c:[{id:"g",n:"有力",bg:"#1E9E78"},{id:"y",n:"溫柔",bg:"#F2C230"},{id:"b",n:"哭腔",bg:"#2F7FD8"},{id:"o",n:"重音",bg:"#EE8A2E"}],
+  s:[{t:"⤴",n:"滑上去"},{t:"⤵",n:"滑下來"},{t:"～",n:"拉長音"},{t:"/",n:"換氣"},{t:"(V)",n:"抖音"},{t:"🔁",n:"轉音"}]};
+const HEX=/^#[0-9a-fA-F]{6}$/;
+let mkTags=(v=>v&&Array.isArray(v.c)&&Array.isArray(v.s)&&v.c.every(c=>c&&c.id&&typeof c.n==="string"&&HEX.test(c.bg))&&v.s.every(s=>s&&s.t&&typeof s.n==="string")?v:JSON.parse(JSON.stringify(MK_DEF)))(load("pr_mk_tags",null));
+const mkFg=hex=>{const n=parseInt(hex.slice(1),16);return ((n>>16)*299+(n>>8&255)*587+(n&255)*114)/1000>150?"#2A2100":"#fff"};
+const mkSw=c=>{const i=el("i","mk-sw");i.style.background=c.bg;return i};
+function editMkTags(){
+  const draft={c:mkTags.c.map(x=>({...x,old:x.id})),s:mkTags.s.map(x=>({...x,old:x.t}))};
+  const body=el("div","mk-edit"),err=el("p","err");
+  const txt=(v,max,cls,lab)=>{const i=el("input",cls||"");i.type="text";i.value=v;i.maxLength=max;i.setAttribute("aria-label",lab);return i};
+  function draw(){
+    body.innerHTML="";
+    body.append(el("h3","sub-h","顏色"));
+    draft.c.forEach((c,i)=>{
+      const row=el("div","row mk-erow"),col=el("input"),nm=txt(c.n,8,"","顏色名稱"),del=el("button","pill","×");
+      col.type="color";col.value=c.bg;col.setAttribute("aria-label","「"+c.n+"」的顏色");col.oninput=()=>{c.bg=col.value};
+      nm.oninput=()=>{c.n=nm.value};del.type="button";del.setAttribute("aria-label","刪除「"+c.n+"」");del.onclick=()=>{draft.c.splice(i,1);draw()};
+      row.append(col,nm,del);body.append(row)});
+    if(draft.c.length<8){const a=el("button","pill","＋ 新增顏色");a.type="button";a.onclick=()=>{draft.c.push({id:"c"+Date.now().toString(36),n:"",bg:"#9B6CD6"});draw();body.querySelectorAll(".mk-erow")[draft.c.length-1].querySelector("input[type=text]").focus()};body.append(a)}
+    body.append(el("h3","sub-h","符號"));
+    draft.s.forEach((s,i)=>{
+      const row=el("div","row mk-erow"),sy=txt(s.t,4,"sym","符號"),nm=txt(s.n,8,"","符號名稱"),del=el("button","pill","×");
+      sy.oninput=()=>{s.t=sy.value};nm.oninput=()=>{s.n=nm.value};del.type="button";del.setAttribute("aria-label","刪除「"+(s.n||s.t)+"」");del.onclick=()=>{draft.s.splice(i,1);draw()};
+      row.append(sy,nm,del);body.append(row)});
+    if(draft.s.length<12){const a=el("button","pill","＋ 新增符號");a.type="button";a.onclick=()=>{draft.s.push({t:"",n:""});draw();body.querySelectorAll(".mk-erow")[draft.c.length+draft.s.length-1].querySelector("input").focus()};body.append(a)}
+    body.append(err);
+  }
+  draw();
+  const reset=el("button","btn ghost","恢復預設"),cancel=el("button","btn ghost","取消"),ok=el("button","btn","儲存");
+  const dl=sheetDialog("歌詞標記","編輯標籤",[el("p","note","改名稱、顏色或符號，所有歌都會一起換。刪掉的標籤，歌詞上用到它的地方也會一起拿掉。"),body],[reset,cancel,ok]);
+  cancel.onclick=dl.close;
+  reset.onclick=()=>{draft.c=MK_DEF.c.map(x=>({...x,old:mkTags.c.some(y=>y.id===x.id)?x.id:null}));draft.s=MK_DEF.s.map(x=>({...x}));
+    // a symbol whose text comes back is kept; others count as deleted
+    draft.s.forEach(x=>{x.old=mkTags.s.some(y=>y.t===x.t)?x.t:null});draw()};
+  ok.onclick=()=>{
+    draft.c.forEach(c=>{c.n=c.n.trim()});draft.s.forEach(s=>{s.t=s.t.trim();s.n=s.n.trim()});
+    if(draft.c.some(c=>!c.n)){err.textContent="每個顏色都要有名稱。";return}
+    if(draft.s.some(s=>!s.t)){err.textContent="每個符號都要填符號。";return}
+    if(new Set(draft.s.map(s=>s.t)).size<draft.s.length){err.textContent="有兩個一樣的符號，換一個吧。";return}
+    const goneC=mkTags.c.filter(x=>!draft.c.some(d=>d.old===x.id)).map(x=>x.id);
+    const goneS=mkTags.s.filter(x=>!draft.s.some(d=>d.old===x.t)).map(x=>x.t);
+    const ren={};draft.s.forEach(d=>{if(d.old!=null&&d.old!==d.t)ren[d.old]=d.t});
+    const all=load("pr_lyric_marks",{});let used=0;
+    Object.values(all).forEach(song=>Object.values(song).forEach(m=>{used+=(m.c||[]).filter(r=>goneC.includes(r[2])).length+(m.s||[]).filter(r=>goneS.includes(r[1])).length}));
+    if(used&&!confirm("刪掉的標籤在歌詞上用了 "+used+" 處，這些標記會一起拿掉，無法復原。確定要儲存嗎？"))return;
+    Object.keys(all).forEach(k=>{const song=all[k];Object.keys(song).forEach(i=>{const m=song[i];
+      if(m.c){m.c=m.c.filter(r=>!goneC.includes(r[2]));if(!m.c.length)delete m.c}
+      if(m.s){m.s=m.s.filter(r=>!goneS.includes(r[1])).map(r=>ren[r[1]]!=null?[r[0],ren[r[1]]]:r);if(!m.s.length)delete m.s}
+      if(!Object.keys(m).length)delete song[i]});if(!Object.keys(song).length)delete all[k]});
+    save("pr_lyric_marks",all);
+    mkTags={c:draft.c.map(({old,...x})=>x),s:draft.s.map(({old,...x})=>x)};save("pr_mk_tags",mkTags);
+    dl.close();document.querySelectorAll(".lyr").forEach(w=>w._reload&&w._reload());
+  };
+}
+let lyrMarkShow=load("pr_lyr_marks_show",true)!==false; // 顯示標記, shared by all songs
 function lyricsPanel(song,yt){
   const wrap=el("div","lyr"),list=el("div","lyr-list"),tools=el("div","row lyr-tools"),msg=el("p","note lyr-msg");
   let lines=[],els=[],player=null,cur=-1,userScroll=0,cal=null;
-  const own=()=>load("pr_lyric_times",{})[song.title]||null;
-  const setOwn=a=>{const o=load("pr_lyric_times",{});if(a)o[song.title]=a;else delete o[song.title];save("pr_lyric_times",o)};
-  const times=()=>{const o=own();return lines.map((l,i)=>o&&o[i]!=null?o[i]:l.t)}; // null = not timed yet
+  const KEY=lyrKey(song);
+  // 標記
+  let marks=load("pr_lyric_marks",{})[KEY]||{},mk=false,sel=null;
+  const bar=el("div","mk-bar"),legend=el("div","mk-legend");bar.hidden=true;
+  const own=()=>load("pr_lyric_times",{})[KEY]||null;
+  const setOwn=a=>{const o=load("pr_lyric_times",{});if(a)o[KEY]=a;else delete o[KEY];save("pr_lyric_times",o)};
+  const times=()=>{const o=song.my?own():null;return lines.map((l,i)=>o&&o[i]!=null?o[i]:l.t)}; // null = not timed yet
   const untimed=()=>times().some(t=>t==null);
   const r2=v=>Math.round(v*100)/100;
-  fetch(song.lyrics).then(r=>r.json()).then(j=>{lines=j.lines||[];build();renderTools();
-    if(untimed())msg.textContent="這首歌的歌詞還沒對時間。按「對時間」跟著影片每句按一下，歌詞就會跟著捲動。"}).catch(()=>{list.textContent="歌詞載入失敗，請重新整理。"});
+  (song.lines?Promise.resolve({lines:song.lines}):fetch(song.lyrics).then(r=>r.json())).then(j=>{lines=j.lines||[];build();renderTools();
+    if(song.my&&untimed())msg.textContent="這首歌的歌詞還沒對時間。按「對時間」跟著影片每句按一下，歌詞就會跟著捲動。"}).catch(()=>{list.textContent="歌詞載入失敗，請重新整理。"});
   function build(){
     list.innerHTML="";
-    els=lines.map((l,i)=>{const b=el("button","lyr-line"+(l.gap?" gap":""),l.s);b.type="button";b.onclick=()=>seek(i);list.append(b);return b});
+    els=lines.map((l,i)=>{const b=el("button","lyr-line"+(l.gap?" gap":""));b.type="button";b.onclick=e=>mk?pick(i,e):seek(i);list.append(b);return b});
+    els.forEach((b,i)=>paint(i));showLegend();
+  }
+  function paint(i){
+    const b=els[i];if(!b)return;
+    const chars=Array.from(lines[i].s),n=chars.length,m=(mk||lyrMarkShow)&&marks[i]||{},col=new Array(n).fill(""),und=new Array(n).fill(false),after={};
+    (m.c||[]).forEach(([a,z,c])=>{for(let k=a;k<=z&&k<n;k++)col[k]=c});
+    (m.u||[]).forEach(([a,z])=>{for(let k=a;k<=z&&k<n;k++)und[k]=true});
+    (m.s||[]).forEach(([p,t])=>{(after[p]=after[p]||[]).push(t)});
+    b.innerHTML="";let seg=null,key=null;
+    const syms=p=>{if(after[p]){seg=null;after[p].forEach(t=>b.append(el("span","mk-sym",t)))}};
+    for(let k=0;k<n;k++){
+      syms(k);
+      const kk=col[k]+(und[k]?"u":"");
+      if(!seg||kk!==key){const t=col[k]&&mkTags.c.find(x=>x.id===col[k]);seg=el("span","mk"+(t?" mk-c":"")+(und[k]?" mk-u":""));
+        if(t){seg.style.background=t.bg;seg.style.color=mkFg(t.bg)}key=kk;b.append(seg)}
+      const c=el("span",sel&&sel.i===i&&k>=sel.a&&k<=sel.b?"sel":"",chars[k]);c.dataset.i=k;seg.append(c);
+    }
+    syms(n);
+    b.setAttribute("aria-label",lines[i].s);
+  }
+  function showLegend(){
+    legend.innerHTML="";if(mk||!lyrMarkShow)return;
+    // every tag is listed, used in this song or not
+    mkTags.c.forEach(c=>{const s=el("span");s.append(mkSw(c),c.n);legend.append(s)});
+    mkTags.s.forEach(({t,n})=>{const s=el("span");s.append(el("b","",t),n?" "+n:"");legend.append(s)});
+    const e=el("button","pill mk-edit-btn","✎ 編輯標籤");e.type="button";e.onclick=editMkTags;legend.append(e);
+  }
+  const saveMarks=()=>{
+    Object.keys(marks).forEach(i=>{const m=marks[i];["c","u","s"].forEach(k=>{if(m[k]&&!m[k].length)delete m[k]});if(!Object.keys(m).length)delete marks[i]});
+    const o=load("pr_lyric_marks",{});if(Object.keys(marks).length)o[KEY]=marks;else delete o[KEY];save("pr_lyric_marks",o);
+  };
+  // tap one character, then another on the same line for a range; the same character again clears
+  function pick(i,e){
+    const c=e.target.closest("[data-i]");if(!c)return;
+    const k=+c.dataset.i,old=sel&&sel.i;
+    if(sel&&sel.i===i&&sel.a===sel.b&&k!==sel.a)sel={i,a:Math.min(k,sel.a),b:Math.max(k,sel.a)};
+    else if(sel&&sel.i===i&&sel.a===k&&sel.b===k)sel=null;
+    else sel={i,a:k,b:k};
+    if(old!=null&&old!==i)paint(old);paint(i);markBar();
+  }
+  const cut=(arr,a,b)=>{const out=[];(arr||[]).forEach(r=>{if(r[1]<a||r[0]>b){out.push(r);return}if(r[0]<a)out.push([r[0],a-1].concat(r.slice(2)));if(r[1]>b)out.push([b+1,r[1]].concat(r.slice(2)))});return out};
+  function apply(kind,v){
+    if(!sel)return;const m=marks[sel.i]=marks[sel.i]||{},a=sel.a,b=sel.b;
+    if(kind==="c"){const all=(m.c||[]).some(r=>r[2]===v&&r[0]<=a&&r[1]>=b);m.c=cut(m.c,a,b);if(!all)m.c.push([a,b,v])}
+    else if(kind==="u"){const all=(m.u||[]).some(r=>r[0]<=a&&r[1]>=b);m.u=cut(m.u,a,b);if(!all)m.u.push([a,b])}
+    else if(kind==="s"){m.s=m.s||[];const j=m.s.findIndex(x=>x[0]===b+1&&x[1]===v);if(j>=0)m.s.splice(j,1);else m.s.push([b+1,v])}
+    else{m.c=cut(m.c,a,b);m.u=cut(m.u,a,b);m.s=(m.s||[]).filter(x=>x[0]<a||x[0]>b+1)}
+    saveMarks();paint(sel.i);
+  }
+  function markBar(){
+    bar.innerHTML="";bar.hidden=!mk;if(!mk)return;
+    mkTags.c.forEach(c=>{const p=el("button","pill");p.append(mkSw(c),c.n);p.onclick=()=>apply("c",c.id);bar.append(p)});
+    const u=el("button","pill","底線");u.style.textDecoration="underline";u.onclick=()=>apply("u");bar.append(u);
+    mkTags.s.forEach(({t,n})=>{const p=el("button","pill",t+(n?" "+n:""));p.onclick=()=>apply("s",t);bar.append(p)});
+    const tx=el("button","pill","＋ 文字");tx.onclick=()=>{if(!sel)return;const v=(prompt("要加在選取的字後面的文字，例如：（泣）、(VV)","")||"").trim().slice(0,12);if(v)apply("s",v)};bar.append(tx);
+    const clr=el("button","pill","清除標記");clr.onclick=()=>apply("x");bar.append(clr);
+    bar.querySelectorAll("button").forEach(b=>{b.type="button";b.disabled=!sel});
+    const ed=el("button","pill","✎ 編輯標籤");ed.type="button";ed.onclick=editMkTags;bar.append(ed);
+  }
+  wrap._reload=()=>{marks=load("pr_lyric_marks",{})[KEY]||{};els.forEach((b,i)=>paint(i));showLegend();markBar();if(!cal)renderTools()};
+  function markStart(){
+    if(cal)return;mk=true;sel=null;wrap.classList.add("marking");els.forEach((b,i)=>paint(i));markBar();showLegend();renderTools();
+    msg.textContent="點一個字選取，再點同一句的另一個字選一整段，然後按上面的顏色或符號（符號會加在選取的字後面）。再按一次同一個顏色或符號就取消。";
+  }
+  function markEnd(){
+    mk=false;sel=null;wrap.classList.remove("marking");els.forEach((b,i)=>paint(i));markBar();showLegend();renderTools();msg.textContent="";
   }
   async function getPlayer(create){
     if(player)return player;
@@ -2833,7 +3026,9 @@ function lyricsPanel(song,yt){
   // reading the lyrics by hand pauses the auto-scroll for a moment
   ["wheel","touchmove"].forEach(e=>list.addEventListener(e,()=>{userScroll=Date.now()},{passive:true}));
   const center=b=>list.scrollTo({top:b.offsetTop-list.clientHeight/2+b.offsetHeight/2,behavior:"smooth"});
+  let shown=false,iv=0;
   function tick(){
+    if(wrap.isConnected)shown=true;else if(shown){clearInterval(iv);return} // the card was rebuilt
     if(!player){getPlayer(false);return}
     let t=0;try{t=player.getCurrentTime()||0}catch(e){return}
     const ts=times();let k=-1;
@@ -2841,10 +3036,11 @@ function lyricsPanel(song,yt){
     if(k!==cur){
       if(els[cur])els[cur].classList.remove("on");
       cur=k;
-      if(els[k]){els[k].classList.add("on");if(!cal&&Date.now()-userScroll>3000)center(els[k])}
+      if(els[k]){els[k].classList.add("on");if(!cal&&!mk&&lyrAuto&&Date.now()-userScroll>3000)center(els[k])}
     }
   }
-  setInterval(tick,200);
+  iv=setInterval(tick,200);
+  wrap._recenter=()=>{if(els[cur])center(els[cur])};
   // 對時間: play the video and tap at the start of each line (button or space bar)
   function renderTools(){
     tools.innerHTML="";
@@ -2853,21 +3049,35 @@ function lyricsPanel(song,yt){
       mark.onclick=calMark;back.onclick=()=>{cal.i=Math.max(0,cal.i-1);calShow()};done.onclick=calEnd;
       tools.append(mark,back,done);return;
     }
-    const start=el("button","btn ghost","對時間");start.onclick=calStart;tools.append(start);
-    if(own()){
-      const copy=el("button","btn ghost","複製時間"),reset=el("button","btn ghost","還原預設時間");
-      copy.onclick=()=>{const s=JSON.stringify(times());
-        (navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(()=>{msg.textContent="已複製，可以貼給 Claude 更新到網站。"},()=>{msg.textContent=s})};
-      reset.onclick=()=>{if(!confirm("要清掉這台裝置上自己對的時間，改回預設嗎？"))return;setOwn(null);renderTools();msg.textContent="已還原成預設時間。"};
-      tools.append(copy,reset);
+    if(mk){const done=el("button","btn","完成標記");done.onclick=markEnd;tools.append(done);return}
+    if(song.my){const start=el("button","btn ghost","對時間");start.onclick=calStart;tools.append(start)}
+    const mkB=el("button","btn ghost","標記歌詞");mkB.onclick=markStart;tools.append(mkB);
+    if(own()&&song.my){
+      const reset=el("button","btn ghost","清除時間");
+      reset.onclick=()=>{if(!confirm("要清掉這首歌對好的時間嗎？"))return;setOwn(null);renderTools();msg.textContent="已清除，按「對時間」重新對。"};
+      tools.append(reset);
+    }
+    const lab=el("label","ci-chk"),cb=el("input");cb.type="checkbox";cb.checked=lyrAuto;cb.dataset.lyrAuto="";
+    cb.onchange=()=>{lyrAuto=cb.checked;save("pr_lyr_auto",lyrAuto);
+      document.querySelectorAll("input[data-lyr-auto]").forEach(x=>{x.checked=lyrAuto});
+      if(lyrAuto)document.querySelectorAll(".lyr").forEach(w=>w._recenter&&w._recenter())};
+    lab.append(cb,"自動捲動");tools.append(lab);
+    {
+      const ml=el("label","ci-chk"),mc=el("input");mc.type="checkbox";mc.checked=lyrMarkShow;mc.dataset.lyrMarks="";
+      mc.onchange=()=>{lyrMarkShow=mc.checked;save("pr_lyr_marks_show",lyrMarkShow);
+        document.querySelectorAll("input[data-lyr-marks]").forEach(x=>{x.checked=lyrMarkShow});
+        document.querySelectorAll(".lyr").forEach(w=>w._repaint&&w._repaint())};
+      ml.append(mc,"顯示標記");ml.style.marginLeft="0";tools.append(ml);
     }
   }
+  wrap._repaint=()=>{els.forEach((b,i)=>paint(i));showLegend()};
   function calShow(){
     els.forEach((b,i)=>b.classList.toggle("cal",i===cal.i));
     if(els[cal.i])center(els[cal.i]);
     msg.textContent="第 "+(cal.i+1)+" / "+lines.length+" 句：影片唱到這句的第一個字時，按「這句開始了」或空白鍵。點歌詞可以換到那一句。";
   }
   async function calStart(){
+    if(mk)markEnd();
     const p=await getPlayer(true);if(!p){msg.textContent="影片還沒準備好，請先播放影片再試一次。";return}
     cal={i:0,arr:times().slice()};renderTools();calShow();
     p.seekTo(Math.max(0,(cal.arr[0]==null?0:cal.arr[0])-4),true);p.playVideo();
@@ -2882,13 +3092,13 @@ function lyricsPanel(song,yt){
   function calEnd(){
     if(!cal)return;
     cal=null;els.forEach(b=>b.classList.remove("cal"));renderTools();
-    msg.textContent=own()?"時間已存在這台裝置。要更新到網站給大家用，按「複製時間」貼給 Claude。":"";
+    msg.textContent=own()?"時間已存在這台裝置。":"";
   }
   document.addEventListener("keydown",e=>{
     if(!cal||e.code!=="Space"||/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||"")))return;
     e.preventDefault();calMark();
   });
-  wrap.append(list,tools,msg);
+  wrap.append(legend,bar,list,tools,msg);
   return wrap;
 }
 
@@ -2907,13 +3117,14 @@ function karaPanel(song,yt){
   const accEl=el("b","","—"),cntEl=el("span","note","");
   const s1=el("span");s1.append("唱準率 ",accEl);stat.append(s1,cntEl);
   box.append(el("h3","sub-h","跟唱比對"),el("p","note","戴耳機播放影片，跟著唱。上面的橫條是原唱的旋律，你唱的音高會畫成一條線，對準就變綠。男生女生的段落都可以唱，不用管八度。"),cv,live,stat,keyRow,btns,msg,worst);
+  if(song.my)box.append(el("p","note","旋律是從你上傳的音檔自動找出來的，可能有錯音。橫條跟歌聲對不上時，用下面的按鈕把旋律往前或往後移。"),melOffRow(song,()=>{st.data=myMelData(song);resetStats(st);drawKara(st)}));
   const st={song,yt,cv,live,accEl,cntEl,worst,msg,startB,data:null,shift:0,stats:[],trail:[],lastT:0,on:false,center:60};
   const showKey=()=>{keyLbl.textContent=(st.data?st.data.key:"")+(st.shift?"・"+(st.shift>0?"升 ":"降 ")+Math.abs(st.shift):"・原調")};
   kDown.onclick=()=>{st.shift=Math.max(-7,st.shift-1);showKey();resetStats(st);drawKara(st)};
   kUp.onclick=()=>{st.shift=Math.min(7,st.shift+1);showKey();resetStats(st);drawKara(st)};
   reset.onclick=()=>{resetStats(st);drawKara(st)};
   startB.onclick=()=>kara===st?stopKara():startKara(st);
-  fetch(song.melody).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{st.data=d;resetStats(st);showKey();drawKara(st)})
+  (song.my?Promise.resolve(myMelData(song)):fetch(song.melody).then(r=>{if(!r.ok)throw 0;return r.json()})).then(d=>{st.data=d;resetStats(st);showKey();drawKara(st)})
     .catch(()=>{msg.textContent="找不到這首歌的旋律資料。";startB.disabled=true});
   return box;
 }
@@ -3023,21 +3234,298 @@ function drawKara(st,t){
 }
 function renderVSongs(){
   const box=$("#vsongs");box.innerHTML="";
-  if(!VSONGS.length){const e=el("div","empty");e.append(el("b","","還沒有歌曲"),"之後加入的練唱歌曲會出現在這裡。");box.append(e);return}
-  VSONGS.forEach(s=>{
-    const card=el("article","song"),meta=el("div","meta"),links=el("div","video-links");
-    s.meta.forEach(m=>meta.append(el("span","",m)));
-    card.append(el("h3","",s.title),el("p","by",s.by),meta);
-    if(s.yt){
-      const yt=ytBox(s.yt,s.title);
-      const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+s.yt;a.target="_blank";a.rel="noopener";
-      links.append(a,el("span","note",s.ytNote||""));
-      card.append(yt.el,links);
-      if(s.lyrics)card.append(foldSection("lyrics","歌詞（跟著影片捲動，點一句可以跳過去）",lyricsPanel(s,yt)));
-      if(s.melody)card.append(karaPanel(s,yt));
+  VSONGS.forEach(s=>box.append(songCard(s)));
+  mySongs.forEach(s=>box.append(songCard(mySong(s))));
+  const add=el("button","btn ghost add-song","＋ 新增歌曲");
+  add.onclick=()=>{const f=songForm(null);add.replaceWith(f);f.querySelector("input").focus()};
+  box.append(add);
+}
+function songCard(s){
+  const card=el("article","song"),meta=el("div","meta"),links=el("div","video-links");
+  s.meta.forEach(m=>meta.append(el("span","",m)));
+  card.append(el("h3","",s.title));if(s.by)card.append(el("p","by",s.by));card.append(meta);
+  if(s.yt){
+    const yt=ytBox(s.yt,s.title);
+    const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+s.yt;a.target="_blank";a.rel="noopener";
+    links.append(a,el("span","note",s.ytNote||""));
+    card.append(yt.el,links);
+    if(s.lyrics||(s.lines&&s.lines.length))card.append(foldSection("lyrics","歌詞（跟著影片捲動，點一句可以跳過去）",lyricsPanel(s,yt)));
+    if(s.melody||(s.my&&s.mel))card.append(karaPanel(s,yt));
+    else if(s.my)card.append(melSetup(s,yt));
+  }
+  if(s.my){
+    const tools=el("div","row song-tools"),ed=el("button","pill","✎ 編輯歌曲"),del=el("button","pill","× 刪除");
+    ed.onclick=()=>{if(kara)stopKara();const f=songForm(s.src);card.replaceWith(f);f.querySelector("input").focus()};
+    del.onclick=()=>{
+      const cancel=el("button","btn ghost","取消"),ok=el("button","btn danger","確認刪除");
+      const dl=sheetDialog("刪除歌曲","要刪除「"+s.title+"」嗎？",[el("p","","歌詞、對好的時間和旋律都會一起刪掉，刪除後無法復原。")],[cancel,ok]);
+      cancel.onclick=dl.close;
+      ok.onclick=()=>{dl.close();if(kara)stopKara();mySongs=mySongs.filter(x=>x!==s.src);saveMySongs();
+        const o=load("pr_lyric_times",{});delete o[lyrKey(s)];save("pr_lyric_times",o);
+        const mo=load("pr_lyric_marks",{});delete mo[lyrKey(s)];save("pr_lyric_marks",mo);renderVSongs()};
+    };
+    tools.append(ed,del);card.append(tools);
+  }
+  return card;
+}
+
+// songs people add themselves (pr_my_songs): [{id, title, by, yt, lines:[{s, gap}], mel:{key, notes, off, src}}]
+// mel.notes are in the uploaded file's time; off (seconds) moves them onto the video's time.
+let mySongs=(v=>Array.isArray(v)?v:[])(load("pr_my_songs",[])).filter(s=>s&&s.id&&s.title&&typeof s.yt==="string"&&Array.isArray(s.lines));
+const saveMySongs=()=>save("pr_my_songs",mySongs);
+// tags: the labels under the title, chosen by the user (older songs without them show 自己加的歌)
+const songTags=o=>Array.isArray(o.tags)?o.tags.filter(t=>typeof t==="string"&&t):["自己加的歌"];
+const mySong=o=>({my:true,src:o,id:o.id,title:o.title,by:o.by||"",meta:songTags(o),yt:o.yt,lines:o.lines,mel:o.mel||null});
+const myMelData=s=>({key:s.mel.key||"",notes:s.mel.notes.map(n=>[n[0]+(s.mel.off||0),n[1],n[2]])});
+// accepts watch?v=, youtu.be/, shorts/, embed/, live/ links or a bare video id
+function ytId(s){
+  s=(s||"").trim();const m=s.match(/(?:youtu\.be\/|[?&]v=|\/(?:shorts|embed|live|v)\/)([\w-]{11})(?![\w-])/);
+  return m?m[1]:/^[\w-]{11}$/.test(s)?s:null;
+}
+// one line per row; a blank row starts a new section
+function parseLyrics(txt){
+  const out=[];let gap=false;
+  txt.replace(/\r/g,"").split("\n").forEach(l=>{l=l.trim();if(!l){gap=out.length>0;return}out.push(gap?{s:l,gap:true}:{s:l});gap=false});
+  return out;
+}
+const lyricsText=lines=>lines.map(l=>(l.gap?"\n":"")+l.s).join("\n");
+// after editing the lyrics: same number of lines keeps every time, otherwise unchanged lines at the start and end keep theirs
+function remapTimes(oldL,newL,old){
+  if(oldL.length===newL.length)return old.slice();
+  const t=newL.map(()=>null);let a=0,b=0;
+  while(a<oldL.length&&a<newL.length&&oldL[a].s===newL[a].s){t[a]=old[a]==null?null:old[a];a++}
+  while(b<oldL.length-a&&b<newL.length-a&&oldL[oldL.length-1-b].s===newL[newL.length-1-b].s){const v=old[oldL.length-1-b];t[newL.length-1-b]=v==null?null:v;b++}
+  return t;
+}
+// new line index → old line index (same count: by position; otherwise unchanged lines at the start and end)
+function lineMap(oldL,newL){
+  if(oldL.length===newL.length)return newL.map((_,i)=>i);
+  const t=newL.map(()=>null);let a=0,b=0;
+  while(a<oldL.length&&a<newL.length&&oldL[a].s===newL[a].s){t[a]=a;a++}
+  while(b<oldL.length-a&&b<newL.length-a&&oldL[oldL.length-1-b].s===newL[newL.length-1-b].s){t[newL.length-1-b]=oldL.length-1-b;b++}
+  return t;
+}
+// add (o = null) or edit a song
+function songForm(o){
+  const f=el("form","my-form");f.noValidate=true;
+  const fld=(lab,hint,input)=>{const l=el("label");l.append(lab);if(hint)l.append(el("small","",hint));l.append(input);return l};
+  const title=el("input"),by=el("input"),url=el("input"),ly=el("textarea"),err=el("p","err");
+  title.maxLength=40;by.maxLength=40;title.required=true;url.required=true;url.inputMode="url";url.placeholder="https://www.youtube.com/watch?v=…";
+  ly.placeholder="一行一句歌詞。\n空一行表示新的段落。";
+  if(o){title.value=o.title;by.value=o.by||"";url.value="https://www.youtube.com/watch?v="+o.yt;ly.value=lyricsText(o.lines)}
+  const save_=el("button","btn",o?"儲存":"加入歌曲"),cancel=el("button","btn ghost","取消");cancel.type="button";
+  const btns=el("div","row");btns.append(save_,cancel);
+  // 標籤: chips with ×, typed in and added with 加入 or Enter (、 or commas split several)
+  let tags=o?songTags(o).slice():["自己加的歌"];
+  const tagF=el("div","tag-fld"),tagList=el("div","tag-list"),tagRow=el("div","row tag-add"),tagIn=el("input"),tagAdd=el("button","pill","加入");
+  tagIn.type="text";tagIn.maxLength=40;tagIn.placeholder="例如：抒情、練高音";tagIn.setAttribute("aria-label","新增標籤");tagIn.style.flex="1";tagAdd.type="button";
+  const drawTags=()=>{tagList.innerHTML="";tags.forEach((t,i)=>{const c=el("span","tag-chip",t),x=el("button","","×");x.type="button";x.setAttribute("aria-label","刪除標籤「"+t+"」");
+    x.onclick=()=>{tags.splice(i,1);drawTags()};c.append(x);tagList.append(c)});tagAdd.disabled=tags.length>=6;tagIn.disabled=tags.length>=6};
+  const addTags=()=>{tagIn.value.split(/[,，、]/).map(s=>s.trim().slice(0,12)).filter(Boolean).forEach(t=>{if(tags.length<6&&!tags.includes(t))tags.push(t)});tagIn.value="";drawTags();if(!tagIn.disabled)tagIn.focus()};
+  tagAdd.onclick=addTags;tagIn.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addTags()}};
+  const tagHead=el("span","","標籤");tagHead.append(el("small","","（最多 6 個，按 × 刪除）"));
+  tagRow.append(tagIn,tagAdd);tagF.append(tagHead,tagList,tagRow);drawTags();
+  f.append(el("h3","",o?"編輯歌曲":"新增歌曲"),fld("歌名",null,title),fld("演唱者","（可以不填）",by),tagF,
+    fld("YouTube 連結","（影片網址、youtu.be 短網址或 Shorts 都可以）",url),fld("歌詞","（直接貼上，一行一句；空一行是新的段落）",ly),err,btns);
+  cancel.onclick=()=>renderVSongs();
+  f.onsubmit=e=>{
+    e.preventDefault();
+    if(tagIn.value.trim())addTags(); // typed but not added yet
+    const t=title.value.trim(),id=ytId(url.value),lines=parseLyrics(ly.value);
+    if(!t){err.textContent="請填歌名。";title.focus();return}
+    if(!id){err.textContent="看不出是哪支 YouTube 影片，請貼上影片的網址。";url.focus();return}
+    let note="";
+    if(o){
+      const times=load("pr_lyric_times",{}),k="my:"+o.id;
+      if(times[k]){const old=o.lines,nt=remapTimes(old,lines,times[k]);
+        if(nt.some(v=>v==null)&&lines.length)note="歌詞改過的句子要重新按「對時間」。";
+        if(lines.length)times[k]=nt;else delete times[k];save("pr_lyric_times",times)}
+      const mo=load("pr_lyric_marks",{}),k2="my:"+o.id;
+      if(mo[k2]){const nm={};lineMap(o.lines,lines).forEach((j,i)=>{if(j!=null&&mo[k2][j]&&o.lines[j].s===lines[i].s)nm[i]=mo[k2][j]});
+        if(Object.keys(nm).length)mo[k2]=nm;else delete mo[k2];save("pr_lyric_marks",mo)}
+      if(id!==o.yt)note="換了影片，歌詞時間和旋律對齊可能都要重新調整。";
+      Object.assign(o,{title:t,by:by.value.trim(),yt:id,lines,tags:tags.slice()});
+    }else{o={id:Date.now().toString(36),title:t,by:by.value.trim(),yt:id,lines,tags:tags.slice()};mySongs.push(o)}
+    saveMySongs();renderVSongs();
+    const cards=[...$("#vsongs").querySelectorAll(".song")],card=cards[VSONGS.length+mySongs.indexOf(o)];
+    if(card){card.scrollIntoView({block:"start"});if(note){const p=el("p","note",note);card.querySelector(".meta").after(p)}}
+  };
+  return f;
+}
+// 旋律往前／往後: move the melody against the video in 0.05 s steps
+function melOffRow(s,changed){
+  const row=el("div","kara-off"),btns=el("div","row"),lbl=el("p","note"),early=el("button","pill","◀ 早一點"),late=el("button","pill","晚一點 ▶");
+  early.setAttribute("aria-label","旋律提早 0.05 秒");late.setAttribute("aria-label","旋律延後 0.05 秒");
+  const show=()=>{const o=s.mel.off||0;lbl.textContent="旋律對齊：目前位置 "+(o>=0?"+":"")+o.toFixed(2)+" 秒"};
+  const step=d=>{s.mel.off=Math.round(((s.mel.off||0)+d)*100)/100;saveMySongs();show();changed()};
+  early.onclick=()=>step(-0.05);late.onclick=()=>step(0.05);
+  const redo=el("button","pill","重新建立旋律");
+  redo.onclick=()=>{
+    const cancel=el("button","btn ghost","取消"),ok=el("button","btn danger","刪除旋律");
+    const dl=sheetDialog("跟唱比對","要刪掉這首歌的旋律嗎？",[el("p","","刪掉後可以重新上傳音檔建立，無法復原。")],[cancel,ok]);
+    cancel.onclick=dl.close;ok.onclick=()=>{dl.close();if(kara)stopKara();delete s.src.mel;saveMySongs();renderVSongs()};
+  };
+  show();btns.append(early,late,redo);row.append(lbl,btns);return row;
+}
+// upload a recording → find the melody → line it up with the video
+function melSetup(s,yt){
+  const box=el("div","mel-setup"),body=el("div");body.style.cssText="display:flex;flex-direction:column;gap:10px";
+  box.append(el("h3","sub-h","跟唱比對"),body);
+  const firstLyric=()=>{const t=load("pr_lyric_times",{})["my:"+s.id];return t&&t[0]!=null?t[0]:null};
+  function pick(){
+    body.innerHTML="";
+    const inp=el("input");inp.type="file";inp.accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg,.flac";
+    inp.hidden=true;const btn=el("button","btn ghost","選擇音檔");btn.onclick=()=>inp.click();
+    const ol=el("ol");["上傳這首歌的音檔（mp3、m4a、wav 都可以），網站會自動找出主旋律。","對齊影片：音檔和影片各按一下第一句開始的地方。","完成後就能開著影片跟唱、看準不準。"].forEach(x=>ol.append(el("li","",x)));
+    body.append(ol,el("p","note","去掉伴奏的人聲檔最準；有伴奏的原曲也可以，但可能多出樂器的音或漏掉幾個音。音檔只在這台裝置上處理，不會上傳，也不會保存，只存找出來的旋律。"),btn,inp);
+    inp.onchange=()=>{if(inp.files[0])run(inp.files[0])};
+  }
+  async function run(file){
+    body.innerHTML="";
+    const bar=el("div","mel-prog"),fill=el("i"),txt=el("p","note","讀取音檔…");bar.append(fill);body.append(el("p","",file.name),bar,txt);
+    let r;
+    try{r=await extractMelody(file,p=>{fill.style.width=Math.round(p*100)+"%";txt.textContent="找主旋律中… "+Math.round(p*100)+"%"})}
+    catch(e){body.innerHTML="";body.append(el("p","note","這個檔案讀不出聲音，換一個音檔試試（mp3、m4a、wav）。"));const b=el("button","btn ghost","重新選擇");b.onclick=pick;body.append(b);return}
+    if(r.notes.length<10){body.innerHTML="";body.append(el("p","note","這個音檔裡找不到清楚的旋律，換一個音檔試試。"));const b=el("button","btn ghost","重新選擇");b.onclick=pick;body.append(b);return}
+    align(file,r);
+  }
+  function align(file,r){
+    body.innerHTML="";
+    const url=URL.createObjectURL(file),au=el("audio");au.src=url;au.controls=true;au.preload="auto";
+    let tA=null,tV=firstLyric();
+    const st=el("p","note"),tapA=el("button","btn","音檔第一句開始了"),tapV=el("button","btn","影片第一句開始了"),skip=el("button","btn ghost","音檔和影片同時開始，不用對");
+    const vRow=el("div","row"),done=el("button","btn","完成");done.disabled=true;
+    const fmt=t=>fmtT(t)+"."+String(Math.floor(t%1*10));
+    const upd=()=>{
+      st.textContent=(tA==null?"音檔：還沒按":"音檔第一句：")+(tA==null?"":fmt(tA))+"　"+(tV==null?"影片：還沒按":"影片第一句："+fmt(tV));
+      done.disabled=tA==null||tV==null};
+    tapA.onclick=()=>{tA=au.currentTime;au.pause();upd()};
+    tapV.onclick=async()=>{let p=null;try{p=await yt.player()}catch(e){}
+      if(!p){st.textContent="影片播放器還沒準備好，先點上面的影片播放一次再按。";return}
+      let t=0;try{t=p.getCurrentTime()||0}catch(e){}
+      if(t<=0){st.textContent="先播放上面的影片，唱到第一句時再按。";try{p.playVideo()}catch(e){}return}
+      tV=t;try{p.pauseVideo()}catch(e){}upd()};
+    const finish=off=>{
+      URL.revokeObjectURL(url);
+      // drop what comes long before the first line (intro instruments)
+      const first=tA!=null?tA-1.5:-1e9,notes=r.notes.filter(n=>n[0]>=first);
+      s.src.mel={key:r.key,notes,off:Math.round(off*100)/100,src:file.name};saveMySongs();renderVSongs();
+    };
+    done.onclick=()=>finish(tV-tA);skip.onclick=()=>finish(0);
+    vRow.append(tapV);
+    body.append(el("p","","找到 "+r.notes.length+" 個音（"+r.key+"）。接著對齊影片："),
+      el("p","note","① 播放下面的音檔，第一句歌聲一出來就按「音檔第一句開始了」。"),au,tapA,
+      el("p","note",tV!=null?"② 歌詞已經對好時間，影片第一句在 "+fmt(tV)+"，會用這個時間。要自己按也可以：":"② 播放上面的影片，第一句一開始就按「影片第一句開始了」。"),vRow,
+      st,el("div","row"));
+    const fin=body.lastChild;fin.append(done,skip);
+    body.append(el("p","note","差一點點沒關係，之後跟唱時還能用「早一點／晚一點」微調（每按一下 0.05 秒）。"));
+    upd();
+  }
+  pick();return box;
+}
+
+/* ---------- melody from a recording (runs in the browser) ---------- */
+// Harmonic-sum salience on spectral peaks (Melodia-like), a Viterbi path over 10-cent bins with a
+// cost per bin jumped, voicing by salience, then frames → notes with hysteresis.
+const MEL_LO=45,MEL_HI=84,MEL_BIN=0.1; // A2–C6, MIDI step
+function fftReal(re,im){ // in place, length power of 2
+  const n=re.length;
+  for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
+  for(let len=2;len<=n;len<<=1){
+    const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a),half=len>>1;
+    for(let i=0;i<n;i+=len){let cr=1,ci=0;
+      for(let k=0;k<half;k++){const p=i+k,q=p+half,xr=re[q]*cr-im[q]*ci,xi=re[q]*ci+im[q]*cr;
+        re[q]=re[p]-xr;im[q]=im[p]-xi;re[p]+=xr;im[p]+=xi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}
+  }
+}
+async function extractMelody(file,prog){
+  const raw=await file.arrayBuffer();
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  let ab;
+  try{const c=new OAC(1,16000,16000);ab=await c.decodeAudioData(raw.slice(0))}
+  catch(e){const c=new OAC(1,44100,44100);ab=await new Promise((res,rej)=>c.decodeAudioData(raw,res,rej))}
+  const SR=ab.sampleRate,len=ab.length,x=new Float32Array(len),nc=ab.numberOfChannels;
+  for(let c=0;c<nc;c++){const d=ab.getChannelData(c);for(let i=0;i<len;i++)x[i]+=d[i]/nc}
+  let N=1024;while(N<SR*0.1)N<<=1;
+  const hop=Math.round(SR*0.02),F=Math.max(0,Math.floor((len-N)/hop)+1);
+  const B=Math.round((MEL_HI-MEL_LO)/MEL_BIN)+1,win=new Float32Array(N);
+  for(let i=0;i<N;i++)win[i]=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));
+  const re=new Float32Array(N),im=new Float32Array(N),mag=new Float32Array(N/2);
+  const sal=new Float32Array(F*B),rms=new Float32Array(F);
+  const kLo=Math.max(2,Math.floor(55*N/SR)),kHi=Math.min(N/2-2,Math.ceil(5000*N/SR)),H=10,SP=10; // ±1 semitone
+  const hw=[];for(let h=1;h<=H;h++)hw.push(Math.pow(0.8,h-1));
+  const cw=[];for(let d=-SP;d<=SP;d++){const c=Math.cos(d/SP*Math.PI/2);cw.push(c*c)}
+  for(let f=0;f<F;f++){
+    const o=f*hop;let e=0;
+    for(let i=0;i<N;i++){const v=x[o+i];e+=v*v;re[i]=v*win[i];im[i]=0}
+    rms[f]=Math.sqrt(e/N);
+    fftReal(re,im);
+    let mx=0;for(let k=kLo;k<=kHi;k++){const m=Math.hypot(re[k],im[k]);mag[k]=m;if(m>mx)mx=m}
+    if(mx>0){
+      const floor=mx*0.01,row=f*B; // peaks within 40 dB of the loudest
+      for(let k=kLo+1;k<kHi;k++){
+        const m=mag[k];if(m<floor||m<mag[k-1]||m<mag[k+1])continue;
+        const a=mag[k-1],c=mag[k+1],d=0.5*(a-c)/(a-2*m+c||1),fr=(k+d)*SR/N;
+        const pm=69+12*Math.log2(fr/440);
+        for(let hh=1;hh<=H;hh++){
+          const f0=pm-12*Math.log2(hh),b=Math.round((f0-MEL_LO)/MEL_BIN);
+          if(b<-SP)break;if(b>=B+SP)continue;
+          const w=m*hw[hh-1];
+          for(let dd=-SP;dd<=SP;dd++){const bb=b+dd;if(bb>=0&&bb<B)sal[row+bb]+=w*cw[dd+SP]}
+        }
+      }
     }
-    box.append(card);
-  });
+    if(f%250===249){prog(0.85*f/F);await new Promise(r=>setTimeout(r))}
+  }
+  // normalise by a loud-frame level so the emission scale doesn't depend on the file's volume
+  const fmax=new Float32Array(F);for(let f=0;f<F;f++){let m=0;for(let b=0;b<B;b++){const v=sal[f*B+b];if(v>m)m=v}fmax[f]=m}
+  const srt=Array.from(fmax).sort((a,b)=>a-b),ref=srt[Math.floor(srt.length*0.95)]||1;
+  // Viterbi with a linear jump cost (distance transform keeps it O(B) per frame)
+  const C=0.006,bp=new Uint16Array(F*B);let prev=new Float32Array(B),cur=new Float32Array(B);const arg=new Uint16Array(B);
+  for(let b=0;b<B;b++)prev[b]=sal[b]/ref;
+  for(let f=1;f<F;f++){
+    for(let b=0;b<B;b++){cur[b]=prev[b];arg[b]=b}
+    for(let b=1;b<B;b++)if(cur[b-1]-C>cur[b]){cur[b]=cur[b-1]-C;arg[b]=arg[b-1]}
+    for(let b=B-2;b>=0;b--)if(cur[b+1]-C>cur[b]){cur[b]=cur[b+1]-C;arg[b]=arg[b+1]}
+    const row=f*B;for(let b=0;b<B;b++){bp[row+b]=arg[b];cur[b]+=sal[row+b]/ref}
+    const t=prev;prev=cur;cur=t;
+  }
+  const path=new Uint16Array(F);let best=0;for(let b=1;b<B;b++)if(prev[b]>prev[best])best=b;
+  if(F){path[F-1]=best;for(let f=F-1;f>0;f--)path[f-1]=bp[f*B+path[f]]}
+  prog(0.92);
+  // voicing: salience on the path against the song's own level, and not near-silent
+  const ps=new Float32Array(F);for(let f=0;f<F;f++)ps[f]=sal[f*B+path[f]]/ref;
+  const pv=Array.from(ps).filter(v=>v>0).sort((a,b)=>a-b),med=pv[Math.floor(pv.length*0.5)]||0;
+  const rs=Array.from(rms).sort((a,b)=>a-b),rmsRef=rs[Math.floor(rs.length*0.9)]||1;
+  const voiced=f=>ps[f]>=Math.max(0.12,med*0.55)&&rms[f]>rmsRef*0.05&&fmax[f]>0&&ps[f]>=fmax[f]/ref*0.6;
+  // frames → semitones with hysteresis, then runs → notes
+  const pitch=f=>MEL_LO+path[f]*MEL_BIN,t0=N/2/SR,dur=hop/SR,notes=[];
+  let q=null,startF=0,acc=[];
+  const flush=end=>{if(q==null)return;const d=(end-startF)*dur;
+    if(d>=0.08){const s=acc.slice().sort((a,b)=>a-b),m=Math.round(s[s.length>>1]);
+      const last=notes[notes.length-1],st=Math.round((t0+startF*dur)*1000)/1000;
+      if(last&&last[2]===m&&st-(last[0]+last[1])<0.05)last[1]=Math.round((st+d-last[0])*1000)/1000;
+      else notes.push([st,Math.round(d*1000)/1000,m])}
+    q=null;acc=[]};
+  for(let f=0;f<F;f++){
+    if(!voiced(f)){flush(f);continue}
+    const p=pitch(f);
+    if(q==null){q=Math.round(p);startF=f;acc=[p];continue}
+    if(Math.abs(p-q)>0.75){flush(f);q=Math.round(p);startF=f;acc=[p]}else acc.push(p);
+  }
+  flush(F);
+  prog(1);
+  return {notes,key:guessKey(notes)};
+}
+// Krumhansl–Schmuckler key profiles on time-weighted pitch classes
+function guessKey(notes){
+  const MAJ=[6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88],MIN=[6.33,2.68,3.52,5.38,2.6,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+  const hist=new Array(12).fill(0);notes.forEach(n=>{hist[((n[2]%12)+12)%12]+=n[1]});
+  const corr=(p,r)=>{const mx=hist.reduce((a,b)=>a+b)/12,mp=p.reduce((a,b)=>a+b)/12;let s=0,sx=0,sp=0;
+    for(let i=0;i<12;i++){const a=hist[(i+r)%12]-mx,b=p[i]-mp;s+=a*b;sx+=a*a;sp+=b*b}return s/Math.sqrt(sx*sp||1)};
+  let best={v:-2,k:""};
+  for(let r=0;r<12;r++){const a=corr(MAJ,r),b=corr(MIN,r);if(a>best.v)best={v:a,k:NOTES[r]+" 大調"};if(b>best.v)best={v:b,k:NOTES[r]+" 小調"}}
+  return best.k;
 }
 renderVSongs();
 window.addEventListener("resize",()=>{if(kara)drawKara(kara)});
@@ -3614,6 +4102,36 @@ buildNav();navReady=true;navSync();
     {before:toProjects,el:()=>$("#mfFab"),title:"節拍器",text:"右下角的節拍器會帶入這首歌的速度，彈的時候跟著打拍子。"},
     {before:toProjects,el:()=>$("#asFab"),title:"自動捲譜",text:"雙手在彈、沒空翻譜？按這裡讓樂譜自動往下捲，速度可以拖動調整，也能一鍵回到第一頁。"}
   ];
+  // 歌唱 › 專案 has its own tour: opens the first time that page is shown (pr_tour_sproj), and from 這頁怎麼用
+  const vcard=()=>$("#vsongs .song");
+  const toSProj=()=>{if(document.body.dataset.mode!=="singing")$("#tab-singing").click();if(curSub("singing")!=="projects")showSub("singing","projects")};
+  const openLyrics=()=>{toSProj();const c=vcard(),b=c&&c.querySelector('.fold-h[data-kind="lyrics"]');if(b&&b.getAttribute("aria-expanded")==="false")b._set(false)};
+  const lyrBtn=t=>{const c=vcard();return c&&[...c.querySelectorAll(".lyr-tools button")].find(b=>b.textContent===t)};
+  const SSTEPS=[
+    {title:"歌唱專案怎麼用",text:"這裡放要練唱的歌：看影片、跟著歌詞唱、標記唱法，再用麥克風檢查唱得準不準。花一分鐘看看吧！",center:true},
+    {before:toSProj,el:()=>{const c=vcard();return c&&[c.querySelector("h3"),c.querySelector(".meta")]},
+     title:"一首歌一張卡片",text:"每首歌都有影片、歌詞，有旋律資料的歌還有跟唱比對。"},
+    {before:toSProj,el:()=>{const c=vcard();return c&&c.querySelector(".video")},
+     title:"播放影片",text:"點影片開始播放；下面的連結可以到 YouTube 開啟。"},
+    {before:openLyrics,el:()=>{const c=vcard();return c&&c.querySelector(".lyr-list")},
+     title:"歌詞跟著影片走",text:"唱到的那句會亮起來、捲到中間；點任何一句，影片就跳到那裡開始播。"},
+    {before:openLyrics,el:()=>lyrBtn("標記歌詞"),
+     title:"標記唱法",text:"按「標記歌詞」，點字選取後可以上色（有力、溫柔…）、加底線，或加上滑上去、換氣、抖音、轉音等符號。標籤的名稱、顏色都能自己改。"},
+    {before:openLyrics,el:()=>{const c=vcard();return c&&[...c.querySelectorAll(".lyr-tools .ci-chk")]},
+     title:"捲動和標記開關",text:"「自動捲動」關掉後歌詞就不會自己捲；有標記的歌可以用「顯示標記」切換要不要顯示。"},
+    {before:toSProj,el:()=>{const c=vcard();return c&&c.querySelector(".kara canvas")},
+     title:"跟唱比對",text:"戴耳機播放影片、按「開始跟唱」。橫條是原唱的旋律，你唱的音高畫成一條線，唱準會變綠；停下來會列出最需要練的音。"},
+    {before:toSProj,el:()=>$("#vsongs .add-song"),
+     title:"新增自己的歌",text:"貼上 YouTube 連結和歌詞，就能練自己想唱的歌：用「對時間」讓歌詞跟著影片，也可以上傳音檔讓網站找出旋律，做跟唱比對。"},
+    {el:()=>$("#backupBtn"),title:"記得備份",text:"自己加的歌、歌詞時間和標記都只存在這個瀏覽器。按右上角的備份按鈕匯出成檔案，換裝置時再匯入。"},
+    {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」選「歌唱專案導覽」。唱得開心！"}
+  ];
+  // 吉他 › 專案 on its own (the song-card steps of the main tour)
+  const GSTEPS=[
+    {title:"吉他專案怎麼用",text:"正在練的歌和樂譜都在這裡。花一分鐘看看怎麼用吧！",center:true},
+    ...songSteps,
+    {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看，按右上角的「？」選「吉他專案導覽」。練習愉快！"}
+  ];
   const STEPS=CLASS?[
     {title:"歡迎來到讚頌吉他班",text:"課堂上練的曲子都在這裡。花一分鐘看看怎麼用吧！",center:true},
     ...songSteps,
@@ -3630,7 +4148,7 @@ buildNav();navReady=true;navSync();
     {el:navEl,title:"導覽清單",text:navText},
     {el:()=>[$("#styleBtn"),$("#themeBtn")],title:"換個風格",text:"調色盤可以換網頁風格：簡約、復古紙本、霓虹舞台、圓潤可愛；月亮按鈕切換深色模式。"},
     ...songSteps,
-    {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」就可以。祝練習愉快！"}
+    {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"右上角的「？」可以選要看哪一份導覽：網站導覽、吉他專案導覽或歌唱專案導覽。祝練習愉快！"}
   ];
 
   const root=el("div","tour"),spot=el("div","tour-spot"),card=el("div","tour-card"),blocks=[0,1,2,3].map(()=>el("div","tour-block"));
@@ -3641,7 +4159,7 @@ buildNav();navReady=true;navSync();
   [skip,prev,next].forEach(b=>b.type="button");
   nav.append(skip,prev,next);card.append(stepLbl,title,text,tryBox,dots,nav);root.append(...blocks,spot,card);document.body.append(root);
 
-  let steps=[],i=0,raf=0,clickEl=null,start=null;
+  let steps=[],i=0,raf=0,clickEl=null,start=null,tourKey=KEY;
   const targets=s=>{const t=s.el&&s.el();return (Array.isArray(t)?t:[t]).filter(shown)};
   function onClicked(){clickEl=null;const at=i;setTimeout(()=>{if(i===at&&!root.hidden)go(at+1)},350)}
   function unlisten(){if(clickEl){clickEl.removeEventListener("click",onClicked);clickEl=null}}
@@ -3652,7 +4170,7 @@ buildNav();navReady=true;navSync();
     const t=targets(s);
     if(isClick&&t[0]){clickEl=t[0];clickEl.addEventListener("click",onClicked,{once:true})}
     if(t[0])t[0].scrollIntoView({block:"center",behavior:reducedMotion()?"auto":"smooth"});
-    stepLbl.textContent=i===0?"使用說明":"第 "+i+" / "+(steps.length-1)+" 步";
+    stepLbl.textContent=i===0?(steps===SSTEPS?"歌唱專案導覽":steps===GSTEPS?"吉他專案導覽":"使用說明"):"第 "+i+" / "+(steps.length-1)+" 步";
     title.textContent=s.title;text.textContent=typeof s.text==="function"?s.text():s.text;
     tryBox.hidden=!(isClick&&s.try);tryBox.textContent=isClick&&s.try?"動手試試："+s.try:"";
     dots.innerHTML="";steps.forEach((_,k)=>dots.append(el("i",k===i?"on":"")));
@@ -3694,18 +4212,20 @@ buildNav();navReady=true;navSync();
     if(n<0)n=0;if(n>=steps.length){end();return}
     i=n;show();
   }
-  function begin(){
+  function begin(list,key){
     if(!root.hidden)return;
     closeNav();
-    start={mode:document.body.dataset.mode,sub:curSub("guitar"),y:scrollY};
-    steps=STEPS;i=0;root.hidden=false;show();place();
+    steps=list||STEPS;tourKey=key||KEY;
+    start={mode:document.body.dataset.mode,sub:curSub("guitar"),y:scrollY,s:steps===SSTEPS};
+    i=0;root.hidden=false;show();place();
   }
   function end(){
     if(root.hidden)return;
     cancelAnimationFrame(raf);root.hidden=true;
     if(clickEl){clickEl.removeEventListener("click",onClicked);clickEl=null}
-    save(KEY,true);
-    // put the page back the way it was
+    save(tourKey,true);
+    // put the page back the way it was (the singing tour stays on 歌唱 › 專案, at the top of it)
+    if(start&&start.s){window.scrollTo({top:Math.max(0,$("#s-projects").getBoundingClientRect().top+scrollY-16)});$("#helpBtn").focus({preventScroll:true});return}
     if(start){if(document.body.dataset.mode!==start.mode)$("#tab-"+start.mode).click();if(!CLASS&&curSub("guitar")!==start.sub)showSub("guitar",start.sub);window.scrollTo({top:0})}
     $("#helpBtn").focus({preventScroll:true});
   }
@@ -3716,7 +4236,46 @@ buildNav();navReady=true;navSync();
     else if(e.key==="ArrowRight")go(i+1);
     else if(e.key==="ArrowLeft")go(i-1);
   },true);
-  $("#helpBtn").onclick=begin;
+  // ？: 同學版 goes straight to its tour; the full site lets you pick one
+  const menu=$("#helpMenu"),help=$("#helpBtn");
+  const TOURS=[
+    {n:"網站導覽",d:"板塊、清單、網頁風格和吉他專案，整個網站怎麼用",go:()=>begin()},
+    {n:"吉他專案導覽",d:"樂譜、示範音檔、節拍器和自動捲譜",go:()=>begin(GSTEPS,"pr_tour_gproj")},
+    {n:"歌唱專案導覽",d:"影片、歌詞、標記唱法、跟唱比對和新增歌曲",go:()=>begin(SSTEPS,"pr_tour_sproj")}
+  ];
+  const closeHelp=focusBtn=>{if(menu.hidden)return;menu.hidden=true;help.setAttribute("aria-expanded","false");if(focusBtn)help.focus()};
+  if(CLASS){menu.remove();help.onclick=()=>begin()}
+  else{
+    help.setAttribute("aria-haspopup","true");help.setAttribute("aria-expanded","false");help.setAttribute("aria-controls","helpMenu");
+    help.setAttribute("aria-label","使用說明（選擇導覽）");help.title="使用說明";
+    TOURS.forEach(t=>{const b=el("button","style-opt");b.type="button";b.setAttribute("role","menuitem");
+      const s=el("span");s.append(el("b","",t.n),el("small","",t.d));b.append(s);b.onclick=()=>{closeHelp();t.go()};menu.append(b)});
+    help.onclick=e=>{e.stopPropagation();closeStyleMenu();
+      if(menu.hidden){menu.hidden=false;help.setAttribute("aria-expanded","true");menu.querySelector(".style-opt").focus()}else closeHelp()};
+    document.addEventListener("click",e=>{if(!e.target.closest("#helpMenu,#helpBtn"))closeHelp()});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeHelp(true)});
+    menu.addEventListener("keydown",e=>{
+      const items=[...menu.querySelectorAll(".style-opt")],k=items.indexOf(document.activeElement);
+      if(e.key==="ArrowDown"){items[(k+1)%items.length].focus();e.preventDefault()}
+      else if(e.key==="ArrowUp"){items[(k-1+items.length)%items.length].focus();e.preventDefault()}
+    });
+  }
+  if(!CLASS){
+    // first time 歌唱 › 專案 is on screen (after the 版本公告 and the main tour)
+    let sWait=0;
+    const sCheck=()=>{
+      if(load("pr_tour_sproj",false)||sWait)return;
+      if(document.body.dataset.mode!=="singing"||$("#s-projects").hidden)return;
+      sWait=setTimeout(function w(){
+        if(document.body.dataset.mode!=="singing"||$("#s-projects").hidden||load("pr_tour_sproj",false)){sWait=0;return}
+        if($("dialog.rn")||!root.hidden){sWait=setTimeout(w,400);return}
+        sWait=0;begin(SSTEPS,"pr_tour_sproj");
+      },600);
+    };
+    new MutationObserver(sCheck).observe(document.body,{attributes:true,attributeFilter:["data-mode"]});
+    new MutationObserver(sCheck).observe($("#s-projects"),{attributes:true,attributeFilter:["hidden"]});
+    sCheck();
+  }
   // first visit: open by itself, but after the 版本公告 dialog if that is showing
   if(!load(KEY,false)){
     const wait=()=>$("dialog.rn")?setTimeout(wait,300):begin(); // the dialog is removed once read
@@ -3731,6 +4290,17 @@ buildNav();navReady=true;navSync();
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.6",title:"自己加歌來練唱",items:[
+    ["自己加歌","唱歌 › 專案最下面按「＋ 新增歌曲」，貼上 YouTube 連結和歌詞，就能跟著影片看歌詞，再用「對時間」對好每一句。"],
+    ["歌曲標籤","自己加的歌可以在「新增歌曲」或「✎ 編輯歌曲」裡自己加標籤、刪標籤。"],
+    ["自己的跟唱比對","自己加的歌可以上傳音檔，網站會自動找出主旋律，對齊影片後就能跟唱比對；用去掉伴奏的人聲檔最準。"],
+    ["歌詞標記","按歌詞下面的「標記歌詞」，可以幫字上色（有力、溫柔、哭腔、重音）、加底線，或加上滑上去、滑下來、拉長音、換氣、抖音、轉音的符號和自己的文字；按「✎ 編輯標籤」可以改名稱、改顏色、新增或刪除標籤；歌詞下面可以勾選要不要顯示標記。每首歌都能用。"],
+    ["歌詞捲動開關","歌詞下面可以勾選要不要自動捲動。"],
+    ["歌唱專案導覽","第一次打開唱歌 › 專案會有互動導覽，介紹影片、歌詞、標記、跟唱比對和新增歌曲；之後按右上角的「？」選「歌唱專案導覽」可以再看一次。"],
+    ["選擇導覽","右上角的「？」可以選要看網站導覽、吉他專案導覽或歌唱專案導覽。"],
+    ["內建歌曲的歌詞時間","篇章和暮色回響的歌詞時間已經對好，不再顯示「對時間」；「對時間」留給自己加的歌。"],
+    ["資料備份","右上角的備份按鈕可以把吉他和歌唱的練習資料存成一個檔案，換裝置或換瀏覽器時再匯入。"]
+  ]},
   {v:"2026-10-12.5",class:true,title:"右下角也能調速度",items:[
     ["調整播放速度","右下角「播放音檔」多了播放速度：拖動滑桿調快調慢，按「原速」回到原本的速度，跟播放器裡的速度是同一個。"]
   ]},
@@ -3794,6 +4364,46 @@ function sheetDialog(kicker,title,content,buttons,onClose){
   d.addEventListener("close",close);d.showModal();
   return {d,close};
 }
+// 資料備份: all pr_ keys (guitar and singing) go into one JSON file; importing replaces them and reloads
+function backupDialog(){
+  const n=Object.keys(localStorage).filter(k=>/^pr_/.test(k)).length;
+  const exp=el("button","btn","匯出資料"),imp=el("button","btn ghost","匯入資料"),close=el("button","btn ghost","關閉"),inp=el("input"),msg=el("p","note");
+  inp.type="file";inp.accept=".json,application/json";inp.hidden=true;
+  const dl=sheetDialog("資料備份","匯出或匯入練習資料",[
+    el("p","","練習資料只存在這個瀏覽器。匯出會把吉他和歌唱的資料（樂譜筆記、重點段落、刷法、和弦進行、自己加的歌、歌詞時間、歌詞標記、旋律、學習進度和各種設定）存成一個檔案；換手機、換電腦或換瀏覽器時，在新的地方按「匯入資料」選這個檔案就好。"),
+    el("p","note","錄音不會保存，所以不在備份裡。"),inp,msg],[exp,imp,close]);
+  close.onclick=dl.close;
+  exp.onclick=()=>{
+    const data={};Object.keys(localStorage).filter(k=>/^pr_/.test(k)).forEach(k=>{data[k]=localStorage.getItem(k)});
+    const d=new Date(),day=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const a=el("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({app:"practice-room",ver:1,at:d.toISOString(),data})],{type:"application/json"}));
+    a.download="彈唱練習室備份-"+day+".json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    msg.textContent="已匯出 "+n+" 項資料。";
+  };
+  imp.onclick=()=>inp.click();
+  inp.onchange=()=>{
+    const f=inp.files[0];if(!f)return;
+    f.text().then(txt=>{
+      let j;try{j=JSON.parse(txt)}catch(e){j=null}
+      const ok=j&&j.app==="practice-room"&&j.data&&typeof j.data==="object"&&Object.keys(j.data).every(k=>/^pr_/.test(k)&&typeof j.data[k]==="string");
+      if(!ok){msg.textContent="這不是彈唱練習室的備份檔。";inp.value="";return}
+      dl.close();
+      const at=j.at?new Date(j.at):null,when=at&&!isNaN(at)?at.getFullYear()+"/"+(at.getMonth()+1)+"/"+at.getDate()+" "+at.getHours()+":"+String(at.getMinutes()).padStart(2,"0"):"不明";
+      const cancel=el("button","btn ghost","取消"),go=el("button","btn danger","確認匯入");
+      const d2=sheetDialog("資料備份","要匯入這個備份嗎？",[el("p","","備份時間："+when+"，共 "+Object.keys(j.data).length+" 項資料。"),
+        el("p","","匯入會取代這個瀏覽器目前所有的練習資料，無法復原。不確定的話，先取消並匯出目前的資料留著。")],[cancel,go]);
+      cancel.onclick=d2.close;
+      go.onclick=()=>{
+        const old={};Object.keys(localStorage).filter(k=>/^pr_/.test(k)).forEach(k=>{old[k]=localStorage.getItem(k)});
+        try{Object.keys(old).forEach(k=>localStorage.removeItem(k));Object.keys(j.data).forEach(k=>localStorage.setItem(k,j.data[k]))}
+        catch(e){Object.keys(localStorage).filter(k=>/^pr_/.test(k)).forEach(k=>localStorage.removeItem(k));Object.keys(old).forEach(k=>{try{localStorage.setItem(k,old[k])}catch(e2){}});
+          d2.close();alert("匯入失敗（瀏覽器的儲存空間不夠），資料沒有變動。");return}
+        location.reload();
+      };
+    });
+  };
+}
+if(CLASS)$("#backupBtn").remove();else $("#backupBtn").onclick=backupDialog;
 const relList=r=>{const ul=el("ul");r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});return ul};
 const verDate=v=>v.split(".")[0].replace(/-/g,"/");
 // 讚頌吉他班 only gets entries marked class:true (guitar 專案 changes) and remembers them separately.
