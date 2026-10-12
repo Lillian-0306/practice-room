@@ -41,7 +41,7 @@
 }
 body[data-mode="singing"]{--accent:var(--voc);--accent-soft:var(--voc-soft);--accent-on:var(--voc-on)}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;-webkit-tap-highlight-color:transparent}
 body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;cursor:pointer}
 a{color:var(--accent)}
@@ -294,6 +294,9 @@ p{margin:0}
 .mode[aria-selected="true"] span{color:inherit;opacity:.9}
 
 section.panel[hidden]{display:none}
+.prog-picker{display:flex;flex-direction:column;gap:10px}
+.prog-grp{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.prog-g{flex-basis:100%;font-size:.78rem;font-weight:700;color:var(--muted)}
 .subtabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;margin:0 0 18px;background:var(--surface);border:1px solid var(--line);border-radius:999px}
 .subtab{border:0;background:transparent;border-radius:999px;padding:8px 12px;min-height:44px;font-weight:700;color:var(--muted)}
 .subtab[aria-selected="true"]{background:var(--accent);color:var(--accent-on)}
@@ -434,6 +437,16 @@ section.panel[hidden]{display:none}
 .sn-box{position:absolute;border:2px dashed var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:4px;pointer-events:none}
 .sn-box span{position:absolute;left:-2px;bottom:100%;background:var(--accent);color:var(--accent-on);font-size:.72rem;font-weight:700;padding:1px 6px;border-radius:6px 6px 6px 0;white-space:nowrap}
 .sn-boxes{display:flex;flex-direction:column;gap:6px}
+/* a box being re-framed: drag the edges / corners to resize, the middle to move */
+.sn-box.sn-adj{pointer-events:auto;touch-action:none;cursor:move;border-style:solid;z-index:2}
+.sn-h{position:absolute;width:14px;height:14px;background:#fff;border:2px solid currentColor;border-radius:4px;touch-action:none}
+.sn-h::before{content:"";position:absolute;inset:-10px}
+.sn-h[data-h="nw"]{left:-8px;top:-8px;cursor:nwse-resize}.sn-h[data-h="ne"]{right:-8px;top:-8px;cursor:nesw-resize}
+.sn-h[data-h="sw"]{left:-8px;bottom:-8px;cursor:nesw-resize}.sn-h[data-h="se"]{right:-8px;bottom:-8px;cursor:nwse-resize}
+.sn-h[data-h="n"]{left:calc(50% - 7px);top:-8px;cursor:ns-resize}.sn-h[data-h="s"]{left:calc(50% - 7px);bottom:-8px;cursor:ns-resize}
+.sn-h[data-h="w"]{top:calc(50% - 7px);left:-8px;cursor:ew-resize}.sn-h[data-h="e"]{top:calc(50% - 7px);right:-8px;cursor:ew-resize}
+.sn-box .sn-done{position:absolute;right:-2px;top:calc(100% + 8px);border:0;border-radius:999px;padding:4px 12px;font:inherit;font-size:.8rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap}
+.loop-item .loop-ic[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
 .sn-boxes[hidden]{display:none}
 .sn-bsw{width:26px;height:26px;flex:none;margin-right:4px}
 .sn-pal{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px 34px}
@@ -464,6 +477,24 @@ section.panel[hidden]{display:none}
 .player .pm-tempo{font-weight:700;color:var(--ink)}
 /* saved A-B loops */
 .loop-save{flex-wrap:nowrap}
+.pat-mine{margin:6px 0 10px;gap:6px}
+.pat-mine[hidden]{display:none}
+.pat-mine .pill{min-height:34px;padding:3px 12px;font-size:.86rem}
+.pat-mine input{flex:1;min-width:0;font:inherit;font-size:.9rem;color:var(--ink);background:var(--surface);border:1.5px solid var(--accent);border-radius:999px;padding:6px 14px;min-height:36px;outline:none}
+#patPicker .pill.mine::before{content:"★ ";color:var(--accent)}
+/* 編輯 mode: tap patterns (all but 自訂) to tick them, then 刪除所選 asks before deleting */
+#patPicker .pill.del{position:relative;padding-right:34px;border:1.5px dashed var(--line);background:transparent;color:var(--ink)}
+#patPicker .pill.del::after{content:"";position:absolute;right:9px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:2px solid var(--muted);box-sizing:border-box;font-size:.75rem;line-height:14px;text-align:center}
+#patPicker .pill.del[aria-pressed="true"]{border-style:solid;border-color:#E5484D;background:color-mix(in srgb,#E5484D 14%,transparent);color:var(--ink)}
+#patPicker .pill.del[aria-pressed="true"]::after{content:"✓";background:#E5484D;border-color:#E5484D;color:#fff;font-weight:700}
+#patPicker .pill.del:disabled{opacity:.4;cursor:default;padding-right:16px}
+#patPicker .pill.del:disabled::after{display:none}
+.pat-mine .btn.danger{min-height:36px;padding:4px 14px;font-size:.88rem}
+.pat-mine .btn.danger:disabled{opacity:.45;cursor:default}
+#patPicker .pill.pat-edit-btn{border:1.5px solid var(--line);background:transparent}
+#patPicker .pill.pat-edit-btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-on);border-color:var(--accent)}
+.btn.danger{background:#E5484D;color:#fff;box-shadow:none}
+#patPicker .pill.mine[aria-pressed="true"]::before{color:inherit}
 .loop-save input,.loop-item input{flex:1;min-width:0;font:inherit;font-size:.9rem;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:6px 14px;min-height:36px}
 .loop-save input:focus,.loop-item input:focus{outline:none;border-color:var(--accent)}
 .loop-save button:disabled{opacity:.45;cursor:default}
@@ -536,6 +567,7 @@ section.panel[hidden]{display:none}
 .pattern.dense>*{font-size:.85rem;min-height:32px}
 .pattern>.beat{box-shadow:inset 2px 0 0 var(--accent)}
 .pattern>.rest{opacity:.35}
+.pattern>.du{letter-spacing:-.18em;text-indent:-.18em;white-space:nowrap}
 .pattern>.on{background:var(--accent);color:var(--accent-on);opacity:1}
 .pattern button{cursor:pointer}
 .pattern.editing>*{outline:1.5px dashed var(--line);outline-offset:-1.5px}
@@ -696,6 +728,18 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .ascroll .ap-step{width:32px;height:32px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font-size:1.05rem;flex:none}
 .ascroll .ap-go{border-radius:999px;padding:0 12px;height:34px;margin-left:auto;background:var(--accent);color:var(--accent-on);font-weight:700;font-size:.88rem}
 .ap-jump .bar-in{width:3.6em;min-height:32px}
+.ascroll .ap-panel{max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px);overflow-y:auto}
+.ap-sub{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.ap-loop .bar-in{width:3em}
+.ap-lstat{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700;padding:6px 8px;border-radius:10px;background:var(--accent-soft)}
+.ap-lstat[hidden]{display:none}
+.ap-lstat span{flex:1;min-width:0}
+.ascroll .ap-lclr{flex:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:0 10px;height:30px;font-size:.8rem}
+.ap-saved{display:flex;flex-wrap:wrap;gap:6px}
+.ap-saved:empty,.ap-loop [hidden]{display:none}
+.ascroll .ap-saved button{display:flex;flex-direction:column;align-items:flex-start;border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:4px 10px;font-size:.84rem;font-weight:700;text-align:left;max-width:100%}
+.ascroll .ap-saved button small{font-size:.72rem;font-weight:400;color:var(--muted)}
+.ascroll .ap-saved button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .as-panel{position:absolute;right:0;bottom:calc(100% + 12px);width:236px;padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .as-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px 4px}
 .as-head b{font-family:var(--serif);font-size:1rem}
@@ -800,6 +844,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     <div class="ap-jump" id="apJump">
       <div class="ap-jrow"><span>第</span><button class="ap-step" id="apMinus" type="button" aria-label="前一小節">−</button><input class="bar-in" id="apBar" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="要跳到第幾小節"><button class="ap-step" id="apPlus" type="button" aria-label="下一小節">＋</button><span>小節</span><button class="ap-go" id="apGo" type="button">跳到</button></div>
       <label class="ci-chk"><input type="checkbox" data-ci="jump">先數 4 拍預備拍</label>
+    </div>
+    <div class="ap-jump ap-loop" id="apLoop">
+      <span class="ap-sub">段落循環</span>
+      <div class="ap-jrow"><span>第</span><input class="bar-in" id="apLA" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="循環從第幾小節"><span>到</span><input class="bar-in" id="apLB" type="number" inputmode="numeric" min="1" step="1" value="4" aria-label="循環到第幾小節"><span>小節</span><button class="ap-go" id="apLGo" type="button">循環</button></div>
+      <label class="ci-chk"><input type="checkbox" data-ci="loop">先數 4 拍預備拍</label>
+      <div class="ap-lstat" id="apLStat" hidden><span id="apLInfo"></span><button class="ap-lclr" id="apLClr" type="button">取消循環</button></div>
+      <div class="ap-saved" id="apSaved" role="group" aria-label="儲存的段落"></div>
     </div>
   </div>
   <button class="mf-fab" id="apFab" type="button" aria-expanded="false" aria-controls="apPanel" aria-label="播放音檔">
@@ -921,7 +972,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     <div class="block">
       <header><h2>跟著節拍換和弦</h2><p>選和弦進行和刷法，每小節換一個和弦，節奏圖亮起時刷弦。</p></header>
       <span class="grp-label">和弦進行</span>
-      <div class="row" id="progPicker" role="group" aria-label="和弦進行"></div>
+      <div class="prog-picker" id="progPicker" role="group" aria-label="和弦進行"></div>
       <div class="row zoom-row"><span class="lbl">和弦圖</span><button class="pill" id="dzOut" aria-label="縮小和弦圖">−</button><span class="note" id="dzLbl"></span><button class="pill" id="dzIn" aria-label="放大和弦圖">＋</button></div>
       <div class="prog" id="progBar"></div>
       <div class="pat-edit" id="progEdit" hidden>
@@ -932,15 +983,18 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       </div>
       <span class="grp-label" style="margin-top:12px">刷法</span>
       <div class="row" id="patPicker" role="group" aria-label="刷法"></div>
+      <div class="row pat-mine" id="patMine" hidden></div>
       <div class="pat-edit" id="patEdit" hidden>
         <div class="row"><span class="lbl">拍號</span><div class="row" id="ceMeter" role="group" aria-label="自訂拍號"></div></div>
         <div class="row"><span class="lbl">格子</span><div class="row" id="ceGrid" role="group" aria-label="自訂格子"></div></div>
-        <p class="note" style="margin:4px 0 8px">點下方節奏圖的格子切換：↓ 下刷 → ↑ 上刷 → ✕ 切音 → · 不刷。播放中也能改。</p>
+        <p class="note" style="margin:4px 0 8px">點下方節奏圖的格子切換：↓ 下刷 → ↑ 上刷 → ↓↑ 下上 → ✕ 切音 → · 不刷。播放中也能改。</p>
         <div class="row"><button class="pill" id="ceDown">每拍下刷</button><button class="pill" id="ceClear">清空</button></div>
+        <div class="row loop-save" style="margin-top:10px"><input type="text" id="ceName" maxlength="20" placeholder="幫這個刷法取名字" aria-label="刷法名稱"><button class="pill" id="ceSave">儲存刷法</button></div>
+        <p class="note" id="ceSaveMsg" style="margin:6px 0 0"></p>
       </div>
       <div class="now"><div class="cur" id="curChord">—</div><div class="note" id="beatInfo">按開始</div></div>
       <div class="pattern" id="pattern"></div>
-      <p class="legend">↓ 下刷　↑ 上刷　✕ 切音（右手掌悶住弦再刷）　· 不刷</p>
+      <p class="legend">↓ 下刷　↑ 上刷　↓↑ 一格裡先下再上　✕ 切音（右手掌悶住弦再刷）　· 不刷</p>
       <label for="bpm" class="row" style="justify-content:space-between"><span>速度 <small class="note" id="bpmUnit"></small></span><b id="bpmVal">80 BPM</b></label>
       <input type="range" id="bpm" min="50" max="140" value="80">
       <div class="row" style="margin-top:12px"><button class="btn" id="playBtn">開始</button><span class="note">建議從 60–70 BPM 開始，穩了再加速。</span></div>
@@ -1282,7 +1336,8 @@ const CH={
   Asus2:{f:[-1,0,2,2,0,0],fg:[0,0,1,2,0,0],n:"A 把 2 弦放空。"},
   Asus4:{f:[-1,0,2,2,3,0],fg:[0,0,1,2,3,0],n:"2 弦改按第 3 格，再放回 A。"},
   Esus4:{f:[0,2,2,2,0,0],fg:[0,2,3,4,0,0],n:"E 加上 3 弦第 2 格，常和 E 交替。"},
-  F:{f:[1,3,3,2,1,1],fg:[1,3,4,2,1,1],b:[1,0,5],n:"食指要橫按六條弦（封閉和弦），是第一道關卡，慢慢來。"},
+  F:{f:[1,3,3,2,1,1],fg:[1,3,4,2,1,1],b:[1,0,5],n:"食指要橫按六條弦（封閉和弦），是第一道關卡，慢慢來。按不起來可以先用「F 簡易」。"},
+  "F 簡易":{f:[-1,-1,3,2,1,1],fg:[0,0,3,2,1,1],b:[1,4,5],n:"簡易版的 F：食指只壓 1、2 弦第 1 格（小封閉），只彈下面四條弦，和弦一樣是 F。"},
   Bm:{f:[-1,2,4,4,3,2],fg:[0,1,3,4,2,1],b:[2,1,5],n:"食指橫按第 2 格的 1 到 5 弦，不彈 6 弦。"},
   "F#m":{f:[2,4,4,2,2,2],fg:[1,3,4,1,1,1],b:[2,0,5],n:"Em 的形狀整個往上移兩格，再用食指封閉。"},
   Cm:{f:[-1,3,5,5,4,3],fg:[0,1,3,4,2,1],b:[3,1,5],n:"Am 形狀往上移到第 3 格，食指封閉 1 到 5 弦。"},
@@ -1297,7 +1352,7 @@ const GROUPS=[
   ["基本和弦",["C","G","D","A","E","Em","Am","Dm"]],
   ["七和弦",["C7","G7","D7","A7","E7","B7","Am7","Em7","Dm7","Cmaj7","Fmaj7"]],
   ["掛留和弦 sus",["Dsus2","Dsus4","Asus2","Asus4","Esus4"]],
-  ["封閉和弦",["F","Bm","F#m","Cm"]],
+  ["封閉和弦",["F","F 簡易","Bm","F#m","Cm"]],
   ["色彩與高把位",["Fadd9","Aadd9","Bsus4","C#m","C#m7","G#m7(#5)"]]
 ];
 let curChord="C";
@@ -1438,11 +1493,17 @@ function stopTuner(){
 $("#tunerBtn").onclick=()=>tunerOn?stopTuner():startTuner();
 
 /* ---------- guitar: progression player (Web Audio lookahead scheduler) ---------- */
-const PROGS=[
-  ["C","G","Am","F"],["Am","F","C","G"],["G","D","Em","C"],["Em","C","G","D"],
-  ["C","Am","Dm","G7"],["Am","Dm","E7","Am"],["D","Dsus4","D","Dsus2"],
-  ["C","G","Am","Em","F","C","F","G"]
+// grouped on screen; the diatonic chords of C and of G in order (I ii iii IV V vi V7), the canon, then the easy ones
+const PROG_GROUPS=[
+  {g:"C 調和弦轉換",p:[["C","Dm","Em","F","G","Am","G7"]]},
+  {g:"G 調和弦轉換",p:[["G","Am","Bm","C","D","Em","D7"]]},
+  {g:"卡農進行",p:[["C","G","Am","Em","F","C","F","G"]]},
+  {g:"簡易入門",p:[["C","G","Am","F"],["Am","F","C","G"],["G","D","Em","C"],["Em","C","G","D"],
+    ["C","Am","Dm","G7"],["Am","Dm","E7","Am"],["D","Dsus4","D","Dsus2"]]}
 ];
+const PROGS=PROG_GROUPS.flatMap(g=>g.p);
+const progKey=p=>p.join("-");
+const progFind=k=>PROGS.find(p=>progKey(p)===k);
 // Strum patterns. beats per bar, sub = slots per beat; D down, U up, X muted chuck, - rest.
 const PATS=[
   {n:"民謠基本",beats:4,sub:2,s:"D-DU-UDU"},
@@ -1460,9 +1521,19 @@ const savedCustom=load("pr_custom",null);
 const custom={n:"自訂",custom:true,meter:"4/4",grid:8,beats:4,sub:2,slots:[..."D-DU-UDU"].map(x=>x==="-"?"":x)};
 if(savedCustom&&CE_METERS[savedCustom.meter]&&[8,16].includes(savedCustom.grid)&&Array.isArray(savedCustom.slots)){
   const [bt,sb]=CE_METERS[savedCustom.meter],k=savedCustom.grid===16?2:1;
-  if(savedCustom.slots.length===bt*sb*k&&savedCustom.slots.every(x=>["","D","U","X"].includes(x)))
+  if(savedCustom.slots.length===bt*sb*k&&savedCustom.slots.every(x=>["","D","U","B","X"].includes(x)))
     Object.assign(custom,{meter:savedCustom.meter,grid:savedCustom.grid,beats:bt,sub:sb*k,slots:savedCustom.slots});
 }
+// presets the user deleted (pr_pat_hidden: names)
+const patHidden=(v=>Array.isArray(v)?v:[])(load("pr_pat_hidden",[]));
+for(let i=PATS.length-1;i>=0;i--)if(patHidden.includes(PATS[i].n))PATS.splice(i,1);
+// saved custom patterns (pr_my_pats: [{n, meter, grid, slots}]), listed between the presets and 自訂
+const SLOT_OK=["","D","U","B","X"];
+const mkPat=o=>{const [bt,sb]=CE_METERS[o.meter],k=o.grid===16?2:1;return {n:o.n,mine:true,meter:o.meter,grid:o.grid,beats:bt,sub:sb*k,slots:o.slots.slice()}};
+const patOk=o=>!!o&&typeof o.n==="string"&&!!o.n&&!!CE_METERS[o.meter]&&[8,16].includes(o.grid)&&Array.isArray(o.slots)&&
+  o.slots.length===CE_METERS[o.meter][0]*CE_METERS[o.meter][1]*(o.grid===16?2:1)&&o.slots.every(x=>SLOT_OK.includes(x));
+(v=>Array.isArray(v)?v:[])(load("pr_my_pats",[])).filter(patOk).forEach(o=>{if(!PATS.some(p=>p.n===o.n))PATS.push(mkPat(o))});
+const saveMyPats=()=>save("pr_my_pats",PATS.filter(p=>p.mine).map(p=>({n:p.n,meter:p.meter,grid:p.grid,slots:p.slots})));
 PATS.push(custom);
 const LOOKAHEAD=0.12,TICK_MS=25;
 // remembered by name; older saves stored a list position (from before 八分下刷 was removed)
@@ -1471,18 +1542,20 @@ let pat=(v=>PATS.find(p=>p.n===(typeof v==="number"?OLD_PAT_ORDER[v]:v))||PATS[0
 // custom progression: chords picked by the user, saved in the browser
 const customProg=(()=>{const v=load("pr_custom_prog",null);return Array.isArray(v)&&v.every(c=>CH[c])?v.slice(0,16):["C","Am","F","G"]})();
 const PROG_ALL=[...PROGS,customProg];
-let prog=PROG_ALL[Math.max(0,Math.min(PROG_ALL.length-1,load("pr_prog",0)|0))],playing=false,sched=null,slot=0,nextT=0,uiTimers=[];
+// remembered by chords ("custom" for 自訂); older saves stored a list position in this old order
+const OLD_PROG_ORDER=["C-G-Am-F","Am-F-C-G","G-D-Em-C","Em-C-G-D","C-Am-Dm-G7","Am-Dm-E7-Am","D-Dsus4-D-Dsus2","C-G-Am-Em-F-C-F-G","custom"];
+let prog=(v=>{const k=typeof v==="number"?OLD_PROG_ORDER[v]:v;return k==="custom"?customProg:progFind(k)||PROGS[0]})(load("pr_prog",0)),playing=false,sched=null,slot=0,nextT=0,uiTimers=[];
 // chord-diagram zoom: 0 = names only
 const DZ=[0,64,88,120,160,220];
 let dzi=Math.max(0,Math.min(DZ.length-1,load("pr_prog_zoom",2)|0)),progSvgs=[];
-PROG_ALL.forEach(p=>{
-  const b=el("button","pill",p===customProg?"自訂":p.join(" – "));
-  b.addEventListener("click",()=>setProg(p));
-  $("#progPicker").append(b);
+[...PROG_GROUPS,{g:"自訂",p:[customProg]}].forEach(g=>{
+  const row=el("div","prog-grp");row.append(el("span","prog-g",g.g));
+  g.p.forEach(p=>{const b=el("button","pill",p===customProg?"自己選和弦":p.join(" – "));b.addEventListener("click",()=>setProg(p));row.append(b)});
+  $("#progPicker").append(row);
 });
 function setProg(p){
   const was=playing;stopPlayer();
-  prog=p;save("pr_prog",PROG_ALL.indexOf(p));
+  prog=p;save("pr_prog",p===customProg?"custom":progKey(p));
   $("#progPicker").querySelectorAll(".pill").forEach((x,i)=>x.setAttribute("aria-pressed",PROG_ALL[i]===p));
   $("#progEdit").hidden=p!==customProg;
   renderProg();renderProgEdit();if(was&&prog.length)startPlayer();
@@ -1520,12 +1593,13 @@ GROUPS.forEach(g=>{
 });
 $("#ceProgUndo").onclick=()=>{customProg.pop();progChanged()};
 $("#ceProgClear").onclick=()=>{customProg.length=0;progChanged()};
-const SYM={D:"↓",U:"↑",X:"✕","":"·"},NEXT={"":"D",D:"U",U:"X",X:""};
+// B = 下上: a down and an up inside one slot (the up half a slot later)
+const SYM={D:"↓",U:"↑",B:"↓↑",X:"✕","":"·"},NEXT={"":"D",D:"U",U:"B",B:"X",X:""};
 function renderPattern(){
   const box=$("#pattern"),n=pat.slots.length;box.innerHTML="";
   box.style.setProperty("--n",n);box.classList.toggle("dense",n>8);box.classList.toggle("editing",!!pat.custom);
   pat.slots.forEach((s,i)=>{
-    const c=el(pat.custom?"button":"span",((s?"":"rest")+(i%pat.sub===0&&i?" beat":"")).trim(),SYM[s]);
+    const c=el(pat.custom?"button":"span",((s?"":"rest")+(s==="B"?" du":"")+(i%pat.sub===0&&i?" beat":"")).trim(),SYM[s]);
     if(pat.custom){
       c.setAttribute("aria-label","第 "+(Math.floor(i/pat.sub)+1)+" 拍第 "+(i%pat.sub+1)+" 格："+SYM[s]);
       c.onclick=()=>{pat.slots[i]=NEXT[pat.slots[i]];saveCustom();renderPattern()};
@@ -1536,13 +1610,81 @@ function renderPattern(){
 }
 function saveCustom(){save("pr_custom",{meter:custom.meter,grid:custom.grid,slots:custom.slots})}
 function setPattern(p){
+  if(!p)return; // e.g. a preset the user deleted
   const was=playing;stopPlayer();
   pat=p;save("pr_pattern",p.n);
-  $("#patPicker").querySelectorAll(".pill").forEach((b,i)=>b.setAttribute("aria-pressed",PATS[i]===p));
+  $("#patPicker").querySelectorAll(".pill:not(.pat-edit-btn)").forEach((b,i)=>b.setAttribute("aria-pressed",!patEditing&&PATS[i]===p));
   $("#patEdit").hidden=!p.custom;
-  renderPattern();if(was)startPlayer();
+  renderPatMine();renderPattern();if(was)startPlayer();
 }
-PATS.forEach(p=>{const b=el("button","pill",p.n);b.onclick=()=>setPattern(p);$("#patPicker").append(b)});
+let patEditing=false;const patSel=new Set(); // patterns ticked in 編輯 mode
+function renderPatPicker(){
+  const box=$("#patPicker");box.innerHTML="";
+  PATS.forEach(p=>{
+    const del=patEditing;
+    const b=el("button","pill"+(p.mine?" mine":"")+(del?" del":""),p.n);b.setAttribute("aria-pressed",del?patSel.has(p):p===pat);
+    if(del&&p===custom){b.disabled=true;b.title="自訂不能刪除"}
+    b.onclick=()=>{if(!del){setPattern(p);return}patSel.has(p)?patSel.delete(p):patSel.add(p);b.setAttribute("aria-pressed",patSel.has(p));renderPatMine()};
+    box.append(b)});
+  const ed=el("button","pill pat-edit-btn",patEditing?"完成":"編輯");ed.setAttribute("aria-pressed",String(patEditing));
+  ed.onclick=()=>{patEditing=!patEditing;patSel.clear();renderPatPicker();renderPatMine()};box.append(ed);
+}
+// asks first; deleted presets are remembered in pr_pat_hidden, saved ones leave pr_my_pats
+function confirmDelPat(list){
+  list=list.filter(p=>p!==custom&&PATS.includes(p));if(!list.length)return;
+  const cancel=el("button","btn ghost","取消"),ok=el("button","btn danger","確認刪除");
+  const names=list.map(p=>"「"+p.n+"」").join("、");
+  const dl=sheetDialog("刪除刷法",list.length>1?"要刪除這 "+list.length+" 個刷法嗎？":"要刪除"+names+"嗎？",
+    list.length>1?[el("p","",names),el("p","","刪除後無法復原。")]:[el("p","","刪除後無法復原。")],[cancel,ok]);
+  cancel.onclick=dl.close;
+  ok.onclick=()=>{
+    dl.close();
+    list.forEach(p=>{PATS.splice(PATS.indexOf(p),1);if(!p.mine)patHidden.push(p.n);patSel.delete(p)});
+    saveMyPats();save("pr_pat_hidden",patHidden);
+    if(!PATS.includes(pat))setPattern(PATS[0]);
+    renderPatPicker();renderPatMine();
+  };
+}
+renderPatPicker();
+// the selected saved pattern: rename, copy into 自訂 to change it, delete
+function renderPatMine(){
+  const box=$("#patMine");box.innerHTML="";
+  if(patEditing){
+    box.hidden=false;const n=patSel.size,del=el("button","btn danger",n?"刪除所選（"+n+"）":"刪除所選");del.disabled=!n;
+    del.onclick=()=>confirmDelPat(PATS.filter(p=>patSel.has(p)));
+    box.append(del,el("span","note",n?"已選 "+n+" 個":"點刷法勾選要刪除的，可以選很多個。"));return}
+  box.hidden=!pat.mine;if(!pat.mine)return;
+  const p=pat,ren=el("button","pill","✎ 改名"),ed=el("button","pill","修改節奏"),del=el("button","pill","× 刪除");
+  ren.onclick=()=>{
+    const inp=el("input");inp.type="text";inp.maxLength=20;inp.value=p.n;inp.setAttribute("aria-label","刷法名稱");
+    let done=false;const fin=ok=>{if(done)return;done=true;const v=inp.value.trim();
+      if(ok&&v&&v!==p.n){if(PATS.some(x=>x!==p&&x.n===v)){alert("已經有叫「"+v+"」的刷法了，換個名字吧。")}else{p.n=v;saveMyPats();save("pr_pattern",p.n);renderPatPicker()}}
+      renderPatMine()};
+    inp.onkeydown=e=>{if(e.key==="Enter")fin(true);else if(e.key==="Escape")fin(false)};inp.onblur=()=>fin(true);
+    box.innerHTML="";box.append(inp);inp.focus();inp.select();
+  };
+  ed.onclick=()=>{ // load it into 自訂; saving under the same name replaces it
+    Object.assign(custom,{meter:p.meter,grid:p.grid,beats:p.beats,sub:p.sub,slots:p.slots.slice()});saveCustom();
+    $("#ceMeter").querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-pressed",b.textContent===custom.meter));
+    $("#ceGrid").querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.g===custom.grid));
+    $("#ceName").value=p.n;$("#ceSaveMsg").textContent="改好後按「儲存刷法」，同名會蓋過原本的「"+p.n+"」。";
+    setPattern(custom);
+  };
+  del.onclick=()=>confirmDelPat([p]);
+  box.append(ren,ed,del);
+}
+// save 自訂 as a named pattern (same name = replace it)
+$("#ceSave").onclick=()=>{
+  const mine=PATS.filter(p=>p.mine);let n=$("#ceName").value.trim();
+  if(!n){let k=mine.length+1;while(PATS.some(p=>p.n==="我的刷法 "+k))k++;n="我的刷法 "+k}
+  const clash=PATS.find(p=>p.n===n);
+  if(clash&&!clash.mine){$("#ceSaveMsg").textContent="「"+n+"」是內建刷法的名字，換一個吧。";return}
+  const o=mkPat({n,meter:custom.meter,grid:custom.grid,slots:custom.slots});
+  if(clash)PATS.splice(PATS.indexOf(clash),1,o);else PATS.splice(PATS.indexOf(custom),0,o);
+  saveMyPats();$("#ceName").value="";$("#ceSaveMsg").textContent="";
+  renderPatPicker();setPattern(o);
+};
+$("#ceName").onkeydown=e=>{if(e.key==="Enter")$("#ceSave").click()};
 // custom editor: meter and grid (eighths / sixteenths); changing either resets to one down-strum per beat
 function resizeCustom(){
   const [bt,sb]=CE_METERS[custom.meter],k=custom.grid===16?2:1;
@@ -1571,7 +1713,9 @@ function scheduleSlot(t){
   if(!prog.length)return;
   const c=audio(),n=pat.slots.length,pos=slot%n,bar=Math.floor(slot/n)%prog.length,s=pat.slots[pos];
   if(pos%pat.sub===0)click(t,pos===0?2:1);
-  if(s==="X")chuck(t);else if(s)strum(prog[bar],s,t,pos%pat.sub===0?0.28:0.22,progSvgs[bar]);
+  if(s==="X")chuck(t);
+  else if(s==="B"){strum(prog[bar],"D",t,pos%pat.sub===0?0.28:0.22,progSvgs[bar]);strum(prog[bar],"U",t+slotDur()/2,0.2,progSvgs[bar])}
+  else if(s)strum(prog[bar],s,t,pos%pat.sub===0?0.28:0.22,progSvgs[bar]);
   const id=setTimeout(()=>{uiTimers=uiTimers.filter(x=>x!==id);showSlot(pos,bar)},Math.max(0,(t-c.currentTime)*1000));
   uiTimers.push(id);
 }
@@ -1972,8 +2116,9 @@ function player(src,bpm){
   // loop by bars: from the start of bar a to the end of bar b
   const bloopRow=el("div","row bar-row"),bA=numIn("循環從第幾小節"),bB=numIn("循環到第幾小節"),bGo=el("button","pill","循環這幾小節");
   bA.value=1;bB.value=4;
-  bGo.onclick=()=>{let a=clampBar(bA.value),b=clampBar(bB.value);if(b<a)[a,b]=[b,a];bA.value=a;bB.value=b;
-    A=barT(a);B=barT(b+1);if(cur.bars&&b>=cur.bars.n)B=Math.min(B,au.duration||B);show();startAt(a,"loop")};
+  function loopRange(){let a=clampBar(bA.value),b=clampBar(bB.value);if(b<a)[a,b]=[b,a];bA.value=a;bB.value=b;
+    A=barT(a);B=barT(b+1);if(cur.bars&&b>=cur.bars.n)B=Math.min(B,au.duration||B);show();startAt(a,"loop")}
+  bGo.onclick=loopRange;
   [bA,bB].forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")bGo.click()});
   const bGrp=el("span","bar-grp");bGrp.append(el("span","lbl","第"),bA,el("span","lbl","到"),bB,el("span","lbl","小節"));bloopRow.append(bGrp,bGo,ciBox("loop"));
   function showNow(){
@@ -1994,7 +2139,13 @@ function player(src,bpm){
     bars:()=>cur.bars?cur.bars.n:0,
     now:()=>nowEl.textContent.replace(/^現在：/,""),
     time:()=>fmt(au.currentTime)+" / "+(isFinite(au.duration)?fmt(au.duration):"--:--"),
-    label:()=>cur.label||""
+    label:()=>cur.label||"",
+    // 段落循環 for the floating panel
+    loopBars:(a,b)=>{bA.value=a;bB.value=b;loopRange();return [+bA.value,+bB.value]}, // no .click(): the panel would take it as a click outside
+    loopInfo:()=>A===null?"":info.textContent,
+    clearLoop:()=>{A=B=null;show()},
+    saved:()=>myLoops().map(L=>({n:L.n,s:barRange(L.a,L.b)||fmt(L.a)+" – "+fmt(L.b),on:A===L.a&&B===L.b})),
+    playSaved:i=>{const L=myLoops()[i];if(L){A=L.a;B=L.b;au.currentTime=A;au.play();show()}}
   };
   const barSec=foldSection("bars","小節跳轉",jumpRow,nowRow,barNote);
   renderLoops();
@@ -2156,18 +2307,58 @@ function sheetNotes(s,sheet,pages){
   bar._syncUi=()=>{Object.assign(ui,load("pr_sn_ui",{}));if(ui.fold&&mode!=="view")setMode("view");syncUi()};
   head.append(ttl,pin);
   bar.append(head,modes,tools);sheet.prepend(bar,more,boxList);syncUi();
-  // practice boxes: outlines on the pages, and a list to open each one on its own
+  // practice boxes: outlines on the pages, and a list to open each one on its own.
+  // 重新框選 (adj = that box's index) jumps to the box and lets its edges be dragged.
+  let adj=-1;
+  const SN_FRAME='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8"/><path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8"/><path d="M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16"/><path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/></svg>';
+  function adjustBox(d,b,p){
+    d.classList.add("sn-adj");d.style.color=b.c;
+    ["nw","n","ne","e","se","s","sw","w"].forEach(k=>{const hd=el("i","sn-h");hd.dataset.h=k;d.append(hd)});
+    const done=el("button","sn-done","完成");done.type="button";done.style.background=b.c;
+    done.onclick=e=>{e.stopPropagation();adj=-1;renderBoxes()};d.append(done);
+    let drag=null;const MW=.03,MH=.015;
+    const at=e=>{const r=p.wrap.getBoundingClientRect();return [(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]};
+    d.addEventListener("pointerdown",e=>{
+      if(e.target===done||(e.pointerType==="mouse"&&e.button!==0))return;
+      e.preventDefault();e.stopPropagation();try{d.setPointerCapture(e.pointerId)}catch(_){}
+      drag={k:e.target.dataset.h||"m",p0:at(e),r0:{x:b.x,y:b.y,w:b.w,h:b.h}};
+    });
+    d.addEventListener("pointermove",e=>{
+      if(!drag)return;const [px,py]=at(e),dx=px-drag.p0[0],dy=py-drag.p0[1],r0=drag.r0,k=drag.k;
+      let {x,y,w,h}=r0;
+      if(k==="m"){x=Math.min(1-w,Math.max(0,r0.x+dx));y=Math.min(1-h,Math.max(0,r0.y+dy))}
+      else{
+        if(k.includes("w")){x=Math.min(r0.x+r0.w-MW,Math.max(0,r0.x+dx));w=r0.x+r0.w-x}
+        if(k.includes("e"))w=Math.min(1-r0.x,Math.max(MW,r0.w+dx));
+        if(k.includes("n")){y=Math.min(r0.y+r0.h-MH,Math.max(0,r0.y+dy));h=r0.y+r0.h-y}
+        if(k.includes("s"))h=Math.min(1-r0.y,Math.max(MH,r0.h+dy));
+      }
+      Object.assign(b,{x,y,w,h});
+      Object.assign(d.style,{left:x*100+"%",top:y*100+"%",width:w*100+"%",height:h*100+"%"});
+    });
+    const up=()=>{if(!drag)return;drag=null;const r4=v=>Math.round(v*1e4)/1e4;b.x=r4(b.x);b.y=r4(b.y);b.w=r4(b.w);b.h=r4(b.h);snSave()};
+    d.addEventListener("pointerup",up);d.addEventListener("pointercancel",up);
+  }
   function renderBoxes(){
     pages.forEach(p=>p.wrap.querySelectorAll(".sn-box").forEach(b=>b.remove()));
     data.boxes.forEach((b,i)=>{if(!b.c)b.c=SN_BOX[i%SN_BOX.length].c;const p=pages[b.pg];if(!p)return;const d=el("div","sn-box");
       Object.assign(d.style,{left:b.x*100+"%",top:b.y*100+"%",width:b.w*100+"%",height:b.h*100+"%",borderColor:b.c,background:"color-mix(in srgb,"+b.c+" 9%,transparent)"});
-      const lb=el("span","",b.n);lb.style.background=b.c;lb.style.color="#fff";d.append(lb);p.wrap.append(d)});
+      const lb=el("span","",b.n);lb.style.background=b.c;lb.style.color="#fff";d.append(lb);p.wrap.append(d);
+      if(i===adj)adjustBox(d,b,p)});
     boxList.innerHTML="";boxList.hidden=!data.boxes.length;
     if(!data.boxes.length)return;
-    boxList.append(el("span","sn-hint","重點段落（點一下單獨檢視）"));
+    boxList.append(el("span","sn-hint",adj>=0?"拖動「"+(data.boxes[adj]||{}).n+"」的邊框或四個角調整範圍，拖中間可以移動，好了按「完成」。":"重點段落（點一下單獨檢視）"));
     data.boxes.forEach((b,i)=>{
-      const row=el("div","loop-item"),go=el("button","pill loop-go"),ren=el("button","pill loop-ic","✎"),del=el("button","pill loop-ic","×");
-      go.append(el("span","",b.n),el("small","","第 "+(b.pg+1)+" 頁"));go.onclick=()=>openBox(i);go.style.borderColor=b.c;
+      const row=el("div","loop-item"),go=el("button","pill loop-go"),ren=el("button","pill loop-ic","✎"),fr=el("button","pill loop-ic"),del=el("button","pill loop-ic","×");
+      fr.innerHTML=SN_FRAME;fr.title=i===adj?"完成調整":"重新框選";fr.setAttribute("aria-label",(i===adj?"完成調整「":"重新框選「")+b.n+"」");fr.setAttribute("aria-pressed",String(i===adj));
+      go.append(el("span","",b.n),el("small","","第 "+(b.pg+1)+" 頁"));
+      fr.onclick=()=>{
+        adj=adj===i?-1:i;
+        if(adj>=0&&mode!=="view")setMode("view"); // drawing tools would grab the drag
+        renderBoxes();
+        if(adj>=0){const d=pages[b.pg].wrap.querySelector(".sn-adj");if(d)d.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"center"})}
+      };
+      go.onclick=()=>openBox(i);go.style.borderColor=b.c;
       // colour: a dot that opens a small palette under the row
       const sw=el("button","sn-sw sn-bsw");sw.style.background=b.c;sw.setAttribute("aria-label","換「"+b.n+"」的顏色");sw.title="換顏色";
       const pal=el("div","sn-pal");pal.hidden=true;
@@ -2175,14 +2366,14 @@ function sheetNotes(s,sheet,pages){
         x.onclick=()=>{b.c=o.c;snSave();renderBoxes()};pal.append(x)});
       sw.onclick=()=>{pal.hidden=!pal.hidden};
       ren.setAttribute("aria-label","重新命名「"+b.n+"」");del.setAttribute("aria-label","刪除「"+b.n+"」");
-      del.onclick=()=>{data.boxes.splice(i,1);snSave();renderBoxes()};
+      del.onclick=()=>{data.boxes.splice(i,1);if(adj===i)adj=-1;else if(adj>i)adj--;snSave();renderBoxes()};
       ren.onclick=()=>{
         const inp=el("input");inp.type="text";inp.maxLength=30;inp.value=b.n;inp.setAttribute("aria-label","段落名稱");
         let done=false;const fin=ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v){b.n=v;snSave()}renderBoxes()};
         inp.onkeydown=e=>{if(e.key==="Enter")fin(true);else if(e.key==="Escape")fin(false)};inp.onblur=()=>fin(true);
         go.replaceWith(inp);inp.focus();inp.select();
       };
-      row.append(sw,go,ren,del);boxList.append(row,pal);
+      row.append(sw,go,ren,fr,del);boxList.append(row,pal);
     });
   }
   async function openBox(i){
@@ -2479,7 +2670,9 @@ renderSongs();
 // playing, otherwise the song at mid-screen. Only one of the floating panels is open at a time.
 (function(){
   const box=$("#aScroll"),fab=$("#apFab"),panel=$("#apPanel"),play=$("#apPlay"),song=$("#apSong"),timeEl=$("#apTime"),nowEl=$("#apNow"),
-        jump=$("#apJump"),inp=$("#apBar"),ci=panel.querySelector("input[data-ci]");
+        jump=$("#apJump"),inp=$("#apBar"),ci=panel.querySelector('input[data-ci="jump"]'),
+        loopBox=$("#apLoop"),la=$("#apLA"),lb=$("#apLB"),lci=panel.querySelector('input[data-ci="loop"]'),lstat=$("#apLStat"),linfo=$("#apLInfo"),saved=$("#apSaved");
+  let savedKey="";
   const players=()=>[...document.querySelectorAll("#songs .player")].filter(p=>p._ctl);
   function target(){
     const ps=players(),run=ps.find(p=>p._ctl.playing());if(run)return run;
@@ -2493,12 +2686,21 @@ renderSongs();
     fab.setAttribute("aria-label",on?"播放音檔（播放中）":"播放音檔");
     play.disabled=!p;play.setAttribute("aria-pressed",String(on));
     const l=on?"暫停":"播放";play.setAttribute("aria-label",l);play.title=l;
-    if(!c){song.textContent="";timeEl.textContent="";nowEl.textContent="";jump.hidden=true;return}
+    if(!c){song.textContent="";timeEl.textContent="";nowEl.textContent="";jump.hidden=loopBox.hidden=true;return}
     const name=p.closest(".song").querySelector("h3").textContent.split(/\s*\+\s*/)[0];
     song.textContent="「"+name+"」"+(c.label()?"・"+c.label():"");
     timeEl.textContent=c.time();nowEl.textContent=c.now();
     const n=c.bars();jump.hidden=!n;if(n){inp.max=n;if(+inp.value>n)inp.value=n}
     ci.checked=ciPref.jump;
+    // loop: bar range (when the track has a bar grid), what is looping now, and the saved sections
+    const sv=c.saved();loopBox.hidden=!n&&!sv.length;
+    la.parentNode.hidden=!n;lci.parentNode.hidden=!n;if(n){la.max=lb.max=n}
+    lci.checked=ciPref.loop;
+    const li=c.loopInfo();lstat.hidden=!li;linfo.textContent=li;
+    const key=JSON.stringify(sv.map(L=>[L.n,L.s]));if(key!==savedKey){savedKey=key; // rebuild only when the list changes (render runs 4× a second; a rebuilt button would count as a click outside)
+      saved.innerHTML="";sv.forEach((L,i)=>{const b=el("button");b.type="button";b.setAttribute("aria-pressed",String(L.on));
+        b.append(L.n,el("small","",L.s));b.onclick=()=>{const p=target();if(p){p._ctl.playSaved(i);setTimeout(render,50)}};saved.append(b)})}
+    [...saved.children].forEach((b,i)=>b.setAttribute("aria-pressed",String(!!(sv[i]&&sv[i].on))));
   }
   const clamp=v=>{const n=(target()||{_ctl:{bars:()=>1}})._ctl.bars()||1;return Math.max(1,Math.min(n,Math.round(+v)||1))};
   play.onclick=()=>{const p=target();if(p){p._ctl.toggle();setTimeout(render,50)}};
@@ -2506,6 +2708,10 @@ renderSongs();
   $("#apPlus").onclick=()=>{inp.value=clamp(+inp.value+1)};
   $("#apGo").onclick=()=>{const p=target();if(!p)return;inp.value=clamp(inp.value);p._ctl.jump(+inp.value);setTimeout(render,50)};
   inp.onkeydown=e=>{if(e.key==="Enter")$("#apGo").click()};
+  $("#apLGo").onclick=()=>{const p=target();if(!p)return;const [a,b]=p._ctl.loopBars(la.value,lb.value);la.value=a;lb.value=b;setTimeout(render,50)};
+  [la,lb].forEach(x=>x.onkeydown=e=>{if(e.key==="Enter")$("#apLGo").click()});
+  $("#apLClr").onclick=()=>{const p=target();if(p){p._ctl.clearLoop();render()}};
+  lci.onchange=()=>{ciPref.loop=lci.checked;save("pr_countin",ciPref);document.querySelectorAll('input[data-ci="loop"]').forEach(x=>x.checked=lci.checked)};
   // same setting as the 先數 4 拍預備拍 box in each player
   ci.onchange=()=>{ciPref.jump=ci.checked;save("pr_countin",ciPref);document.querySelectorAll('input[data-ci="jump"]').forEach(x=>x.checked=ci.checked)};
   let tick=0;
@@ -3134,9 +3340,9 @@ function learnGo(key){
     const setBpm=v=>{$("#bpm").value=v;$("#bpm").dispatchEvent(new Event("input"))};
     if(key==="pat-16")setPattern(PATS.find(p=>p.n==="十六分切分"));
     if(key==="pat-chuck")setPattern(PATS.find(p=>p.n==="流行切音"));
-    if(key==="prog-canon")setProg(PROGS[PROGS.length-1]);
-    if(key==="prog-basic-60"){setProg(PROGS[0]);setPattern(PATS.find(p=>p.n==="民謠基本"));setBpm(60)}
-    if(key==="prog-chuck-75"){setProg(PROGS[0]);setPattern(PATS.find(p=>p.n==="流行切音"));setBpm(75)}
+    if(key==="prog-canon")setProg(progFind("C-G-Am-Em-F-C-F-G"));
+    if(key==="prog-basic-60"){setProg(progFind("C-G-Am-F"));setPattern(PATS.find(p=>p.n==="民謠基本"));setBpm(60)}
+    if(key==="prog-chuck-75"){setProg(progFind("C-G-Am-F"));setPattern(PATS.find(p=>p.n==="流行切音"));setBpm(75)}
   }
   navGo("guitar","common",target);
 }
@@ -3413,11 +3619,12 @@ buildNav();navReady=true;navSync();
 
   let steps=[],i=0,raf=0,clickEl=null,start=null;
   const targets=s=>{const t=s.el&&s.el();return (Array.isArray(t)?t:[t]).filter(shown)};
-  function onClicked(){clickEl=null;setTimeout(()=>go(i+1),350)}
+  function onClicked(){clickEl=null;const at=i;setTimeout(()=>{if(i===at&&!root.hidden)go(at+1)},350)}
+  function unlisten(){if(clickEl){clickEl.removeEventListener("click",onClicked);clickEl=null}}
   function show(){
     const s=steps[i];if(s.before)s.before();
     const isClick=typeof s.click==="function"?s.click():!!s.click;
-    if(clickEl){clickEl.removeEventListener("click",onClicked);clickEl=null}
+    unlisten();
     const t=targets(s);
     if(isClick&&t[0]){clickEl=t[0];clickEl.addEventListener("click",onClicked,{once:true})}
     if(t[0])t[0].scrollIntoView({block:"center",behavior:reducedMotion()?"auto":"smooth"});
@@ -3457,6 +3664,7 @@ buildNav();navReady=true;navSync();
     card.style.left=Math.min(vw-cw-16,Math.max(16,x))+"px";card.style.top=Math.min(vh-ch-8,Math.max(8,y))+"px";
   }
   function go(n){
+    unlisten();
     // skip steps whose control isn't on screen in this layout
     while(n>0&&n<steps.length&&steps[n].el){if(steps[n].before)steps[n].before();if(targets(steps[n]).length)break;n+=n>i?1:-1}
     if(n<0)n=0;if(n>=steps.length){end();return}
@@ -3499,6 +3707,19 @@ buildNav();navReady=true;navSync();
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.4",title:"吉他練習更好用了",items:[
+    ["播放音檔可以循環","右下角「播放音檔」多了段落循環：填第幾到第幾小節按「循環」，存好的段落點一下就開始重複。"],
+    ["重點段落重新框選","樂譜筆記的重點旁邊多了「重新框選」，會跳到那個重點，拖動邊框或四個角就能改範圍。"],
+    ["和弦進行分類","分成 C 調和弦轉換、G 調和弦轉換、卡農進行和簡易入門，新增 C 調、G 調的順階和弦轉換。"],
+    ["F 簡易","和弦圖多了簡易版的 F，食指只壓 1、2 弦，按不起來大橫按時可以先用它。"],
+    ["自訂刷法","格子多了「↓↑」一格先下再上；自訂好的刷法可以取名儲存，下次打開還在。"],
+    ["整理刷法","按刷法最後的「編輯」，可以一次勾選很多個刷法刪掉（內建的也可以），刪除前會再問一次，刪掉後無法復原。"],
+    ["小修正","使用說明按「跳過這步」不會再亂跳；手機點按鈕時不會再閃藍色方塊。"]
+  ]},
+  {v:"2026-10-12.3",class:true,title:"播放音檔可以循環、重點可以重新框選",items:[
+    ["播放音檔可以循環","右下角「播放音檔」多了段落循環：填第幾到第幾小節按「循環」，可以先數 4 拍預備拍；存好的段落點一下就開始重複，按「取消循環」停止。"],
+    ["重點段落重新框選","樂譜筆記的重點清單裡，名字旁邊多了「重新框選」，按下去會跳到那個重點；拖動框的邊或四個角改大小，拖中間整個移動，好了按「完成」。"]
+  ]},
   {v:"2026-10-12.2",title:"歌唱多了「學習」分頁",items:[
     ["推薦教學影片","歌唱 › 學習放了精選的教學影片，分成放鬆發聲、音色與共鳴、音準、聽音與音感四個主題。"],
     ["看完就練","每支影片都可以直接在頁面上播放，看完打勾記錄，再按「去練習」用練習室的工具練。"],
