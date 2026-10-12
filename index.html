@@ -3332,9 +3332,8 @@ function songCard(s){
   card.append(el("h3","",s.title));if(s.by)card.append(el("p","by",s.by));card.append(meta);
   if(s.yt){
     const yt=ytBox(s.yt,s.title);
-    const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+s.yt;a.target="_blank";a.rel="noopener";
-    links.append(a,el("span","note",s.ytNote||""));
-    card.append(yt.el,links);
+    card.append(yt.el);
+    if(s.ytNote){links.append(el("span","note",s.ytNote));card.append(links)}
     if(s.lyrics||(s.lines&&s.lines.length))card.append(foldSection("lyrics","歌詞（跟著影片捲動，點一句可以跳過去）",lyricsPanel(s,yt)));
     if(s.melody||(s.my&&s.mel))card.append(foldSection("kara","跟唱比對",karaPanel(s,yt)));
     else if(s.my)card.append(foldSection("kara","跟唱比對",melSetup(s,yt)));
@@ -4493,7 +4492,7 @@ artFromUrl(); // a shared #art=… link opens that article
     {before:toSProj,el:()=>{const c=vcard();return c&&[c.querySelector("h3"),c.querySelector(".meta")]},
      title:"一首歌一張卡片",text:"每首歌都有影片、歌詞，有旋律資料的歌還有跟唱比對。"},
     {before:toSProj,el:()=>{const c=vcard();return c&&c.querySelector(".video")},
-     title:"播放影片",text:"點影片開始播放；下面的連結可以到 YouTube 開啟。"},
+     title:"播放影片",text:"點影片開始播放。"},
     {before:openLyrics,el:()=>{const c=vcard();return c&&c.querySelector(".lyr-list")},
      title:"歌詞跟著影片走",text:"唱到的那句會亮起來、捲到中間；點任何一句，影片就跳到那裡開始播。"},
     {before:openLyrics,el:()=>lyrBtn("標記歌詞"),
@@ -4672,6 +4671,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.13",title:"歌曲卡片更簡潔",items:[
+    ["拿掉 YouTube 連結","唱歌 › 專案的歌曲卡片不再顯示「在 YouTube 開啟」，影片直接在卡片上播放。"]
+  ]},
   {v:"2026-10-12.12",title:"從 YouTube 一鍵帶入歌曲",items:[
     ["書籤小工具","新增歌曲裡有「抓 YouTube 歌曲」按鈕，拖到書籤列後，在 YouTube 影片頁按一下，就會打開練習室並填好連結、歌名和演唱者（電腦版瀏覽器）。"],
     ["說明欄的歌詞","影片說明欄有歌詞的話會一起帶進歌詞欄，加入前記得檢查一下。"]
