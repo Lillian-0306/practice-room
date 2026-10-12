@@ -860,6 +860,26 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .as-hint:empty{display:none}
 /* on narrow screens the menu button owns the corner, so sit just above it */
 @media (max-width:1023px){.ascroll{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+/* 歌唱 › 專案: recording button and panel */
+.vrec-panel{width:min(300px,calc(100vw - 32px));max-height:calc(100vh - 170px);overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px}
+.vrec-panel .as-head{margin-bottom:0}
+.vrec-main{display:flex;align-items:center;gap:12px}
+.ascroll .vrec-btn{flex:0 0 auto;width:52px;height:52px;background:#E5484D;color:#fff;box-shadow:0 3px 10px rgba(229,72,77,.35)}
+.vrec-btn .i-stop,.vrec-btn[aria-pressed="true"] .i-rec{display:none}
+.vrec-btn[aria-pressed="true"] .i-stop{display:block}
+.vrec-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vrec-info .rec-time b{font-size:1.25rem}
+.vrec-state{font-size:.8rem;color:var(--muted)}
+.vrec-song{font-size:.8rem;color:var(--muted);margin:-4px 0 0 26px}
+.vrec-song:empty,.vrec-panel .rec-msg:empty{display:none}
+.vrec-panel .rec-msg{margin:0}
+.vrec-panel .rec-list{margin:0}
+.vrec-panel .rec-list li{padding:10px 0}
+.vrec-panel .rec-list .rec-head b{font-size:.88rem}
+.vrec-hint{font-size:.75rem;color:var(--muted);margin:0}
+.ascroll .vrec-panel .rec-actions button{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;background:transparent;color:var(--ink)}
+.ascroll .vrec-fab{background:var(--voc,var(--accent));color:var(--voc-on,var(--accent-on))}
+.vrec-fab.recording::after{content:"";position:absolute;top:1px;right:1px;width:15px;height:15px;border-radius:50%;box-sizing:border-box;border:2.5px solid var(--surface);background:#E5484D;animation:blink 1s steps(2,start) infinite}
 /* guided tour (使用說明): a spotlight on the real control plus a card; transparent blockers
    around the spotlight stop stray clicks, the spotlight itself lets clicks through */
 .tour{position:fixed;inset:0;z-index:60;pointer-events:none}
@@ -984,6 +1004,27 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
   <button class="as-fab" id="asFab" type="button" aria-expanded="false" aria-controls="asPanel" aria-label="自動捲譜">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9.5 11.5v6M7.5 15.5l2 2 2-2"/><path d="M13 10h3M13 13h3"/></svg>
     <span class="as-tip" aria-hidden="true">自動捲譜</span>
+  </button>
+</div>
+<div class="ascroll" id="vRec" hidden>
+  <div class="as-panel vrec-panel" id="vrPanel" role="group" aria-label="錄音" hidden>
+    <div class="as-head"><b>錄音</b><button class="as-close" id="vrClose" type="button" aria-label="收起錄音">×</button></div>
+    <div class="vrec-main">
+      <button class="vrec-btn rec-btn" id="vrBtn" type="button" aria-pressed="false" aria-label="開始錄音">
+        <svg class="i-rec" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg>
+        <svg class="i-stop" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+      <div class="vrec-info"><span class="rec-time"><i class="rec-dot"></i><b class="rec-clock">0:00</b></span><span class="vrec-state" id="vrState">按紅色按鈕開始錄音</span></div>
+    </div>
+    <label class="ci-chk"><input type="checkbox" id="vrWithVideo">開始錄音時一起播放影片</label>
+    <p class="vrec-song" id="vrSong"></p>
+    <p class="msg note rec-msg"></p>
+    <ol class="rec-list"></ol>
+    <p class="vrec-hint">錄音只存在這個分頁，重新整理就會消失，想留下來記得按「下載」。戴耳機錄，才不會把影片的聲音也錄進去。</p>
+  </div>
+  <button class="as-fab vrec-fab" id="vrFab" type="button" aria-expanded="false" aria-controls="vrPanel" aria-label="錄音">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+    <span class="as-tip" aria-hidden="true">錄音</span>
   </button>
 </div>
 <div class="wrap">
@@ -2863,7 +2904,7 @@ const VSONGS=[
    yt:"tln-FPsf4tg",ytNote:"影片來源：YouTube 頻道 4K Music Make",lyrics:"songs/muse-huixiang-lyrics.json"}
 ];
 // YouTube IFrame API, loaded on first use
-let ytReady=null;
+let ytReady=null,ytLast=null; // ytLast: {p, title} of the video that started playing most recently
 function loadYT(){
   if(window.YT&&YT.Player)return Promise.resolve();
   if(ytReady)return ytReady;
@@ -2886,7 +2927,7 @@ function ytBox(id,title){
     const wrap=el("div","video"),host=el("div");wrap.append(host);box.replaceWith(wrap);
     made=loadYT().then(()=>new Promise(res=>{
       const p=new YT.Player(host,{videoId:id,host:"https://www.youtube-nocookie.com",
-        playerVars:{autoplay:autoplay?1:0,rel:0,playsinline:1},events:{onReady:()=>res(p)}});
+        playerVars:{autoplay:autoplay?1:0,rel:0,playsinline:1},events:{onReady:()=>res(p),onStateChange:e=>{if(e.data===1)ytLast={p,title}}}});
     })).catch(()=>{ // API blocked: fall back to a plain embed
       const f=el("iframe");f.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0&playsinline=1";
       f.title=title;f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;
@@ -3567,6 +3608,40 @@ function guessKey(notes){
 }
 renderVSongs();
 window.addEventListener("resize",()=>{if(kara)drawKara(kara)});
+
+/* ---------- singing: floating recorder (專案) ---------- */
+// Same recorder as 錄音回放, in a corner panel on 歌唱 › 專案. 一起播放影片 (pr_vrec_video) starts the
+// video that was played last when recording starts and pauses it when recording stops.
+const recV=(function(){
+  const box=$("#vRec"),fab=$("#vrFab"),panel=$("#vrPanel"),btn=$("#vrBtn"),state=$("#vrState"),withV=$("#vrWithVideo"),songEl=$("#vrSong");
+  const r=recorder(panel,"歌唱專案");
+  withV.checked=load("pr_vrec_video",true)!==false;withV.onchange=()=>save("pr_vrec_video",withV.checked);
+  let vid=null;
+  const showSong=()=>{songEl.textContent=withV.checked?(ytLast?"會播放：「"+ytLast.title+"」":"先在歌曲卡片上播放過影片，錄音時才能一起播放。"):""};
+  withV.addEventListener("change",showSong);
+  // recorder() sets the button text; this one is an icon, so mirror its state instead
+  new MutationObserver(()=>{
+    const on=panel.querySelector(".rec-time").classList.contains("recording");
+    btn.setAttribute("aria-pressed",String(on));btn.setAttribute("aria-label",on?"停止錄音":"開始錄音");
+    btn.textContent="";btn.append(...btnIcons);
+    fab.classList.toggle("recording",on);fab.setAttribute("aria-label",on?"錄音（錄音中）":"錄音");
+    state.textContent=on?"錄音中…再按一次停止":"按紅色按鈕開始錄音";
+    if(on&&withV.checked&&ytLast){vid=ytLast.p;try{vid.playVideo()}catch(e){}}
+    if(!on&&vid){try{vid.pauseVideo()}catch(e){}vid=null}
+  }).observe(panel.querySelector(".rec-time"),{attributes:true,attributeFilter:["class"]});
+  const btnIcons=[...btn.children];
+  function setOpen(v){panel.hidden=!v;fab.setAttribute("aria-expanded",String(v));if(v)showSong()}
+  fab.onclick=e=>{e.stopPropagation();setOpen(panel.hidden)};
+  $("#vrClose").onclick=()=>{setOpen(false);fab.focus()};
+  document.addEventListener("click",e=>{if(!panel.hidden&&!box.contains(e.target))setOpen(false)});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
+  // visible only while 歌唱 › 專案 is on screen; leaving stops a recording
+  const sing=$("#singing"),proj=$("#s-projects");
+  function sync(){const v=!CLASS&&!sing.hidden&&!proj.hidden;box.hidden=!v;if(!v){r.stop();setOpen(false)}}
+  const mo=new MutationObserver(sync);[sing,proj].forEach(n=>mo.observe(n,{attributes:true,attributeFilter:["hidden"]}));
+  sync();
+  return r;
+})();
 
 /* ---------- singing: breathing ---------- */
 const BREATHS=[
@@ -4336,6 +4411,7 @@ artFromUrl(); // a shared #art=… link opens that article
      title:"跟唱比對",text:"戴耳機播放影片、按「開始跟唱」。橫條是原唱的旋律，你唱的音高畫成一條線，唱準會變綠；停下來會列出最需要練的音。"},
     {before:toSProj,el:()=>$("#vsongs .add-song"),
      title:"新增自己的歌",text:"貼上 YouTube 連結和歌詞，就能練自己想唱的歌：用「對時間」讓歌詞跟著影片，也可以上傳音檔讓網站找出旋律，做跟唱比對。"},
+    {before:toSProj,el:()=>$("#vrFab"),title:"錄音",text:"右下角的麥克風按鈕可以錄下自己唱的。勾「一起播放影片」，按錄音時會順便播放剛剛看的影片；錄好可以馬上聽、下載下來。"},
     {el:()=>$("#backupBtn"),title:"記得備份",text:"自己加的歌、歌詞時間和標記都只存在這個瀏覽器。按右上角的備份按鈕匯出成檔案，換裝置時再匯入。"},
     {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」選「歌唱專案導覽」。唱得開心！"}
   ];
@@ -4454,7 +4530,7 @@ artFromUrl(); // a shared #art=… link opens that article
   const TOURS=[
     {n:"網站導覽",d:"板塊、清單、網頁風格和吉他專案，整個網站怎麼用",go:()=>begin()},
     {n:"吉他專案導覽",d:"樂譜、示範音檔、節拍器和自動捲譜",go:()=>begin(GSTEPS,"pr_tour_gproj")},
-    {n:"歌唱專案導覽",d:"影片、歌詞、標記唱法、跟唱比對和新增歌曲",go:()=>begin(SSTEPS,"pr_tour_sproj")}
+    {n:"歌唱專案導覽",d:"影片、歌詞、標記唱法、跟唱比對、錄音和新增歌曲",go:()=>begin(SSTEPS,"pr_tour_sproj")}
   ];
   const closeHelp=focusBtn=>{if(menu.hidden)return;menu.hidden=true;help.setAttribute("aria-expanded","false");if(focusBtn)help.focus()};
   if(CLASS){menu.remove();help.onclick=()=>begin()}
@@ -4503,6 +4579,10 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.10",title:"歌唱專案可以錄音",items:[
+    ["右下角錄音","唱歌 › 專案右下角多了麥克風按鈕，打開面板就能錄音、回聽和下載。"],
+    ["跟著影片錄","勾「開始錄音時一起播放影片」，按下錄音會同時播放剛剛看的影片，停止時影片也會暫停。戴耳機錄比較清楚。"]
+  ]},
   {v:"2026-10-12.9",title:"編輯歌詞時間軸",items:[
     ["編輯歌詞時間軸","自己加的歌對完時間後，「對時間」會變成「編輯歌詞時間軸」，放在「標記歌詞」右邊；按下去會從正在唱的那句開始重新對，點歌詞可以換到別句。"]
   ]},
