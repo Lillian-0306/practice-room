@@ -396,6 +396,14 @@ section.panel[hidden]{display:none}
 .song .by{color:var(--muted);font-size:.9rem;margin-top:2px}
 .song .meta{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .song .meta span{background:var(--accent-soft);border-radius:6px;padding:2px 10px;font-size:.85rem}
+/* 歌唱 › 專案: each card folds to its header */
+.song-h{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.song-h .song-t{flex:1;min-width:0}
+.song-fold{flex:none;display:grid;place-items:center;width:36px;height:36px;margin:-6px -6px 0 0;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.song-fold:hover{background:var(--accent-soft);color:var(--ink)}
+.song-fold svg{transition:transform .2s}
+.song-fold[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.song.folded .meta{margin-bottom:0}
 .song .chords{margin:4px 0 12px}
 .song .chords .pill{min-height:36px;padding:4px 12px}
 .song-chord{display:grid;grid-template-columns:minmax(0,200px) 1fr;gap:14px;align-items:start;margin:0 0 14px;padding:12px;border-radius:10px;background:var(--bg)}
@@ -3326,18 +3334,34 @@ function renderVSongs(){
   add.onclick=()=>{const f=songForm(null);add.replaceWith(f);f.querySelector("input").focus()};
   box.append(add);
 }
+// folded cards, per song (pr_vsong_fold: {lyrKey: true})
+const vFold=load("pr_vsong_fold",{});
 function songCard(s){
   const card=el("article","song"),meta=el("div","meta"),links=el("div","video-links");
   s.meta.forEach(m=>meta.append(el("span","",m)));
-  card.append(el("h3","",s.title));if(s.by)card.append(el("p","by",s.by));card.append(meta);
+  // header (title, singer, tags) stays; the rest folds away with the arrow or a tap on the header
+  const head=el("div","song-h"),ht=el("div","song-t"),fb=el("button","song-fold"),body=el("div","song-b");
+  ht.append(el("h3","",s.title));if(s.by)ht.append(el("p","by",s.by));ht.append(meta);
+  fb.type="button";body.id="songb-"+(++foldSeq);fb.setAttribute("aria-controls",body.id);
+  fb.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  head.append(ht,fb);card.append(head,body);
+  let yt=null;
+  fb._set=c=>{body.hidden=c;card.classList.toggle("folded",c);fb.setAttribute("aria-expanded",String(!c));fb.setAttribute("aria-label",(c?"展開":"收起")+"「"+s.title+"」")};
+  const toggle=()=>{const c=!body.hidden;fb._set(c);
+    if(c){vFold[lyrKey(s)]=true;if(kara&&card.contains(kara.startB))stopKara();
+      const p=yt&&yt.current();if(p)p.then(x=>{try{x&&x.pauseVideo()}catch(e){}})}
+    else delete vFold[lyrKey(s)];
+    save("pr_vsong_fold",vFold)};
+  fb.onclick=e=>{e.stopPropagation();toggle()};head.onclick=toggle;
   if(s.yt){
-    const yt=ytBox(s.yt,s.title);
-    card.append(yt.el);
-    if(s.ytNote){links.append(el("span","note",s.ytNote));card.append(links)}
-    if(s.lyrics||(s.lines&&s.lines.length))card.append(foldSection("lyrics","歌詞（跟著影片捲動，點一句可以跳過去）",lyricsPanel(s,yt)));
-    if(s.melody||(s.my&&s.mel))card.append(foldSection("kara","跟唱比對",karaPanel(s,yt)));
-    else if(s.my)card.append(foldSection("kara","跟唱比對",melSetup(s,yt)));
+    yt=ytBox(s.yt,s.title);
+    body.append(yt.el);
+    if(s.ytNote){links.append(el("span","note",s.ytNote));body.append(links)}
+    if(s.lyrics||(s.lines&&s.lines.length))body.append(foldSection("lyrics","歌詞（跟著影片捲動，點一句可以跳過去）",lyricsPanel(s,yt)));
+    if(s.melody||(s.my&&s.mel))body.append(foldSection("kara","跟唱比對",karaPanel(s,yt)));
+    else if(s.my)body.append(foldSection("kara","跟唱比對",melSetup(s,yt)));
   }
+  fb._set(!!vFold[lyrKey(s)]);
   if(s.my){
     const tools=el("div","row song-tools"),ed=el("button","pill","✎ 編輯歌曲"),del=el("button","pill","× 刪除");
     ed.onclick=()=>{if(kara)stopKara();const f=songForm(s.src);card.replaceWith(f);f.querySelector("input").focus()};
@@ -3349,7 +3373,7 @@ function songCard(s){
         const o=load("pr_lyric_times",{});delete o[lyrKey(s)];save("pr_lyric_times",o);
         const mo=load("pr_lyric_marks",{});delete mo[lyrKey(s)];save("pr_lyric_marks",mo);renderVSongs()};
     };
-    tools.append(ed,del);card.append(tools);
+    tools.append(ed,del);body.append(tools);
   }
   return card;
 }
@@ -4484,13 +4508,14 @@ artFromUrl(); // a shared #art=… link opens that article
   ];
   // 歌唱 › 專案 has its own tour: opens the first time that page is shown (pr_tour_sproj), and from 這頁怎麼用
   const vcard=()=>$("#vsongs .song");
-  const toSProj=()=>{if(document.body.dataset.mode!=="singing")$("#tab-singing").click();if(curSub("singing")!=="projects")showSub("singing","projects")};
+  const toSProj=()=>{if(document.body.dataset.mode!=="singing")$("#tab-singing").click();if(curSub("singing")!=="projects")showSub("singing","projects");
+    const f=$("#vsongs .song .song-fold");if(f&&f.getAttribute("aria-expanded")==="false")f._set(false)};
   const openLyrics=()=>{toSProj();const c=vcard(),b=c&&c.querySelector('.fold-h[data-kind="lyrics"]');if(b&&b.getAttribute("aria-expanded")==="false")b._set(false)};
   const lyrBtn=t=>{const c=vcard();return c&&[...c.querySelectorAll(".lyr-tools button")].find(b=>b.textContent===t)};
   const SSTEPS=[
     {title:"歌唱專案怎麼用",text:"這裡放要練唱的歌：看影片、跟著歌詞唱、標記唱法，再用麥克風檢查唱得準不準。花一分鐘看看吧！",center:true},
     {before:toSProj,el:()=>{const c=vcard();return c&&[c.querySelector("h3"),c.querySelector(".meta")]},
-     title:"一首歌一張卡片",text:"每首歌都有影片、歌詞，有旋律資料的歌還有跟唱比對。"},
+     title:"一首歌一張卡片",text:"每首歌都有影片、歌詞，有旋律資料的歌還有跟唱比對。按標題或右邊的箭頭，可以把暫時不練的歌收起來。"},
     {before:toSProj,el:()=>{const c=vcard();return c&&c.querySelector(".video")},
      title:"播放影片",text:"點影片開始播放。"},
     {before:openLyrics,el:()=>{const c=vcard();return c&&c.querySelector(".lyr-list")},
@@ -4671,6 +4696,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.14",title:"歌曲卡片可以收起來",items:[
+    ["收起不練的歌","唱歌 › 專案的每張歌曲卡片，按標題或右上角的箭頭就能收起，只留歌名和標籤；再按一次展開。每首歌會記住自己是收起還是展開。"]
+  ]},
   {v:"2026-10-12.13",title:"歌曲卡片更簡潔",items:[
     ["拿掉 YouTube 連結","唱歌 › 專案的歌曲卡片不再顯示「在 YouTube 開啟」，影片直接在卡片上播放。"]
   ]},
