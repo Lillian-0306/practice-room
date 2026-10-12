@@ -3087,13 +3087,11 @@ function lyricsPanel(song,yt){
       tools.append(mark,back,done);return;
     }
     if(mk){const done=el("button","btn","完成標記");done.onclick=markEnd;tools.append(done);return}
-    if(song.my){const start=el("button","btn ghost","對時間");start.onclick=calStart;tools.append(start)}
+    // own songs: 對時間 first; once every line has a time it becomes 編輯歌詞時間軸, after 標記歌詞
+    const timed=song.my&&lines.length&&!untimed();
+    if(song.my&&!timed){const start=el("button","btn ghost","對時間");start.onclick=()=>calStart();tools.append(start)}
     const mkB=el("button","btn ghost","標記歌詞");mkB.onclick=markStart;tools.append(mkB);
-    if(own()&&song.my){
-      const reset=el("button","btn ghost","清除時間");
-      reset.onclick=()=>{if(!confirm("要清掉這首歌對好的時間嗎？"))return;setOwn(null);renderTools();msg.textContent="已清除，按「對時間」重新對。"};
-      tools.append(reset);
-    }
+    if(timed){const ed=el("button","btn ghost","編輯歌詞時間軸");ed.onclick=()=>calStart(Math.max(0,cur));tools.append(ed)}
     const lab=el("label","ci-chk"),cb=el("input");cb.type="checkbox";cb.checked=lyrAuto;cb.dataset.lyrAuto="";
     cb.onchange=()=>{lyrAuto=cb.checked;save("pr_lyr_auto",lyrAuto);
       document.querySelectorAll("input[data-lyr-auto]").forEach(x=>{x.checked=lyrAuto});
@@ -3113,11 +3111,12 @@ function lyricsPanel(song,yt){
     if(els[cal.i])center(els[cal.i]);
     msg.textContent="第 "+(cal.i+1)+" / "+lines.length+" 句：影片唱到這句的第一個字時，按「這句開始了」或空白鍵。點歌詞可以換到那一句。";
   }
-  async function calStart(){
+  async function calStart(from){
     if(mk)markEnd();
     const p=await getPlayer(true);if(!p){msg.textContent="影片還沒準備好，請先播放影片再試一次。";return}
-    cal={i:0,arr:times().slice()};renderTools();calShow();
-    p.seekTo(Math.max(0,(cal.arr[0]==null?0:cal.arr[0])-4),true);p.playVideo();
+    const i0=Math.min(lines.length-1,from||0);
+    cal={i:i0,arr:times().slice()};renderTools();calShow();
+    p.seekTo(Math.max(0,(cal.arr[i0]==null?0:cal.arr[i0])-4),true);p.playVideo();
   }
   function calMark(){
     if(!cal||!player)return;
@@ -4504,6 +4503,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.9",title:"編輯歌詞時間軸",items:[
+    ["編輯歌詞時間軸","自己加的歌對完時間後，「對時間」會變成「編輯歌詞時間軸」，放在「標記歌詞」右邊；按下去會從正在唱的那句開始重新對，點歌詞可以換到別句。"]
+  ]},
   {v:"2026-10-12.8",title:"跟唱比對可以收起來",items:[
     ["收起跟唱比對","唱歌 › 專案的「跟唱比對」一開始是收起來的，點標題就能展開；之後展開或收起會記住，所有歌一起。"]
   ]},
