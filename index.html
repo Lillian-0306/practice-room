@@ -728,8 +728,14 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .ascroll .ap-step{width:32px;height:32px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font-size:1.05rem;flex:none}
 .ascroll .ap-go{border-radius:999px;padding:0 12px;height:34px;margin-left:auto;background:var(--accent);color:var(--accent-on);font-weight:700;font-size:.88rem}
 .ap-jump .bar-in{width:3.6em;min-height:32px}
-.ascroll .ap-panel{max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px);overflow-y:auto}
+.ascroll .ap-panel{max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.ap-jrow>span,.ascroll .ap-go{white-space:nowrap}
 .ap-sub{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.ap-bpm{font-size:1.05rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ap-range{width:100%;margin:4px 0 0}
+.ascroll .ap-orig[aria-pressed="true"]{background:transparent;color:var(--muted);border:1.5px solid var(--line)}
+.ap-pct{font-size:.78rem;color:var(--muted)}
+.ap-pct:empty{display:none}
 .ap-loop .bar-in{width:3em}
 .ap-lstat{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700;padding:6px 8px;border-radius:10px;background:var(--accent-soft)}
 .ap-lstat[hidden]{display:none}
@@ -840,6 +846,11 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
         <svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>
       </button>
       <div class="ap-info"><b id="apTime">0:00 / --:--</b><span id="apNow"></span></div>
+    </div>
+    <div class="ap-jump ap-speed" id="apSpeed">
+      <span class="ap-sub">播放速度</span>
+      <div class="ap-jrow"><b class="ap-bpm" id="apBpm">♩=70</b><span class="ap-pct" id="apPct"></span><button class="ap-go ap-orig" id="apOrig" type="button">原速</button></div>
+      <input type="range" class="ap-range" id="apRange" min="0.4" max="1.25" step="0.01" value="1" aria-label="播放速度">
     </div>
     <div class="ap-jump" id="apJump">
       <div class="ap-jrow"><span>第</span><button class="ap-step" id="apMinus" type="button" aria-label="前一小節">−</button><input class="bar-in" id="apBar" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="要跳到第幾小節"><button class="ap-step" id="apPlus" type="button" aria-label="下一小節">＋</button><span>小節</span><button class="ap-go" id="apGo" type="button">跳到</button></div>
@@ -2140,6 +2151,8 @@ function player(src,bpm){
     now:()=>nowEl.textContent.replace(/^現在：/,""),
     time:()=>fmt(au.currentTime)+" / "+(isFinite(au.duration)?fmt(au.duration):"--:--"),
     label:()=>cur.label||"",
+    tempo:()=>({text:val.textContent,sub:sub.textContent,orig:Math.abs(ratio-1)<0.004}),
+    ratio:()=>ratio,setRatio:r=>setRatio(r),origSpeed:()=>setRatio(1),
     // 段落循環 for the floating panel
     loopBars:(a,b)=>{bA.value=a;bB.value=b;loopRange();return [+bA.value,+bB.value]}, // no .click(): the panel would take it as a click outside
     loopInfo:()=>A===null?"":info.textContent,
@@ -2670,7 +2683,7 @@ renderSongs();
 // playing, otherwise the song at mid-screen. Only one of the floating panels is open at a time.
 (function(){
   const box=$("#aScroll"),fab=$("#apFab"),panel=$("#apPanel"),play=$("#apPlay"),song=$("#apSong"),timeEl=$("#apTime"),nowEl=$("#apNow"),
-        jump=$("#apJump"),inp=$("#apBar"),ci=panel.querySelector('input[data-ci="jump"]'),
+        jump=$("#apJump"),inp=$("#apBar"),spd=$("#apSpeed"),ci=panel.querySelector('input[data-ci="jump"]'),
         loopBox=$("#apLoop"),la=$("#apLA"),lb=$("#apLB"),lci=panel.querySelector('input[data-ci="loop"]'),lstat=$("#apLStat"),linfo=$("#apLInfo"),saved=$("#apSaved");
   let savedKey="";
   const players=()=>[...document.querySelectorAll("#songs .player")].filter(p=>p._ctl);
@@ -2686,7 +2699,10 @@ renderSongs();
     fab.setAttribute("aria-label",on?"播放音檔（播放中）":"播放音檔");
     play.disabled=!p;play.setAttribute("aria-pressed",String(on));
     const l=on?"暫停":"播放";play.setAttribute("aria-label",l);play.title=l;
-    if(!c){song.textContent="";timeEl.textContent="";nowEl.textContent="";jump.hidden=loopBox.hidden=true;return}
+    if(!c){song.textContent="";timeEl.textContent="";nowEl.textContent="";jump.hidden=loopBox.hidden=spd.hidden=true;return}
+    const tp=c.tempo();spd.hidden=false;$("#apBpm").textContent=tp.text;$("#apPct").textContent=tp.orig?"原速":Math.round(c.ratio()*100)+"%";
+    if(!spdDrag)$("#apRange").value=c.ratio();$("#apRange").setAttribute("aria-valuetext",tp.text);
+    $("#apOrig").disabled=tp.orig;$("#apOrig").setAttribute("aria-pressed",String(tp.orig));
     const name=p.closest(".song").querySelector("h3").textContent.split(/\s*\+\s*/)[0];
     song.textContent="「"+name+"」"+(c.label()?"・"+c.label():"");
     timeEl.textContent=c.time();nowEl.textContent=c.now();
@@ -2708,6 +2724,11 @@ renderSongs();
   $("#apPlus").onclick=()=>{inp.value=clamp(+inp.value+1)};
   $("#apGo").onclick=()=>{const p=target();if(!p)return;inp.value=clamp(inp.value);p._ctl.jump(+inp.value);setTimeout(render,50)};
   inp.onkeydown=e=>{if(e.key==="Enter")$("#apGo").click()};
+  // speed slider: same range as the player (40%–125%); the 4×-a-second refresh leaves it alone while dragging
+  let spdDrag=false;const rg=$("#apRange");
+  rg.addEventListener("pointerdown",()=>spdDrag=true);["pointerup","pointercancel","change","blur"].forEach(e=>rg.addEventListener(e,()=>spdDrag=false));
+  rg.addEventListener("input",()=>{const p=target();if(p){p._ctl.setRatio(+rg.value);render()}});
+  $("#apOrig").onclick=()=>{const p=target();if(p){p._ctl.origSpeed();render()}};
   $("#apLGo").onclick=()=>{const p=target();if(!p)return;const [a,b]=p._ctl.loopBars(la.value,lb.value);la.value=a;lb.value=b;setTimeout(render,50)};
   [la,lb].forEach(x=>x.onkeydown=e=>{if(e.key==="Enter")$("#apLGo").click()});
   $("#apLClr").onclick=()=>{const p=target();if(p){p._ctl.clearLoop();render()}};
@@ -2718,8 +2739,11 @@ renderSongs();
   function setOpen(v){
     if(v){if(!$("#asPanel").hidden)$("#asFab").click();if(!$("#mfPanel").hidden)$("#mfFab").click()}
     panel.hidden=!v;fab.setAttribute("aria-expanded",String(v));
-    clearInterval(tick);if(v){render();tick=setInterval(render,250)} // follows playback and the count-in
+    clearInterval(tick);if(v){render();fit();tick=setInterval(render,250)} // follows playback and the count-in
   }
+  // the panel opens upward from above the button stack: keep its top on screen (it scrolls inside)
+  function fit(){if(panel.hidden)return;panel.style.maxHeight="";const b=panel.getBoundingClientRect().bottom;panel.style.maxHeight=Math.max(160,b-12)+"px"}
+  addEventListener("resize",fit);
   fab.onclick=()=>setOpen(panel.hidden);
   ["#asFab","#mfFab"].forEach(s=>$(s).addEventListener("click",()=>{if(!panel.hidden)setOpen(false)}));
   $("#apClose").onclick=()=>{setOpen(false);fab.focus()};
@@ -3707,6 +3731,9 @@ buildNav();navReady=true;navSync();
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.5",class:true,title:"右下角也能調速度",items:[
+    ["調整播放速度","右下角「播放音檔」多了播放速度：拖動滑桿調快調慢，按「原速」回到原本的速度，跟播放器裡的速度是同一個。"]
+  ]},
   {v:"2026-10-12.4",title:"吉他練習更好用了",items:[
     ["播放音檔可以循環","右下角「播放音檔」多了段落循環：填第幾到第幾小節按「循環」，存好的段落點一下就開始重複。"],
     ["重點段落重新框選","樂譜筆記的重點旁邊多了「重新框選」，會跳到那個重點，拖動邊框或四個角就能改範圍。"],
