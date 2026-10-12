@@ -300,7 +300,7 @@ section.panel[hidden]{display:none}
 .subtabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;margin:0 0 18px;background:var(--surface);border:1px solid var(--line);border-radius:999px}
 .subtab{border:0;background:transparent;border-radius:999px;padding:8px 12px;min-height:44px;font-weight:700;color:var(--muted)}
 .subtab[aria-selected="true"]{background:var(--accent);color:var(--accent-on)}
-/* learning map (吉他 › 學習) */
+/* learning map (吉他 › 學習); .learn-hero is also 歌唱 › 學習 */
 .learn-hero h2{font-size:1.5rem}
 .learn-hero .bar{height:10px}
 .lstage>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center}
@@ -308,9 +308,9 @@ section.panel[hidden]{display:none}
 .lstage>summary h2{grid-column:2;font-size:1.25rem}
 .lstage>summary .ltime{grid-column:2;font-size:.85rem;color:var(--muted)}
 .lbadge{grid-row:span 2;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:1.2rem;background:var(--accent-soft);color:var(--accent)}
-.lstage.done .lbadge{background:var(--ok);color:#fff}
+.lstage.done>summary .lbadge{background:var(--ok);color:#fff}
 .lchev{grid-row:span 2;color:var(--muted);transition:transform .2s}
-.lstage[open] .lchev{transform:rotate(180deg)}
+.lstage[open]>summary .lchev{transform:rotate(180deg)}
 .lmini{grid-column:2;display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted)}
 .lmini .bar{flex:1;max-width:160px;height:6px;margin:0}
 .lintro{margin:14px 0 4px;color:var(--muted)}
@@ -333,6 +333,43 @@ section.panel[hidden]{display:none}
 .lgoal h3{font-size:.95rem;margin-bottom:4px}
 .ldir{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
 .lres h3{margin:16px 0 6px;font-size:1rem}
+/* 吉他 › 學習 articles */
+.lread{border-color:transparent;background:var(--accent-soft);color:var(--ink)}
+.lread:hover{background:var(--accent);color:var(--accent-on)}
+.larts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.lacard{text-align:left;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:14px;min-height:44px;cursor:pointer}
+.lacard:hover{border-color:var(--accent)}
+.lacard b{display:block;font-size:1.05rem;margin-bottom:4px}
+.lacard span{font-size:.88rem;color:var(--muted)}
+#g-learn.reading>:not(.lart-wrap){display:none}
+.lart-wrap[hidden]{display:none}
+.lart-back{margin-bottom:12px}
+.llink{color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.llink:hover{text-decoration-thickness:2.5px}
+.lmod>summary{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;list-style:none;cursor:pointer}
+.lmod>summary::-webkit-details-marker{display:none}
+.lmod>summary h2{grid-column:2;font-size:1.25rem}
+.lmod>summary .ltime{grid-column:2;font-size:.85rem;color:var(--muted)}
+.lmod>summary .lbadge svg{width:22px;height:22px}
+.lmod.done>summary .lbadge{background:var(--ok);color:#fff}
+.lmod[open]>summary .lchev{transform:rotate(180deg)}
+.lmod>.lintro{margin:-6px 4px 14px}
+.lart h2{font-size:1.6rem;margin-bottom:4px}
+.lart .lead{color:var(--muted);margin:0 0 8px}
+.lart h3{font-size:1.1rem;margin:22px 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+.lart p,.lart li{line-height:1.75}
+.lart ol,.lart ul{padding-left:1.3em;margin:4px 0}
+.lart li{margin-bottom:4px}
+.lart .tip{margin:10px 0;padding:10px 12px;border-radius:10px;background:var(--accent-soft)}
+.lart .pat{font-family:ui-monospace,Consolas,monospace;background:var(--bg);border-radius:8px;padding:8px 12px;margin:6px 0;overflow-x:auto;white-space:pre}
+.lart table{border-collapse:collapse;width:100%;margin:6px 0;font-size:.92rem}
+.lart th,.lart td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+.lart th{background:var(--bg)}
+.lart .ltools{margin-left:0}
+.lart .lres-list{list-style:none;padding:0}
+.lart .lres-list li{padding:7px 0;border-top:1px solid var(--line)}
+.lart .lres-list a{font-weight:700}
+.lart .lres-list small{display:block;color:var(--muted);font-size:.86rem}
 /* 歌唱 › 學習 video cards */
 .vcard{padding:14px 0;border-top:1px solid var(--line)}
 .vcard:first-of-type{border-top:0;padding-top:4px}
@@ -3299,7 +3336,7 @@ const LEARN=[
  {id:"s1",name:"入門建構與物理機能",time:"0–3 個月",intro:"建立正確的肌肉記憶、放鬆發力機制，以及最基礎的讀譜與調音能力。",
   secs:[{t:"核心技能與手型建立",items:[
     {id:"s1-posture",b:"持琴與身體姿態",d:"坐姿琴身傾角、琴頭高度與左手手腕角度，避免手腕過度屈曲造成的肌腱壓力。"},
-    {id:"s1-right",b:"右手撥弦機能",sub:["拇指與食、中、無名指的發力分離（大關節帶動，避免指節抓扯）。","基礎分解和弦模式（T-1-2-3、T-1-2-1-3-1 等）。"],go:[["逐弦彈聽和弦","chord-C"]]},
+    {id:"s1-right",b:"右手撥弦機能",sub:["拇指與食、中、無名指的發力分離（大關節帶動，避免指節抓扯）。","基礎[[分解和弦|arpeggio]]模式（T-1-2-3、T-1-2-1-3-1 等）。"],go:[["逐弦彈聽和弦","chord-C"]]},
     {id:"s1-left",b:"左手按弦與轉換",d:"指尖垂直指板、靠近品絲（Fret）按壓；開放和弦（C、G、Am、Em、Dm、D、E、A）的流暢轉換。",go:[["和弦圖","chords"],["調音","tune"]]}]},
    {t:"基礎樂理與視譜",items:[
     {id:"s1-tab",b:"六線譜（TAB）與和弦圖解讀",d:"掌握拍號、休止符、基本附點與延音線。"},
@@ -3308,7 +3345,7 @@ const LEARN=[
  {id:"s2",name:"節奏律動與封閉突破",time:"3–6 個月",intro:"克服初學者最大的物理瓶頸（大橫按），同時把單純的「按和弦」轉化為穩定的「節奏律動」。",
   secs:[{t:"核心技能",items:[
     {id:"s2-barre",b:"橫按／封閉和弦（Barre Chords）",sub:["食指側邊接觸琴弦、利用手臂重力下沉，而非虎口死夾。","掌握以第 6 弦與第 5 弦為根音的 E 型與 A 型封閉和弦（如 F、Bm、F#m、B）。"],go:[["F 和弦","chord-F"],["Bm 和弦","chord-Bm"]]},
-    {id:"s2-strum",b:"刷弦動態與節拍器訓練",sub:["16 分音符連續擺臂律動（即使不碰弦，手腕也維持擺動）。","重音（Accent）區分、右手手刀悶音（Palm Mute）與左手放鬆切音（Chucking）。"],go:[["節拍器（十六分）","metro-16"],["十六分刷法","pat-16"],["流行切音刷法","pat-chuck"]]},
+    {id:"s2-strum",b:"刷弦動態與節拍器訓練",sub:["16 分音符連續擺臂律動（即使不碰弦，手腕也維持擺動）。","重音（Accent）區分、右手手刀[[悶音|mute]]（Palm Mute）與左手放鬆切音（Chucking）。"],go:[["節拍器（十六分）","metro-16"],["十六分刷法","pat-16"],["流行切音刷法","pat-chuck"]]},
     {id:"s2-capo",b:"變調夾（Capo）應用",d:"理解首調概念，配合 Capo 迅速變更調性以契合歌唱音域。"}]},
    {t:"樂理進階",items:[
     {id:"s2-nash",b:"級數概念（Nashville Number System）",d:"理解 I - vi - IV - V（1-6-4-5）與 IV - V - iii - vi - ii - V - I（卡農進行）。",go:[["卡農進行","prog-canon"]]}]}],
@@ -3329,26 +3366,134 @@ const LEARN=[
      {id:"s4a-ext",b:"延伸和弦與轉位",d:"Slash 和弦（如 D/F#、C/E）與九和弦、十一和弦的爵士／流行點綴。"}]},
    {t:"方向 B：指彈獨奏（Fingerstyle）",items:[
      {id:"s4b-ind",b:"聲部獨立性（Independence）",d:"拇指負責穩定低音（如 Travis Picking 交替低音），其餘手指負責高音旋律與內層琶音。"},
-     {id:"s4b-perc",b:"打擊打板技巧（Percussive Techniques）",d:"掌根打板（Palm Hit）、指甲刷板（Nail Attack）、押尾光太郎（Kotaro Oshio）風格的特殊敲擊。"},
+     {id:"s4b-perc",b:"打擊[[打板|percussive]]技巧（Percussive Techniques）",d:"掌根打板（Palm Hit）、指甲刷板（Nail Attack）、押尾光太郎（Kotaro Oshio）風格的特殊敲擊。"},
      {id:"s4b-tune",b:"特殊調弦法（Alternate Tunings）",d:"DADGAD、Open D、Open G 等調弦架構與共鳴特性。"}]}]}
 ];
 const yt=q=>"https://www.youtube.com/results?search_query="+encodeURIComponent(q);
+const Y=(n,q,d)=>({n,u:yt(q),d}); // YouTube channel → search link
 const LRES=[
  {t:"系統化教學網站與平台",items:[
    {n:"JustinGuitar",u:"https://www.justinguitar.com",d:"架構嚴謹、漸進紮實的免費吉他學習系統，從零基礎到進階分級明確。"},
    {n:"Songsterr",u:"https://www.songsterr.com",d:"互動式六線譜，便於跟著原曲節奏同步練習。"},
    {n:"Ultimate Guitar",u:"https://www.ultimate-guitar.com",d:"大型和弦譜與六線譜庫。"},
    {n:"Soundslice",u:"https://www.soundslice.com",d:"把樂譜與影片播放器同步的進階分析練習工具。"}]},
- {t:"經典教材與書籍",groups:[
-   {g:"基礎與綜合實踐",items:[{n:"《彈指之間》",by:"潘尚文 著",d:"中文圈最經典的民謠吉他入門與進階綜合字典型教材。"},{n:"《吉他初級／中級三月通》",d:"適合打底基本功與系統性練習曲。"}]},
-   {g:"指板與機能強化",items:[{n:"《Guitar Aerobics》",by:"Troy Nelson 著",d:"一年 52 週的每日機能訓練，涵蓋各種演奏表情與節奏手感。"},{n:"《Fretboard Logic SE》",by:"Bill Edwards 著",d:"解析 CAGED 系統與吉他物理幾何特性的權威著作。"}]}]},
- {t:"優質 YouTube 頻道",note:"連結會開 YouTube 搜尋結果。",groups:[
-   {g:"觀念與教學體系",items:[{n:"Paul Davids",u:yt("Paul Davids guitar"),d:"著重吉他音色、樂理應用與高質感練習方法。"},{n:"葉宇峻彈吉他",u:yt("葉宇峻彈吉他"),d:"華語圈樂理解析與手指機能訓練的教學頻道。"},{n:"雄震吉他",u:yt("雄震吉他"),d:"注重基礎功、視譜與指板邏輯。"},{n:"蔡文展吉他訓練中心",u:yt("蔡文展吉他"),d:"注重基礎功、視譜與指板邏輯。"}]},
-   {g:"指彈與編曲觀摩",items:[{n:"Tommy Emmanuel",u:yt("Tommy Emmanuel"),d:"指彈泰斗，示範極致的聲部獨立性與動態控制。"},{n:"Kent Nishimura",u:yt("Kent Nishimura guitar"),d:"流行歌改編指彈的參考範例。"},{n:"Sungha Jung",u:yt("Sungha Jung"),d:"流行歌改編指彈的參考範例。"}]}]},
+ {t:"優質 YouTube 頻道",note:"連結會開 YouTube 搜尋結果，點第一個頻道就是。",groups:[
+   {g:"中文教學",items:[
+     Y("葉宇峻彈吉他","葉宇峻彈吉他","華語圈樂理解析與手指機能訓練的教學頻道。"),
+     Y("雄震吉他","雄震吉他","注重基礎功、視譜與指板邏輯。"),
+     Y("蔡文展吉他訓練中心","蔡文展吉他","注重基礎功、視譜與指板邏輯。"),
+     Y("好和弦 NiceChord","好和弦 NiceChord","用很好懂的方式講樂理：和弦、級數、和聲進行，適合學到階段二、三時看。"),
+     Y("麥書文化","麥書文化 吉他","《彈指之間》出版社的頻道，有書裡練習曲與彈唱的示範。"),
+     Y("大樹音樂屋","大樹音樂屋 吉他","中國大陸的吉他教學頻道，流行歌彈唱教學很多，從入門指法講起。")]},
+   {g:"英文教學（系統入門）",items:[
+     Y("JustinGuitar","JustinGuitar","免費、分級最完整的入門課程，從怎麼拿琴一路教到刷法與彈唱。"),
+     Y("Paul Davids","Paul Davids guitar","著重吉他音色、樂理應用與高質感練習方法。"),
+     Y("Marty Music","Marty Music guitar lesson","大量流行歌教學與入門課，講解輕鬆、示範慢。"),
+     Y("Andy Guitar","Andy Guitar beginner","以入門到中級為主，簡單的歌曲教學很多。"),
+     Y("Acoustic Life","Acoustic Life Tony Polecastro","專講木吉他：技巧、音色、器材與練習觀念。"),
+     Y("GuitarZero2Hero","GuitarZero2Hero fingerstyle","入門到中級的指法、和弦與歌曲教學。")]},
+   {g:"指彈與打板觀摩",items:[
+     Y("Tommy Emmanuel","Tommy Emmanuel","指彈泰斗，示範極致的聲部獨立性與動態控制。"),
+     Y("押尾光太郎 Kotaro Oshio","押尾光太郎 Kotaro Oshio","日本指彈代表人物，打板與特殊調弦的經典範例。"),
+     Y("盧家宏","盧家宏 吉他","台灣指彈吉他手，演奏與改編華語歌。"),
+     Y("董運昌","董運昌 吉他","台灣吉他演奏家，以溫暖的民謠指彈作品著稱。"),
+     Y("Sungha Jung","Sungha Jung","韓國指彈吉他手，大量流行歌改編。"),
+     Y("Kent Nishimura","Kent Nishimura guitar","流行歌改編指彈的參考範例。"),
+     Y("Osamuraisan","Osamuraisan guitar","日本指彈吉他手，動畫與流行歌改編。"),
+     Y("Mike Dawes","Mike Dawes guitar","英國現代指彈，打板、雙手點弦與聲部編排。"),
+     Y("Andy McKee","Andy McKee","現代打擊式指彈的代表，〈Drifting〉是經典曲目。"),
+     Y("Eddie van der Meer","Eddie van der Meer","流行歌指彈改編，常附教學與譜。")]}]},
  {t:"練習輔助工具",items:[
    {n:"Soundbrenner",u:"https://www.soundbrenner.com",d:"iOS／Android 節拍器，支援細緻的重音與拍號自訂。（練習室的「節拍器」也可以用）"},
    {n:"EarMaster",u:"https://www.earmaster.com",d:"音程、和弦色彩與節奏聽辨的專門訓練軟體。（練習室的「聽音辨唱名」可先練基礎）"}]}
 ];
+// Technique articles, opened from the learning map (item.art) or the 技巧文章 block. body is trusted HTML
+// written here; go = practice-room tools like LEARN; res = learning resources.
+const ARTS={
+ arpeggio:{t:"分解和弦",s:"把和弦一顆一顆彈出來：手指分工、低音怎麼找、常用指法。",
+  lead:"分解和弦（Arpeggio）就是不一次刷下去，而是把和弦裡的音依序撥出來，聲音比較柔，最常用在抒情歌的主歌和指彈伴奏。",
+  body:`<h3>手指分工</h3>
+<p>右手用四根手指，譜上常用字母或數字表示：</p>
+<table><tr><th>手指</th><th>古典記號</th><th>中文譜常見</th><th>負責的弦</th></tr>
+<tr><td>拇指</td><td>p</td><td>T</td><td>低音：第 6、5、4 弦（看和弦的根音）</td></tr>
+<tr><td>食指</td><td>i</td><td>1</td><td>第 3 弦</td></tr>
+<tr><td>中指</td><td>m</td><td>2</td><td>第 2 弦</td></tr>
+<tr><td>無名指</td><td>a</td><td>3</td><td>第 1 弦</td></tr></table>
+<p>食、中、無名指固定待在第 3、2、1 弦上，只有拇指會在低音弦之間移動，這樣手不用每次找弦。</p>
+<h3>拇指彈哪一條：找根音</h3>
+<p>拇指的第一個音通常是和弦的根音（和弦名稱那個音）：</p>
+<table><tr><th>根音在第 6 弦</th><td>G、Em、E、F（大橫按）</td></tr>
+<tr><th>根音在第 5 弦</th><td>C、Am、A、Bm</td></tr>
+<tr><th>根音在第 4 弦</th><td>D、Dm、F（簡易）</td></tr></table>
+<h3>常用指法</h3>
+<p>以下用 T＝拇指、1／2／3＝食／中／無名指，一格一個八分音符：</p>
+<div class="pat">4/4 基本：  T  1  2  3  2  1  T  1   (下一小節再來一次)
+4/4 進階：  T  1  2  1  3  1  2  1
+3/4 華爾滋：T  1  2  3  2  1</div>
+<p>剛開始先練「T-1-2-3」四個音一組，穩定之後換成一小節八個音的版本。換和弦時，下一小節的第一個 T 要換到新和弦的根音。</p>
+<h3>練習步驟</h3>
+<ol><li>左手先按好 C 和弦不動，只練右手，節拍器 60 BPM，一拍彈兩個音。</li>
+<li>每個音大小聲要一樣，拇指的低音可以稍微大聲一點，聽起來比較穩。</li>
+<li>穩定後練 C → Am → F → G 循環，每個和弦一小節，換和弦前最後一個音可以先放開左手，提早移動。</li>
+<li>能連續彈四遍不斷之後，節拍器每次加 5 BPM。</li></ol>
+<div class="tip"><b>常見問題：</b>手指用「抓」的會讓聲音很尖、手很累。用指根的大關節往掌心方向帶，撥完手指自然收回，不要往上勾。手腕不要靠在琴上，懸空才能放鬆。</div>`,
+  go:[["逐弦彈聽 C 和弦","chord-C"],["和弦圖","chords"]],
+  res:[{n:"琶音（維基百科）",u:"https://zh.wikipedia.org/wiki/琶音",d:"分解和弦在樂理上的名稱與概念。"},
+   {n:"YouTube：吉他分解和弦教學",u:yt("吉他 分解和弦 教學 入門"),d:"中文教學影片，搜尋結果裡挑一支跟著練。"},
+   {n:"YouTube：JustinGuitar Fingerstyle",u:yt("JustinGuitar fingerstyle beginner"),d:"英文，JustinGuitar 的指彈入門課，節奏清楚、講解慢。"},
+   {n:"YouTube：Travis Picking",u:yt("Travis picking guitar lesson"),d:"拇指交替低音的進階分解（學習地圖的階段四）。"}]},
+ percussive:{t:"打板",s:"在吉他上打出鼓的聲音：掌根、拇指、指甲打板。",
+  lead:"打板（Percussive）是用手敲打琴弦或琴身，做出類似小鼓、大鼓的聲音，一把吉他就能有節奏組的感覺。彈唱常在第 2、4 拍加一下，指彈則會和旋律同時出現。",
+  body:`<h3>三種常見的打板</h3>
+<table><tr><th>名稱</th><th>做法</th><th>聽起來像</th></tr>
+<tr><td>掌根打板（Palm Hit）</td><td>手腕往下轉，用掌根或手掌外側拍在響孔附近的弦上，弦被壓住、發出「啪」一聲。</td><td>小鼓</td></tr>
+<tr><td>拇指打板（Slap）</td><td>拇指側邊打在低音弦上，打完馬上停住，不要彈起來。</td><td>悶悶的低音鼓、貝斯 slap</td></tr>
+<tr><td>指甲刷板（Nail Attack）</td><td>手指往下刷的同時讓指甲打到弦，並順勢壓住。</td><td>清脆的響聲加和弦</td></tr></table>
+<p>另外也有直接敲面板或側板的敲擊（大鼓聲），力道要輕，下面有提醒。</p>
+<h3>彈唱最常用的節奏</h3>
+<p>把一般刷法的第 2、4 拍換成打板（X＝打板）：</p>
+<div class="pat">拍子：  1   &   2   &   3   &   4   &
+刷法：  ↓       X   ↑       ↑   X   ↑</div>
+<p>打板那一下手往下拍、弦被壓住，下一個「↑」直接從那個位置往上刷，手的擺動不要停。</p>
+<h3>練習步驟</h3>
+<ol><li>左手先不按和弦，輕輕蓋住所有弦，只練右手「刷、打」的交替，節拍器 60 BPM。</li>
+<li>打板的音量和刷弦差不多就好，太大聲會蓋過和弦。</li>
+<li>加上左手和弦（例如 C–G–Am–F），一個和弦一小節。</li>
+<li>穩了再加速，或改用十六分音符的刷法。</li></ol>
+<div class="tip"><b>保護吉他：</b>面板很薄，敲面板時用指腹或手掌，不要用指甲或戒指；常敲的位置可以貼透明保護貼。打弦要「拍下去就停」，不要往下壓到弦打到指板。</div>`,
+  go:[["流行切音刷法","pat-chuck"],["節拍器（十六分）","metro-16"]],
+  res:[{n:"YouTube：吉他打板教學",u:yt("吉他 打板 教學"),d:"中文教學，從掌根打板開始。"},
+   {n:"YouTube：Percussive guitar lesson",u:yt("percussive acoustic guitar lesson beginner"),d:"英文，整理各種打板與敲擊的做法。"},
+   {n:"YouTube：押尾光太郎",u:yt("押尾光太郎 Kotaro Oshio"),d:"指彈打板的代表人物，觀摩打板和旋律怎麼同時進行。"},
+   {n:"YouTube：Ed Sheeran 彈唱節奏",u:yt("Ed Sheeran strumming percussive tutorial"),d:"彈唱裡拍弦兼撥弦的節奏體系。"}]},
+ mute:{t:"悶音",s:"讓弦不要一直響：右手悶音（P.M.）、切音、消音。",
+  lead:"悶音是刻意讓弦的聲音變短或變悶。用得好，節奏會更有顆粒感、更乾淨；《勇悍行》全首都用右手悶音。悶音分成三種，用途不太一樣。",
+  body:`<h3>1. 右手悶音（Palm Mute，譜上寫 P.M.）</h3>
+<p>右手手掌外側（小指那一側、手刀的位置）輕輕放在下弦枕（琴橋上白色那條）剛好的位置，再用 pick 或拇指撥弦。聲音會變短、變厚，但還聽得出音高。</p>
+<ul><li>手放太前面（往響孔）：聲音太悶，只剩「噗噗」聲。</li>
+<li>手放太後面（在琴橋後）：幾乎沒有悶的效果。</li>
+<li>慢慢前後移動找到「有音高、但短」的位置，壓的力道要輕。</li></ul>
+<div class="pat">P.M. - - - - - - - - - - - - |
+↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓      （八分音符，全部下撥）</div>
+<h3>2. 切音（Chucking）</h3>
+<p>刷完後馬上把聲音切掉，做出「恰」的短促聲，譜上常寫 X 或 ×。有兩種切法：</p>
+<ul><li><b>右手切音：</b>往下刷的同時手掌外側壓到弦上，刷和切一起完成。</li>
+<li><b>左手切音：</b>左手手指保持碰著弦、但放鬆不壓到底，弦就會變成沒有音高的「恰」。</li></ul>
+<div class="pat">流行切音：↓  -  X  ↑  -  ↑  X  ↑</div>
+<h3>3. 消音（避免雜音）</h3>
+<p>彈和弦時，用不到的弦要讓它不響。例如 D 和弦不彈第 6、5 弦，可以用左手拇指從琴頸上方輕輕碰住第 6 弦；換和弦時左手放鬆貼著弦，就不會有空弦亂響。</p>
+<h3>練習步驟</h3>
+<ol><li>右手悶音：在 E 和弦或空弦第 6 弦上，用八分音符下撥，節拍器 80 BPM，先找到手的位置。</li>
+<li>試著在「悶」和「不悶」之間切換：一小節悶、一小節放開，聽聲音的差別。</li>
+<li>切音：先用「流行切音」刷法，速度 60 開始，「X」要短而清楚。</li>
+<li>最後跟著歌（例如《勇悍行》）練，注意悶音時節奏要穩，不要越彈越快。</li></ol>
+<div class="tip"><b>常見問題：</b>右手悶音最常見的錯誤是壓太大力，整個聲音沒了。悶音要「輕放」，比較像讓手掌的重量靠在弦上。</div>`,
+  go:[["流行切音刷法","pat-chuck"],["用 75 BPM 練切音","prog-chuck-75"]],
+  res:[{n:"Palm mute（維基百科，英文）",u:"https://en.wikipedia.org/wiki/Palm_mute",d:"右手悶音的定義與聲音特性。"},
+   {n:"YouTube：吉他悶音教學",u:yt("吉他 悶音 教學 palm mute"),d:"中文教學，示範手刀放的位置。"},
+   {n:"YouTube：吉他切音教學",u:yt("吉他 切音 教學"),d:"中文教學，右手切音與左手切音的做法。"},
+   {n:"YouTube：JustinGuitar Palm Muting",u:yt("JustinGuitar palm muting"),d:"英文，JustinGuitar 的悶音課。"}]}
+};
 const learnDone=load("pr_learn",{});
 const blockTitled=t=>[...document.querySelectorAll("#g-common > .block")].find(b=>(b.querySelector("h2")||{}).textContent===t);
 // jump to a tool in 吉他 › 常用 and set it up for the exercise
@@ -3374,15 +3519,60 @@ function learnCheck(id,label,detail){
   const lab=el("label","litem"),cb=el("input"),txt=el("span");
   cb.type="checkbox";cb.checked=!!learnDone[id];cb.dataset.lid=id;
   cb.onchange=()=>{learnDone[id]=cb.checked;save("pr_learn",learnDone);learnProgress()};
-  txt.append(el("b","",label));if(detail)txt.append(el("span","ld",detail));
+  const b=el("b");b.append(artText(label));txt.append(b);if(detail){const d=el("span","ld");d.append(artText(detail));txt.append(d)}
   lab.append(cb,txt);return lab;
 }
 function learnTools(go){const r=el("div","ltools");go.forEach(([l,k])=>{const b=el("button","ltool","去練習：「"+l+"」");b.type="button";b.onclick=()=>learnGo(k);r.append(b)});return r}
+// "…[[分解和弦|arpeggio]]…" → text with a link that opens that article
+function artText(s){
+  const f=document.createDocumentFragment();let i=0;
+  s.replace(/\[\[([^|\]]+)\|(\w+)\]\]/g,(m,t,k,at)=>{
+    f.append(s.slice(i,at));i=at+m.length;
+    const a=el("a","llink",t);a.href="#art="+k;a.onclick=e=>{e.preventDefault();openArt(k)};f.append(a);
+  });
+  f.append(s.slice(i));return f;
+}
+function artBtn(k){const b=el("button","ltool lread","閱讀：「"+ARTS[k].t+"」");b.type="button";b.onclick=()=>openArt(k);return b}
+// An article replaces the learning map inside #g-learn; #art=… in the URL makes it linkable and
+// lets the phone's back button return to where the reader was.
+let artY=0;
+function openArt(k,fromUrl){
+  const a=ARTS[k];if(!a)return;
+  const box=$("#g-learn"),wrap=$("#g-learn .lart-wrap"),reading=box.classList.contains("reading");
+  if(!reading)artY=scrollY;
+  wrap.innerHTML="";
+  const back=el("button","btn ghost lart-back","← 回「"+(artMod(k)||{t:"學習地圖"}).t+"」");back.type="button";back.onclick=()=>closeArt();
+  const art=el("article","block lart");
+  art.innerHTML='<header><h2></h2><p class="lead"></p></header>'+a.body;
+  art.querySelector("h2").textContent=a.t;art.querySelector(".lead").textContent=a.lead;
+  if(a.go){art.append(el("h3","","用練習室練"));art.append(learnTools(a.go))}
+  art.append(el("h3","","學習資源"));
+  const ul=el("ul","lres-list");a.res.forEach(r=>{const li=el("li"),x=el("a","",r.n);x.href=r.u;x.target="_blank";x.rel="noopener";li.append(x,el("small","",r.d));ul.append(li)});
+  art.append(ul);
+  const more=Object.keys(ARTS).filter(x=>x!==k);
+  if(more.length){art.append(el("h3","","其他技巧文章"));const r=el("div","ltools");more.forEach(x=>r.append(artBtn(x)));art.append(r)}
+  wrap.append(back,art);wrap.hidden=false;box.classList.add("reading");
+  // one history entry for the whole reading session, so 回學習地圖 always lands on the map
+  if(!fromUrl)history[reading&&history.state&&history.state.art?"replaceState":"pushState"]({art:k},"","#art="+k);
+  if(document.body.dataset.mode!=="guitar")$("#tab-guitar").click();
+  if(curSub("guitar")!=="learn")showSub("guitar","learn");
+  scrollTo(0,0);
+}
+// how: none = 回學習地圖 button, "pop" = browser back / URL, "nav" = side menu or tour moved elsewhere
+function closeArt(how){
+  const box=$("#g-learn");if(!box.classList.contains("reading"))return;
+  if(!how&&history.state&&history.state.art){history.back();return} // popstate closes it
+  box.classList.remove("reading");$("#g-learn .lart-wrap").hidden=true;
+  if(how!=="pop")history.replaceState(null,"",location.pathname+location.search);
+  if(how!=="nav")scrollTo(0,artY);
+}
+function artFromUrl(){const m=/^#art=(\w+)$/.exec(location.hash);if(m&&ARTS[m[1]]&&!CLASS)openArt(m[1],true);else closeArt("pop")}
+addEventListener("popstate",artFromUrl);
 function learnItems(items){
   const ul=el("ul","litems");
   items.forEach(it=>{
     const li=el("li");li.append(learnCheck(it.id,it.b,it.d));
-    if(it.sub){const s=el("ul","lsub");it.sub.forEach(x=>s.append(el("li","",x)));li.append(s)}
+    if(it.sub){const s=el("ul","lsub");it.sub.forEach(x=>{const l=el("li");l.append(artText(x));s.append(l)});li.append(s)}
     if(it.go)li.append(learnTools(it.go));
     ul.append(li);
   });
@@ -3391,18 +3581,38 @@ function learnItems(items){
 function learnProgress(){
   const all=[...document.querySelectorAll("#g-learn [data-lid]")];
   const n=all.filter(c=>c.checked).length;
-  $("#learnBar").style.width=(all.length?n/all.length*100:0)+"%";$("#learnCount").textContent="已完成 "+n+" / "+all.length+" 項";
+  $("#learnBar").style.width=(all.length?n/all.length*100:0)+"%";$("#learnCount").textContent=n+" / "+all.length;$("#lmod-map").classList.toggle("done",all.length&&n===all.length);
   document.querySelectorAll("#g-learn .lstage").forEach(st=>{
     const cs=[...st.querySelectorAll("[data-lid]")],k=cs.filter(c=>c.checked).length;
     st.querySelector(".lmini .bar i").style.width=(cs.length?k/cs.length*100:0)+"%";st.querySelector(".lmini .lcount").textContent=k+" / "+cs.length;
     st.classList.toggle("done",cs.length&&k===cs.length);
   });
 }
+// 學習 is a stack of modules: the learning map first, then topic modules that hold articles (ARTS keys).
+// Add a module = one entry here; its articles appear as cards and in the side list as one item.
+const LMODS=[
+ {id:"map",t:"民謠吉他學習地圖",sub:"四個階段＋學習資源",
+  icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>',d:"從入門到風格分流的四個階段。會了就打勾，進度會存在這個瀏覽器；有「去練習」的項目可以直接跳到練習室的工具；有底線的字可以點開說明文章。"}
+];
+const artMod=k=>LMODS.find(m=>(m.arts||[]).includes(k));
 function renderLearn(){
   const box=$("#g-learn");box.innerHTML="";
-  const hero=el("div","block learn-hero");
-  hero.innerHTML='<header><h2>民謠吉他學習地圖</h2><p>從入門到風格分流的四個階段。會了就打勾，進度會存在這個瀏覽器；有「去練習」的項目可以直接跳到練習室的工具。</p></header><div class="bar"><i id="learnBar"></i></div><p class="note" id="learnCount"></p>';
-  box.append(hero);
+  LMODS.forEach((m,i)=>{
+    // closed by default: only the title, description and progress; open state shares pr_learn_open
+    const sec=el("details","lmod");sec.id="lmod-"+m.id;sec.dataset.name=m.t;sec.open=!!load("pr_learn_open",{})["mod-"+m.id];
+    sec.addEventListener("toggle",()=>{const o=load("pr_learn_open",{});o["mod-"+m.id]=sec.open;save("pr_learn_open",o)});
+    const head=el("summary","block"),badge=el("span","lbadge");badge.innerHTML=m.icon;
+    head.append(badge,el("h2","",m.t),el("span","lchev","▾"),el("span","ltime",m.sub));
+    const intro=el("p","lintro");intro.append(artText(m.d));sec.append(head,intro);
+    if(m.id==="map")renderMap(sec,head);
+    box.append(sec);
+  });
+  const wrap=el("div","lart-wrap");wrap.hidden=true;box.append(wrap);
+  learnProgress();
+}
+function renderMap(sec,head){
+  const mini=el("span","lmini"),bar=el("span","bar"),cnt=el("span","lcount");bar.append(el("i"));bar.firstChild.id="learnBar";cnt.id="learnCount";
+  mini.append(bar,cnt);head.append(mini);
   const openSaved=load("pr_learn_open",null);
   LEARN.forEach((s,i)=>{
     const d=el("details","block lstage");d.dataset.sid=s.id;
@@ -3411,23 +3621,22 @@ function renderLearn(){
     const sum=el("summary");
     sum.append(el("span","lbadge",String(i+1)),el("h2","","階段"+"一二三四"[i]+"："+s.name),el("span","lchev","▾"),el("span","ltime",s.time));
     const mini=el("span","lmini");const bar=el("span","bar");bar.append(el("i"));mini.append(bar,el("span","lcount"));sum.append(mini);
-    d.append(sum,el("p","lintro",s.intro));
+    const intro=el("p","lintro");intro.append(artText(s.intro));d.append(sum,intro);
     (s.secs||[]).forEach(sec=>{const w=el("div","lsec");w.append(el("h3","",sec.t),learnItems(sec.items));d.append(w)});
     (s.dirs||[]).forEach(dir=>{const w=el("div","ldir");w.append(el("h3","",dir.t),learnItems(dir.items));d.append(w)});
     if(s.goal){const g=el("div","lgoal");g.append(el("h3","","檢驗標準"),learnCheck(s.goal.id,"我做得到",s.goal.d));if(s.goal.go)g.append(learnTools(s.goal.go));d.append(g)}
-    box.append(d);
+    sec.append(d);
   });
   const res=el("div","block lres");res.innerHTML='<header><h2>學習資源</h2><p>網站、教材、頻道與練習工具。</p></header>';
-  LRES.forEach(sec=>{
-    res.append(el("h3","",sec.t));if(sec.note)res.append(el("p","note",sec.note));
+  LRES.forEach(s=>{
+    res.append(el("h3","",s.t));if(s.note)res.append(el("p","note",s.note));
     const list=(items)=>{const ul=el("ul");items.forEach(it=>{const li=el("li");
       if(it.u){const a=el("a","",it.n);a.href=it.u;a.target="_blank";a.rel="noopener";li.append(a)}else li.append(el("b","",it.n));
       if(it.by)li.append(" ",el("span","note",it.by));li.append(el("small","",it.d));ul.append(li)});return ul};
-    if(sec.items)res.append(list(sec.items));
-    (sec.groups||[]).forEach(g=>{res.append(el("p","lg",g.g),list(g.items))});
+    if(s.items)res.append(list(s.items));
+    (s.groups||[]).forEach(g=>{res.append(el("p","lg",g.g),list(g.items))});
   });
-  box.append(res);
-  learnProgress();
+  sec.append(res);
 }
 renderLearn();
 
@@ -3501,6 +3710,7 @@ const reducedMotion=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: 
 function navTargets(panel,sub){
   const box=$("#"+panel[0]+"-"+sub);
   if(sub==="projects"){const songs=[...box.querySelectorAll(".song")];if(songs.length)return songs.map(s=>({el:s,label:s.querySelector("h3").textContent}))}
+  const mods=[...box.querySelectorAll(":scope > .lmod")];if(mods.length)return mods.map(m=>({el:m,label:m.dataset.name}));
   return [...box.querySelectorAll(":scope > .block")].map(b=>({el:b,label:(b.querySelector("h2")||{}).textContent||""}));
 }
 function buildNav(){
@@ -3548,6 +3758,7 @@ let spyQueued=false;
 window.addEventListener("scroll",()=>{if(spyQueued)return;spyQueued=true;requestAnimationFrame(()=>{spyQueued=false;navSpy()})},{passive:true});
 let navPin=null,navPinT=0;
 function navGo(panel,sub,target){
+  closeArt("nav");
   navPin=target;navPinT=performance.now();
   if(target&&target.tagName==="DETAILS")target.open=true;
   if(document.body.dataset.mode!==panel)$("#tab-"+panel).click();
@@ -3591,6 +3802,7 @@ rz.addEventListener("keydown",e=>{
 setNavW(load("pr_nav_w",NAVW_DEF));
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeNav()});
 buildNav();navReady=true;navSync();
+artFromUrl(); // a shared #art=… link opens that article
 
 /* ---------- guided tour (使用說明) ---------- */
 // Opens by itself on the first visit (remembered per edition), and from the ？ button any time.
@@ -3626,7 +3838,7 @@ buildNav();navReady=true;navSync();
     {before:()=>{if(document.body.dataset.mode!=="singing")$("#tab-singing").click()},el:()=>$("#tab-guitar"),click:true,
      title:"切回吉他",text:"換板塊時，正在播放的練習會自動停下來。",try:"再點「吉他」回來"},
     {before:()=>{if(document.body.dataset.mode!=="guitar")$("#tab-guitar").click()},el:()=>$("#guitar .subtabs"),
-     title:"常用・學習・專案",text:"「常用」有和弦圖、調音、節拍器、跟拍換和弦和錄音；「學習」是民謠吉他學習地圖，會了就打勾；「專案」放正在練的歌和樂譜。"},
+     title:"常用・學習・專案",text:"「常用」有和弦圖、調音、節拍器、跟拍換和弦和錄音；「學習」是民謠吉他學習地圖，會了就打勾，有底線的字可以點開說明文章；「專案」放正在練的歌和樂譜。"},
     {el:navEl,title:"導覽清單",text:navText},
     {el:()=>[$("#styleBtn"),$("#themeBtn")],title:"換個風格",text:"調色盤可以換網頁風格：簡約、復古紙本、霓虹舞台、圓潤可愛；月亮按鈕切換深色模式。"},
     ...songSteps,
@@ -3731,6 +3943,12 @@ buildNav();navReady=true;navSync();
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.6",title:"學習地圖可以點開說明文章",items:[
+    ["學習地圖收起來了","吉他 › 學習的「民謠吉他學習地圖」平常只顯示標題和進度，點一下才展開四個階段和學習資源，會記得上次有沒有打開。"],
+    ["點字看文章","吉他 › 學習地圖裡有底線的字（分解和弦、悶音、打板）可以點，會打開那個技巧的說明文章和學習資源。"],
+    ["回到原位","看完按「回學習地圖」或手機的返回鍵，會回到剛剛讀到的位置。"],
+    ["更多 YouTube 頻道","學習資源拿掉了書籍，改成更多推薦頻道：中文教學、英文入門課，以及指彈與打板的觀摩頻道。"]
+  ]},
   {v:"2026-10-12.5",class:true,title:"右下角也能調速度",items:[
     ["調整播放速度","右下角「播放音檔」多了播放速度：拖動滑桿調快調慢，按「原速」回到原本的速度，跟播放器裡的速度是同一個。"]
   ]},
