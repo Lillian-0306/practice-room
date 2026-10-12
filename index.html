@@ -460,6 +460,11 @@ section.panel[hidden]{display:none}
 .my-form .err:empty{display:none}
 .my-form .yt-info{font-size:.82rem;color:var(--muted);margin:-6px 0 0;overflow-wrap:anywhere}
 .my-form .yt-info:empty{display:none}
+.bml{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.88rem}
+.bml summary{cursor:pointer;font-weight:700;color:var(--muted)}
+.bml ol{margin:8px 0 4px;padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
+.bml p{margin:6px 0 0;font-size:.82rem;color:var(--muted)}
+.bml-link{display:inline-block;margin:6px 0 2px;padding:6px 14px;border-radius:999px;background:var(--accent);color:var(--accent-on);font-weight:700;text-decoration:none;cursor:grab}
 .my-form .tag-fld{display:flex;flex-direction:column;gap:6px;font-size:.88rem;font-weight:700;color:var(--muted)}
 .my-form .tag-fld small{font-weight:400}
 .tag-list{display:flex;flex-wrap:wrap;gap:6px}
@@ -3408,14 +3413,35 @@ function parseYtTitle(raw,author){
 }
 const ytInfo=id=>fetch("https://www.youtube.com/oembed?format=json&url="+encodeURIComponent("https://www.youtube.com/watch?v="+id))
   .then(r=>r.ok?r.json():Promise.reject()).then(j=>({raw:j.title||"",author:j.author_name||""}));
-// add (o = null) or edit a song
-function songForm(o){
+// 書籤小工具: run on a YouTube video page, it reads the video's id, title, channel and description from the
+// player and opens this page with #yt=<json>; importYt() turns that into a filled-in 新增歌曲 form.
+// Lyrics are only ever what the user's own browser shows them in the description; nothing is fetched by the site.
+const BML="javascript:(()=>{var p=document.getElementById('movie_player'),r=p&&p.getPlayerResponse&&p.getPlayerResponse(),d=r&&r.videoDetails;"+
+  "if(!d||!d.videoId){alert('請在 YouTube 的影片頁面按這個書籤。');return}"+
+  "var o={v:d.videoId,t:d.title||'',a:d.author||'',d:(d.shortDescription||'').slice(0,6000)};"+
+  "window.open(" +JSON.stringify(location.origin+location.pathname).replace(/"/g,"'")+ "+'#yt='+encodeURIComponent(JSON.stringify(o)))})()";
+// the longest stretch of short lines in a description (blank lines allowed inside), if it looks like lyrics
+function findLyrics(desc){
+  const JUNK=/https?:|www\.|@|#|訂閱|subscribe|follow|instagram|facebook|spotify|apple music|kkbox|youtube|℗|©|版權|copyright|all rights|製作|發行|[：:]/i;
+  const rows=(desc||"").replace(/\r/g,"").split("\n").map(s=>s.trim());
+  let best=[],cur=[],blank=0;
+  const end=()=>{while(cur.length&&!cur[cur.length-1])cur.pop();if(cur.filter(Boolean).length>best.filter(Boolean).length)best=cur;cur=[];blank=0};
+  rows.forEach(s=>{
+    if(!s){if(cur.length){if(++blank>2)end();else cur.push("")}return}
+    if(s.length>40||JUNK.test(s)){end();return}
+    blank=0;cur.push(s);
+  });end();
+  return best.filter(Boolean).length>=6?best.join("\n"):"";
+}
+// add (o = null) or edit a song; pre = {url, title, by, lyrics, note} fills a new one (from the 書籤小工具)
+function songForm(o,pre){
   const f=el("form","my-form");f.noValidate=true;
   const fld=(lab,hint,input)=>{const l=el("label");l.append(lab);if(hint)l.append(el("small","",hint));l.append(input);return l};
   const title=el("input"),by=el("input"),url=el("input"),ly=el("textarea"),err=el("p","err");
   title.maxLength=40;by.maxLength=40;title.required=true;url.required=true;url.inputMode="url";url.placeholder="https://www.youtube.com/watch?v=…";
   ly.placeholder="一行一句歌詞。\n空一行表示新的段落。";
   if(o){title.value=o.title;by.value=o.by||"";url.value="https://www.youtube.com/watch?v="+o.yt;ly.value=lyricsText(o.lines)}
+  if(pre){url.value=pre.url;title.value=pre.title.slice(0,40);by.value=pre.by.slice(0,40);ly.value=pre.lyrics}
   const save_=el("button","btn",o?"儲存":"加入歌曲"),cancel=el("button","btn ghost","取消");cancel.type="button";
   const btns=el("div","row");btns.append(save_,cancel);
   // 標籤: chips with ×, typed in and added with 加入 or Enter (、 or commas split several)
@@ -3429,7 +3455,8 @@ function songForm(o){
   const tagHead=el("span","","標籤");tagHead.append(el("small","","（最多 6 個，按 × 刪除）"));
   tagRow.append(tagIn,tagAdd);tagF.append(tagHead,tagList,tagRow);drawTags();
   // 貼上連結就去 YouTube 查影片標題，填進還空著（或上次自動填的）歌名、演唱者
-  const ytNote=el("p","yt-info");let lastId=o?o.yt:null,auto={title:false,by:false},tm=0;
+  const ytNote=el("p","yt-info");let lastId=o?o.yt:pre?ytId(pre.url):null,auto={title:!!pre,by:!!pre},tm=0;
+  if(pre)ytNote.textContent=pre.note;
   title.addEventListener("input",()=>{auto.title=false});by.addEventListener("input",()=>{auto.by=false});
   const lookUp=()=>{
     const id=ytId(url.value);if(!id||id===lastId)return;lastId=id;ytNote.textContent="正在查影片標題…";
@@ -3445,6 +3472,16 @@ function songForm(o){
   f.append(el("h3","",o?"編輯歌曲":"新增歌曲"),
     fld("YouTube 連結","（影片網址、youtu.be 短網址或 Shorts 都可以；貼上後會自動填歌名和演唱者）",url),ytNote,
     fld("歌名",null,title),fld("演唱者","（可以不填）",by),tagF,fld("歌詞","（直接貼上，一行一句；空一行是新的段落）",ly),err,btns);
+  if(!o){
+    // 書籤小工具: dragged to the bookmarks bar, then pressed on a YouTube video page
+    const d=el("details","bml"),a=el("a","bml-link","抓 YouTube 歌曲"),ol=el("ol");
+    d.append(el("summary","","在 YouTube 頁面一鍵帶入（電腦版）"));
+    a.href=BML;a.title="把我拖到書籤列";a.onclick=e=>{e.preventDefault();ytNote.textContent="這個按鈕要拖到瀏覽器的書籤列，到 YouTube 影片頁再按書籤。"};
+    ["先顯示書籤列（Chrome／Edge：Ctrl + Shift + B；Mac：⌘ + Shift + B）。","把下面的「抓 YouTube 歌曲」按鈕拖到書籤列上。","到 YouTube 打開想練的歌，按書籤列上的「抓 YouTube 歌曲」。","練習室會開新分頁，填好連結、歌名、演唱者；影片說明欄有歌詞的話也會一起帶進來。確認後按「加入歌曲」。"]
+      .forEach(t=>ol.append(el("li","",t)));
+    d.append(ol,a,el("p","","手機的 YouTube App 不能用。說明欄沒有歌詞時，可以到影片留言區找，複製後貼到歌詞欄。"));
+    f.insertBefore(d,f.children[1]);
+  }
   cancel.onclick=()=>renderVSongs();
   f.onsubmit=e=>{
     e.preventDefault();
@@ -3647,6 +3684,23 @@ function guessKey(notes){
 }
 renderVSongs();
 window.addEventListener("resize",()=>{if(kara)drawKara(kara)});
+// #yt=… from the 書籤小工具: open 歌唱 › 專案 with a filled-in 新增歌曲 form
+function importYt(){
+  const m=/^#yt=(.+)$/.exec(location.hash);if(!m)return;
+  history.replaceState(null,"",location.pathname+location.search);
+  if(CLASS)return;
+  let d;try{d=JSON.parse(decodeURIComponent(m[1]))}catch(e){return}
+  if(!d||!ytId(d.v||""))return;
+  const p=parseYtTitle(d.t||"",d.a||""),ly=findLyrics(d.d||""),n=ly?parseLyrics(ly).length:0;
+  const pre={url:"https://www.youtube.com/watch?v="+ytId(d.v),title:p.title||"",by:p.by||"",lyrics:ly,
+    note:"已從 YouTube 帶入：「"+(d.t||"")+"」。"+(n?"歌詞是從影片說明欄找到的 "+n+" 句，請檢查有沒有多抓或漏抓。":"說明欄沒有找到歌詞，可以到影片留言區找，複製後貼到歌詞欄。")+"歌名和演唱者不對可以自己改。"};
+  if(document.body.dataset.mode!=="singing")$("#tab-singing").click();
+  if(curSub("singing")!=="projects")showSub("singing","projects");
+  renderVSongs();const add=$("#vsongs .add-song"),f=songForm(null,pre);add.replaceWith(f);
+  setTimeout(()=>f.scrollIntoView({block:"start"}),50);
+}
+addEventListener("hashchange",importYt);
+setTimeout(importYt,0);
 
 /* ---------- singing: floating recorder (專案) ---------- */
 // Same recorder as 錄音回放, in a corner panel on 歌唱 › 專案. 一起播放影片 (pr_vrec_video) starts the
@@ -4618,6 +4672,10 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-12.12",title:"從 YouTube 一鍵帶入歌曲",items:[
+    ["書籤小工具","新增歌曲裡有「抓 YouTube 歌曲」按鈕，拖到書籤列後，在 YouTube 影片頁按一下，就會打開練習室並填好連結、歌名和演唱者（電腦版瀏覽器）。"],
+    ["說明欄的歌詞","影片說明欄有歌詞的話會一起帶進歌詞欄，加入前記得檢查一下。"]
+  ]},
   {v:"2026-10-12.11",title:"新增歌曲自動填歌名",items:[
     ["貼連結就填好","新增歌曲時先貼 YouTube 連結，網站會查影片標題，自動填入歌名和演唱者；填錯可以自己改。"]
   ]},
