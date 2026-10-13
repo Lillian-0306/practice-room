@@ -354,6 +354,18 @@ section.panel[hidden]{display:none}
 .lmod.done>summary .lbadge{background:var(--ok);color:#fff}
 .lmod[open]>summary .lchev{transform:rotate(180deg)}
 .lmod>.lintro{margin:-6px 4px 14px}
+/* 歌唱 › 學習: 歌唱力學習地圖 (one article) */
+.smap-art>h3:first-child{border-top:0;padding-top:0;margin-top:4px}
+.smap-art h4{font-size:1rem;margin:14px 0 4px}
+.smap-art>p,.smap-art>ul,.smap-art>ol,.smap-art>.tip{margin:0 0 10px}
+.smap-art .lex{font-size:.88rem;color:var(--muted);margin:4px 0}
+.smap-art .lex a{font-weight:700;margin-right:10px}
+.smap-art .tblw{overflow-x:auto}
+.smap-hint{margin:4px 0 14px;padding:14px 16px;border:2px solid var(--accent);border-left-width:6px;border-radius:12px;background:var(--accent-soft)}
+.smap-hint b{display:block;font-size:1.08rem;color:var(--accent);margin-bottom:4px}
+.smap-hint p{margin:0 0 10px}
+.smap-hint .smap-jump{min-height:38px;padding:6px 16px}
+.smap-art .vcard{border-top:0;padding-top:0}
 .lart h2{font-size:1.6rem;margin-bottom:4px}
 .lart .lead{color:var(--muted);margin:0 0 8px}
 .lart h3{font-size:1.1rem;margin:22px 0 6px;padding-top:14px;border-top:1px solid var(--line)}
@@ -373,6 +385,28 @@ section.panel[hidden]{display:none}
 /* 歌唱 › 學習 video cards */
 .vcard{padding:14px 0;border-top:1px solid var(--line)}
 .vcard:first-of-type{border-top:0;padding-top:4px}
+/* 歌唱 › 學習 topics fold (details.stopic) */
+.stopic>summary{list-style:none;cursor:pointer;display:flex;align-items:flex-start;gap:10px}
+.stopic>summary::-webkit-details-marker{display:none}
+.stopic>summary header{flex:1;min-width:0}
+.stopic>summary header p{color:var(--muted);font-size:.93rem;font-weight:400;margin-top:4px}
+:root[data-style="paper"] .stopic>summary header p{margin-top:8px}
+.stopic>summary .lchev{margin-top:6px}
+.stopic[open]>summary .lchev{transform:rotate(180deg)}
+.stopic[open]>summary{margin-bottom:12px}
+.ssub{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
+.ssub>summary{list-style:none;cursor:pointer;display:flex;align-items:flex-start;gap:10px}
+.ssub>summary::-webkit-details-marker{display:none}
+.ssub>summary header{flex:1;min-width:0}
+.ssub>summary h3{font-size:1.1rem}
+.ssub>summary header p{color:var(--muted);font-size:.88rem;font-weight:400;margin-top:2px}
+.ssub>summary .lchev{margin-top:4px}
+.ssub[open]>summary .lchev{transform:rotate(180deg)}
+.ssub[open]>summary{margin-bottom:10px}
+/* inside a topic box, each video is its own small card */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:4px}
+.vgrid .vcard,.vgrid .vcard:first-of-type{border:1.5px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);display:flex;flex-direction:column}
+.vgrid .vcard .vrow{margin-top:auto;padding-top:8px}
 .vcard h3{margin:4px 0 2px;font-size:1.05rem}
 .vorig{margin:0 0 4px;font-size:.8rem;color:var(--muted)}
 .vmeta{margin:0 0 6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.86rem}
@@ -4324,49 +4358,89 @@ renderLearn();
 // Other people's teaching videos picked by the user, grouped by topic. Each topic is a .block, so the
 // side list shows it. 我看過了 is saved in pr_slearn; go = the h2 of a 歌唱 › 常用 block to practise with.
 const SLEARN=[
- {t:"放鬆發聲",d:"唱歌先求不用力。喉嚨放鬆了，高音和音色才有辦法往上練。",videos:[
+ {t:"音準",d:"耳朵先聽得出來，知道自己哪裡不準，再對著目標音修正。",videos:[
+   {id:"GStQlcAQPzI",zh:"大幅提升音準的方法（解說＋跟練）",title:"【200万回】音程正確率を劇的にアップさせる方法！【解説+トレーニング】【しゃくり加点の疑問!?】",ch:"ラニー歌うま相談室 | MASAYAH",lang:"日語",
+    d:"超過 200 萬次觀看。先講解為什麼會唱不準，再帶著練；也聊到 KTV 評分裡的滑音加分。",go:"音高偵測器"},
+   {id:"-nIZuBcWToY",zh:"每天聽就能大幅提升音感的鋼琴與歌",title:"【イヤトレ】毎日聴くだけで圧倒的に音感が良くなるピアノと歌",ch:"farm music",lang:"日語",
+    d:"練耳朵用的鋼琴與歌唱，每天聽一點，慢慢建立音感。",go:"聽音辨唱名"}]},
+ {t:"節奏",d:"先把拍點唱穩，再練拍子之間的律動。",videos:[]},
+ {t:"發聲",d:"先控制好力道、讓喉嚨放鬆，再練共鳴和音色。",subs:[
+  {t:"力道",d:"唱歌先求不用力：喉嚨放鬆了，聲音才通透，高音也才有辦法往上練。",videos:[
    {id:"afUn40xTerI",zh:"一唱歌喉嚨就發緊？讓聲音變輕鬆又通透",title:"为什么你一唱歌喉咙就发紧？这条视频能让你唱歌变得轻松又通透！",ch:"Jason-老湿",lang:"中文",
     d:"很多人一唱歌喉嚨就緊、聲音卡住。這支說明為什麼會緊，以及怎麼讓聲音放鬆、通透。",go:"呼吸練習"}]},
- {t:"音色與共鳴",d:"同樣唱準，為什麼有人的聲音特別好聽？",videos:[
+  {t:"音色",d:"同樣唱準，為什麼有人的聲音特別好聽？關鍵在共鳴和泛音。",videos:[
    {id:"Nivrsg5LBk4",zh:"「好聽的歌聲」其實就是泛音",title:"\"いい歌声\"の正体は「倍音」です。【歌うのが楽しくなるボイトレ講座】",ch:"しらスタ【歌唱力向上委員会】",lang:"日語",
-    d:"從「泛音」解釋好聽的歌聲是怎麼來的，讓你知道練共鳴、練音色到底在練什麼。",go:"錄音回放"}]},
- {t:"音準",d:"先知道自己哪裡不準，再對著目標音修正。",videos:[
-   {id:"GStQlcAQPzI",zh:"大幅提升音準的方法（解說＋跟練）",title:"【200万回】音程正確率を劇的にアップさせる方法！【解説+トレーニング】【しゃくり加点の疑問!?】",ch:"ラニー歌うま相談室 | MASAYAH",lang:"日語",
-    d:"超過 200 萬次觀看。先講解為什麼會唱不準，再帶著練；也聊到 KTV 評分裡的滑音加分。",go:"音高偵測器"}]},
- {t:"聽音與音感",d:"耳朵聽得出來，嗓子才唱得出來。",videos:[
-   {id:"-nIZuBcWToY",zh:"每天聽就能大幅提升音感的鋼琴與歌",title:"【イヤトレ】毎日聴くだけで圧倒的に音感が良くなるピアノと歌",ch:"farm music",lang:"日語",
-    d:"練耳朵用的鋼琴與歌唱，每天聽一點，慢慢建立音感。",go:"聽音辨唱名"}]}
+    d:"從「泛音」解釋好聽的歌聲是怎麼來的，讓你知道練共鳴、練音色到底在練什麼。",go:"錄音回放"}]}]}
 ];
 const SCHANNELS=[
- {n:"しらスタ【歌唱力向上委員会】",u:"https://www.youtube.com/@shira-sta",lang:"日語",d:"日本的歌唱教學頻道，講解發聲、音色與歌唱技巧。上面「好聽的歌聲其實就是泛音」就是他們的影片。"}
+ {n:"しらスタ【歌唱力向上委員会】",u:"https://www.youtube.com/@shira-sta",lang:"日語",d:"日本的歌唱教學頻道，講解發聲、音色與歌唱技巧。上面「好聽的歌聲其實就是泛音」和歌唱力學習地圖都來自他們的影片。"}
 ];
+// 歌唱力學習地圖: one article from the user's notes on しらスタ's video (6Tp-eguoPJI), folded like the
+// guitar map (open state in pr_smap_open). go: [label, h2 of a 歌唱 › 常用 block | "proj" | "metro"].
+const SMAP_VIDEO={id:"6Tp-eguoPJI",zh:"「唱歌好聽」究竟是什麼意思？",title:"【歌唱力】歌がうまいってどういうこと？ボイストレーナーが超わかりやすく解説します。",ch:"しらスタ【歌唱力向上委員会】",lang:"日語"};
+const SMAP_BODY="<p>你有沒有想過，大家常說的「這個人唱歌好好聽」，到底是好聽在哪裡？是音很準嗎？還是聲音很漂亮？</p>\n<p>日本的聲樂老師しらスタ用了一個我很喜歡的比喻：<b>唱歌就像穿衣服。</b></p>\n<div class=\"tip\">音準、節奏、發聲，是你衣櫃裡的衣服，衣服越多、質感越好，能搭的就越多。<br>表現力，則是你會不會穿搭：今天要去哪、見誰、想給人什麼感覺，再從衣櫃裡挑出最適合的那幾件。</div>\n<p>所以練唱其實是兩件事：把衣櫃填滿，然後學會搭配。下面就一件一件來看。</p>\n<div class=\"smap-hint\" role=\"note\"><b>看完記得配著影片聽！</b><p>建議看完文章之後，把文章最下面的影片跟文章對照著看。影片裡老師會實際唱給你聽，這樣就能很直觀地聽出每一種差別。</p><button type=\"button\" class=\"btn smap-jump\">跳到影片 ↓</button></div>\n\n<h3>一、音準：不只是「唱在對的音上」</h3>\n<h4>第一層：先把音唱準</h4>\n<p>這就是 KTV 評分在看的東西，音高條對到中間就加分。這當然很重要，但如果只停在這裡，聽起來會有點像早期的 VOCALOID：每個音都準，可是怪怪的、少了點人味。</p>\n<h4>第二層：音跟音之間怎麼接</h4>\n<p>厲害的歌手不只在意「有沒有唱到那個音」，也在意「怎麼滑進去、怎麼離開」。最常見的兩個：</p>\n<ul><li><b>舀音（しゃくり）</b>：從下面一點點滑上去，聽起來比較慵懶、深情，有點哀怨的感覺。</li>\n<li><b>落音（フォール）</b>：唱完之後順勢往下掉，像嘆一口氣，帶點無奈。</li></ul>\n<p>在練習室的歌詞上，可以用「⤴ 滑上去」「⤵ 滑下來」把這些地方標起來。</p>\n<h4>第三層：故意唱高一點點、低一點點</h4>\n<p>這層就比較進階了。在聽起來還是「對」的範圍裡，稍微偏高一點，聲音會變得比較亮、比較有精神；稍微偏低一點（有點藍調的味道），就會有種酷酷的、滄桑的感覺。</p>\n<p class=\"lex\">很會玩這招的歌手，可以聽聽看：<a href=\"https://www.youtube.com/results?search_query=%E8%97%A4%E4%BA%95%E9%A2%A8\" target=\"_blank\" rel=\"noopener\">藤井風</a><a href=\"https://www.youtube.com/results?search_query=aiko\" target=\"_blank\" rel=\"noopener\">aiko</a><a href=\"https://www.youtube.com/results?search_query=%E6%98%9F%E9%87%8E%E6%BA%90\" target=\"_blank\" rel=\"noopener\">星野源</a><a href=\"https://www.youtube.com/results?search_query=%E7%8E%89%E7%BD%AE%E6%B5%A9%E4%BA%8C\" target=\"_blank\" rel=\"noopener\">玉置浩二</a></p>\n<p>說穿了，對這些歌手來說，音準不是一個「點」，而是一個有空間、可以調顏色的範圍。</p>\n\n<h3>二、節奏：拍子之間也有學問</h3>\n<h4>第一層：跟上拍子</h4>\n<p>不搶拍、不拖拍，該進來的時候進來。聽起來很基本，但現在的流行歌字又多、節奏又密，光是每個字都咬在拍子上就不簡單了。</p>\n<h4>第二層：感覺拍子「中間」的律動</h4>\n<p>節奏感好不好，差別常常在拍子跟拍子之間。其實大部分的流行歌，拍子之間都帶一點「跳」的感覺（Swing／Bounce），不是平平均均地走，只是每首歌跳的程度不一樣。像優里的〈乾花〉就跳得很明顯，拍子之間很有彈性、有點拖。</p>\n<p>完全平均的直拍（Even）反而比較少見，聽起來會比較直、比較機械。練歌的時候可以注意聽：這首歌跳多少？你唱的跟原唱跳得一樣嗎？</p>\n<p class=\"lex\">聽聽看：<a href=\"https://www.youtube.com/results?search_query=%E5%84%AA%E9%87%8C%20%E3%83%89%E3%83%A9%E3%82%A4%E3%83%95%E3%83%A9%E3%83%AF%E3%83%BC\" target=\"_blank\" rel=\"noopener\">優里〈乾花〉</a></p>\n<h4>第三層：重音放哪裡、聲音像什麼樂器</h4>\n<p>到了這層，就是在想「哪個字要重一點」：</p>\n<ul><li>搖滾常常把重音放在第一拍，聽起來很有力。</li>\n<li>R&amp;B、Funk 喜歡重音落在反拍，比較慵懶、搖擺。</li>\n<li>也可以照歌詞的意思決定，哪個字最有感情，就唱重一點。</li></ul>\n<p>還可以用聲音去模仿樂器：像大鼓那樣厚、像小鼓那樣脆、像貝斯那樣穩，或是像吹管樂一樣用氣把聲音推出去。</p>\n\n<h3>三、發聲：你的聲音能做到什麼</h3>\n<h4>第一層：真的「能用」的音域</h4>\n<p>很多人會說「我最高唱得到某某音」，但唱得到跟能用是兩回事。真正能用的音，要做到兩件事：</p>\n<ol><li><b>大聲小聲都穩</b>：同一個音，可以很輕（pp），也可以很強（ff），而不是高音只能吼、低音只能虛。</li>\n<li><b>每個母音都唱得順</b>：在那個音高上，a、i、u、e、o 都唱得出來，不是只有剛好某個字比較好唱。</li></ol>\n<h4>第二層：音色可以切換</h4>\n<p>真聲、假聲、混聲之間可以順順地轉換，也能調整聲音裡氣息的多寡。像玉置浩二的聲音，又厚又帶一點沙沙的氣聲。再厲害一點，還能依歌曲需要變出童音、角色音，就像《阿拉丁》裡的精靈那樣一直換聲線。</p>\n<h4>第三層：特殊技巧</h4>\n<p>氣泡音、平穩的抖音、真假音快速切換、嘶吼、哨音……這些就像衣櫃裡的配件，平常不一定用得到，但需要的時候拿出來，效果就很加分。</p>\n\n<h3>四、最後一步：怎麼搭配，才是表現力</h3>\n<p>技巧學了一堆之後，最容易犯的錯就是：每首歌都全部用上。結果聽起來很累，也很做作。</p>\n<p>真正會唱的人，會先想清楚這幾件事，再決定要用哪些技巧：</p>\n<div class=\"tblw\"><table><tr><th>想一想</th><th>舉個例子</th></tr>\n<tr><td>這首歌在講什麼？</td><td>很悲傷的歌，如果唱得太亮、轉音太花俏，聽的人反而進不去那個情緒。</td></tr>\n<tr><td>大家會怎麼聽到？</td><td>在大場館（像 MISIA 的演唱會）需要很有穿透力；但如果是手機直播、短影音，大家多半戴耳機，太大聲反而刺耳。</td></tr>\n<tr><td>現在流行什麼？</td><td>現在的流行歌偏好自然、像在講話的唱法；硬加上很老派的大抖音，就會有點突兀。</td></tr>\n<tr><td>跟你這個人搭不搭？</td><td>唱法跟你的年紀、個性、形象差太多，又不是刻意設計的話，聽起來就會怪怪的。</td></tr>\n<tr><td>是唱給誰聽？</td><td>一般大眾喜歡好入耳、聽不膩的唱法；如果是在教會唱詩歌、帶敬拜，重點就變成敬虔和莊重。</td></tr></table></div>\n\n<h3>所以，該從哪裡開始？</h3>\n<p>我的建議很簡單，就兩步：</p>\n<ol><li><b>先看看自己的衣櫃</b>：音準、節奏、發聲，你大概各在第幾層？哪一塊最弱，就先補哪一塊。</li>\n<li><b>每次唱歌前想一下</b>：這首歌想表達什麼？唱給誰聽？在哪裡唱？想清楚了，再挑要用的技巧。</li></ol>\n<p>不用一次全部學會，慢慢把衣櫃填起來就好。唱得開心最重要！</p>";
+const SMAP_GO=[["音高偵測器","音高偵測器"],["每日暖聲清單","每日暖聲清單"],["呼吸練習","呼吸練習"],["錄音回放","錄音回放"],["在歌詞上標記唱法","proj"],["節拍器（吉他 › 常用）","metro"]];
+function sMapGo(k){
+  if(k==="proj")navGo("singing","projects",$("#vsongs"));
+  else if(k==="metro")navGo("guitar","common",$("#metro"));
+  else navGo("singing","common",[...document.querySelectorAll("#s-common > .block")].find(x=>(x.querySelector("h2")||{}).textContent===k));
+}
+function renderSMap(box){
+  const sec=el("details","lmod");sec.id="lmod-smap";sec.dataset.name="歌唱力學習地圖";sec.open=!!load("pr_smap_open",false);
+  sec.addEventListener("toggle",()=>save("pr_smap_open",sec.open));
+  const head=el("summary","block"),badge=el("span","lbadge");
+  badge.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>';
+  head.append(badge,el("h2","","歌唱力學習地圖"),el("span","lchev","▾"),el("span","ltime","「唱歌好聽」究竟是什麼意思？音準、節奏、發聲與表現力"));
+  const art=el("article","block lart smap-art");art.innerHTML=SMAP_BODY;
+  art.append(el("h3","","用練習室練"));
+  const r=el("div","ltools");SMAP_GO.forEach(([l,k])=>{const b=el("button","ltool","去練習：「"+l+"」");b.type="button";b.onclick=()=>sMapGo(k);r.append(b)});art.append(r);
+  // the source video
+  const v=SMAP_VIDEO,c=el("div","vcard"),yt=ytBox(v.id,v.zh);
+  const meta=el("p","vmeta");meta.append(el("span","vch",v.ch),el("span","vlang",v.lang));
+  c.append(yt.el,el("h3","",v.zh),el("p","vorig",v.title),meta);
+  art.append(el("h3","","影片來源"),el("p","","這篇是看了しらスタ的影片後整理的。影片是日語，想看原版的話，可以在 YouTube 的字幕設定選「自動翻譯」成中文。"),c);
+  art.querySelector(".smap-jump").onclick=()=>c.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"});
+  sec.append(head,art);box.append(sec);
+}
 const sLearnDone=load("pr_slearn",{});
 function sLearnProgress(){
-  const all=SLEARN.flatMap(s=>s.videos),n=all.filter(v=>sLearnDone[v.id]).length;
+  const all=SLEARN.flatMap(s=>s.subs?s.subs.flatMap(x=>x.videos):s.videos),n=all.filter(v=>sLearnDone[v.id]).length;
   $("#sLearnBar").style.width=(all.length?n/all.length*100:0)+"%";$("#sLearnCount").textContent="已看完 "+n+" / "+all.length+" 支影片";
 }
 function renderSLearn(){
   const box=$("#s-learn");box.innerHTML="";
   const hero=el("div","block learn-hero");
   hero.innerHTML='<header><h2>歌唱學習資源</h2><p>精選其他老師的教學影片，依主題排好。看完打勾，進度會存在這個瀏覽器；按「去練習」可以直接用練習室的工具練。</p></header><div class="bar"><i id="sLearnBar"></i></div><p class="note" id="sLearnCount"></p><p class="note">日語影片如果有字幕，可以在 YouTube 的字幕設定裡選「自動翻譯」成中文。</p>';
+  renderSMap(box);
   box.append(hero);
+  // topics (and 發聲's 力道／音色) fold; open unless the user closed them (pr_slearn_fold: 主題 or 主題/子題)
+  const fold=(cls,tag,key,t,d)=>{
+    const f=el("details",cls),sum=el("summary");sum.innerHTML="<header><"+tag+"></"+tag+"><p></p></header>";
+    sum.querySelector(tag).textContent=t;sum.querySelector("p").textContent=d;sum.append(el("span","lchev","▾"));f.append(sum);
+    f.open=!load("pr_slearn_fold",{})[key];
+    f.addEventListener("toggle",()=>{const o=load("pr_slearn_fold",{});if(f.open)delete o[key];else o[key]=true;save("pr_slearn_fold",o)});
+    return f;
+  };
+  const card=v=>{
+    const c=el("div","vcard"),yt=ytBox(v.id,v.zh);
+    const meta=el("p","vmeta");meta.append(el("span","vch",v.ch),el("span","vlang",v.lang));
+    const row=el("div","row vrow");
+    const lab=el("label","vdone"),cb=el("input");cb.type="checkbox";cb.checked=!!sLearnDone[v.id];
+    cb.onchange=()=>{sLearnDone[v.id]=cb.checked;save("pr_slearn",sLearnDone);sLearnProgress()};
+    lab.append(cb,"我看過了");row.append(lab);
+    if(v.go){const g=el("button","ltool","去練習：「"+v.go+"」");g.type="button";
+      g.onclick=()=>navGo("singing","common",[...document.querySelectorAll("#s-common > .block")].find(x=>(x.querySelector("h2")||{}).textContent===v.go));row.append(g)}
+    c.append(yt.el,el("h3","",v.zh),el("p","vorig",v.title),meta,el("p","vdesc",v.d),row);
+    return c;
+  };
+  const videos=(box,list)=>{
+    if(!list.length){box.append(el("p","note","這個主題還沒有影片，之後會補上。"));return}
+    const grid=el("div","vgrid");list.forEach(v=>grid.append(card(v)));box.append(grid);
+  };
   SLEARN.forEach(sec=>{
-    const b=el("div","block");b.innerHTML="<header><h2></h2><p></p></header>";
-    b.querySelector("h2").textContent=sec.t;b.querySelector("p").textContent=sec.d;
-    sec.videos.forEach(v=>{
-      const c=el("div","vcard"),yt=ytBox(v.id,v.zh);
-      const meta=el("p","vmeta");meta.append(el("span","vch",v.ch),el("span","vlang",v.lang));
-      const links=el("div","video-links");
-      const a=el("a","","在 YouTube 開啟");a.href="https://www.youtube.com/watch?v="+v.id;a.target="_blank";a.rel="noopener";links.append(a);
-      const row=el("div","row vrow");
-      const lab=el("label","vdone"),cb=el("input");cb.type="checkbox";cb.checked=!!sLearnDone[v.id];
-      cb.onchange=()=>{sLearnDone[v.id]=cb.checked;save("pr_slearn",sLearnDone);sLearnProgress()};
-      lab.append(cb,"我看過了");row.append(lab);
-      if(v.go){const g=el("button","ltool","去練習：「"+v.go+"」");g.type="button";
-        g.onclick=()=>navGo("singing","common",[...document.querySelectorAll("#s-common > .block")].find(x=>(x.querySelector("h2")||{}).textContent===v.go));row.append(g)}
-      c.append(yt.el,el("h3","",v.zh),el("p","vorig",v.title),meta,el("p","vdesc",v.d),links,row);
-      b.append(c);
-    });
+    const b=fold("block stopic","h2",sec.t,sec.t,sec.d);
+    if(sec.subs)sec.subs.forEach(s=>{const sb=fold("ssub","h3",sec.t+"/"+s.t,s.t,s.d);videos(sb,s.videos);b.append(sb)});
+    else videos(b,sec.videos);
     box.append(b);
   });
   const ch=el("div","block lres");ch.innerHTML='<header><h2>推薦頻道</h2><p>整個頻道都值得追。</p></header>';
@@ -4390,8 +4464,7 @@ const reducedMotion=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: 
 function navTargets(panel,sub){
   const box=$("#"+panel[0]+"-"+sub);
   if(sub==="projects"){const songs=[...box.querySelectorAll(".song")];if(songs.length)return songs.map(s=>({el:s,label:s.querySelector("h3").textContent}))}
-  const mods=[...box.querySelectorAll(":scope > .lmod")];if(mods.length)return mods.map(m=>({el:m,label:m.dataset.name}));
-  return [...box.querySelectorAll(":scope > .block")].map(b=>({el:b,label:(b.querySelector("h2")||{}).textContent||""}));
+  return [...box.querySelectorAll(":scope > .lmod, :scope > .block")].map(b=>({el:b,label:b.dataset.name||(b.querySelector("h2")||{}).textContent||""}));
 }
 function buildNav(){
   const tree=$("#navTree");tree.innerHTML="";navItems.length=0;
@@ -4696,6 +4769,15 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-13.1",title:"歌唱力學習地圖",items:[
+    ["新的學習地圖","唱歌 › 學習最上面多了「歌唱力學習地圖」：用輕鬆的口吻聊「唱歌好聽」到底是什麼，音準、節奏、發聲各三個層次，加上表現力。點標題展開。"],
+    ["直接去練","文章最後有「去練習」按鈕，可以跳到音高偵測器、暖聲清單、錄音回放，或到專案的歌詞上標記唱法。"],
+    ["影片來源","內容整理自しらスタ的影片，影片放在文章最後。"],
+    ["學習資源重新分類","歌唱學習資源改成音準、節奏、發聲三個主題，原本的 4 支影片都放進對應的主題裡，每支影片是一張小卡片。"],
+    ["主題可以收起來","按主題標題就能收起或展開，會記住你的選擇。"],
+    ["發聲再分兩類","發聲裡面分成「力道」和「音色」兩個小區塊，也都可以各自收起來。"],
+    ["影片卡片更簡潔","學習資源的影片卡片不再顯示「在 YouTube 開啟」，影片直接在卡片上播放。"]
+  ]},
   {v:"2026-10-12.14",title:"歌曲卡片可以收起來",items:[
     ["收起不練的歌","唱歌 › 專案的每張歌曲卡片，按標題或右上角的箭頭就能收起，只留歌名和標籤；再按一次展開。每首歌會記住自己是收起還是展開。"]
   ]},
