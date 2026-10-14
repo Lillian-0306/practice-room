@@ -91,7 +91,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 錄音不會持久保存，重新整理就消失。
 - 沒有自動化測試。
 - 進度只存在單一瀏覽器，不跨裝置；右上角「資料備份」（`backupDialog()`，同學版不顯示）可以把所有 `pr_` 開頭的 localStorage 匯出成 JSON（`{app:"practice-room", ver:1, at, data:{key: 原字串}}`），匯入時確認後整批取代並重新整理，寫入失敗會還原。
-- **會員同步（Supabase）**：右上角人像按鈕（`#acctBtn`，同學版不顯示；`SUPA_URL`／`SUPA_KEY` 常數空白時也不顯示）。登入方式：Email 魔法連結、Google。登入後所有 `pr_` 鍵以一筆 JSON 存在 `user_data` 表（每位會員一筆），`save()` 會呼叫 `syncHook`，修改 4 秒後自動上傳，切到背景也會上傳；回到分頁時檢查雲端是否較新（會先詢問再重新整理）。同步記錄用 `prsync_uid`／`prsync_at`／`prsync_dirty`，登入狀態存在 `prsync_auth`（都不是 `pr_` 開頭，不會進備份或雲端）。只有一邊改過就以那邊為準；兩邊都改過、或第一次在已有資料的裝置登入，會跳出「要保留哪一份」讓使用者選。supabase-js 只在完整版從 jsDelivr 延遲載入（固定 2.45.4）。
+- **會員同步（Supabase）**：右上角人像按鈕（`#acctBtn`，同學版不顯示；`SUPA_URL`／`SUPA_KEY` 常數空白時也不顯示）。登入方式：Email＋密碼，Supabase 關閉 Confirm email，所以完全不寄信（見 ADR-0003）；忘記密碼由管理員在 Authentication › Users 重設。登入後所有 `pr_` 鍵以一筆 JSON 存在 `user_data` 表（每位會員一筆），`save()` 會呼叫 `syncHook`，修改 4 秒後自動上傳，切到背景也會上傳；回到分頁時檢查雲端是否較新（會先詢問再重新整理）。同步記錄用 `prsync_uid`／`prsync_at`／`prsync_dirty`，登入狀態存在 `prsync_auth`（都不是 `pr_` 開頭，不會進備份或雲端）。只有一邊改過就以那邊為準；兩邊都改過、或第一次在已有資料的裝置登入，會跳出「要保留哪一份」讓使用者選。supabase-js 只在完整版從 jsDelivr 延遲載入（固定 2.117.2，支援新的 Publishable key）。
   - 資料表 SQL（Supabase › SQL Editor）：
     ```sql
     create table public.user_data (
@@ -104,7 +104,9 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
     create policy "own row insert" on public.user_data for insert with check (auth.uid() = user_id);
     create policy "own row update" on public.user_data for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
     ```
-  - Authentication › URL Configuration：Site URL 設 `https://practice-room-one.vercel.app/`，Redirect URLs 加入 `https://practice-room-one.vercel.app/` 和 `http://localhost:8000/`。Google 登入要在 Authentication › Providers › Google 填入 Google Cloud 的 OAuth Client ID／Secret（Google 端的授權重新導向 URI 填 Supabase 給的 callback 網址）。
+  - Authentication › Sign In / Providers › Email：保持啟用，**關閉 Confirm email**（內建寄信服務只寄給專案成員、每小時 2 封，不能給一般會員用）。
+  - Project Settings › API Keys：網頁用 **Publishable key**（`sb_publishable_…`）填進 `SUPA_KEY`；Secret key 和舊的 service_role 絕對不能放進網頁。舊的 anon key 預計 2026 年底停用。
+  - 免費方案：一週沒活動專案會暫停（要到後台恢復），沒有自動備份。
 
 ## 建議下一步
 （已完成：GitHub Pages 部署、lookahead 節拍器、麥克風調音器、音高曲線與目標音練習、和弦擴充與橫按線、錄音回放。）

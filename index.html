@@ -826,12 +826,11 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 /* 會員登入 */
 .acct-btn{position:relative}
 .acct-btn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:#2FB36B;border:2px solid var(--surface)}
-.rn-body input[type=email]{width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px}
-.rn-body input[type=email]:focus{outline:none;border-color:var(--accent)}
-.acct-or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem;margin:14px 0 4px}
-.acct-or::before,.acct-or::after{content:"";flex:1;height:1px;background:var(--line)}
-.btn.acct-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:8px}
-.btn.acct-g svg{width:20px;height:20px;flex:none}
+.rn-body input[type=email],.rn-body input[type=password]{width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px}
+.rn-body input[type=email]+input,.rn-body input[type=password]+input{margin-top:8px}
+.rn-body input[type=email]:focus,.rn-body input[type=password]:focus{outline:none;border-color:var(--accent)}
+.btn.acct-go{width:100%;margin-top:10px}
+.acct-switch{display:block;margin:4px auto 0;padding:8px;border:0;background:none;color:var(--accent);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;min-height:44px}
 .acct-me{font-weight:700;word-break:break-all}
 
 /* auto-scroll control for reading sheet music (guitar 專案 only), pinned bottom-right */
@@ -4935,10 +4934,10 @@ function backupDialog(){
   };
 }
 if(CLASS)$("#backupBtn").remove();else $("#backupBtn").onclick=backupDialog;
-// 會員同步 (Supabase): sign in with an email link or Google; all pr_ keys are kept as one row per member in
+// 會員同步 (Supabase): sign in with email + password; all pr_ keys are kept as one row per member in
 // the user_data table (setup SQL in HANDOFF.md). Sync bookkeeping uses prsync_* keys, so it never lands in
 // backups or in the cloud copy. Not offered in 讚頌吉他班, and hidden until the project keys are filled in.
-const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project URL and the anon public key
+const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project URL and the Publishable key (never the secret key)
 (function(){
   const btn=$("#acctBtn");
   if(CLASS||!SUPA_URL||!SUPA_KEY){btn.remove();return}
@@ -4948,7 +4947,6 @@ const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project
   const snapshot=()=>{const d={};prKeys().forEach(k=>{d[k]=localStorage.getItem(k)});return d};
   const same=(a,b)=>{const ka=Object.keys(a);return ka.length===Object.keys(b).length&&ka.every(k=>a[k]===b[k])};
   const fmt=t=>{const d=new Date(t);return isNaN(d)?"":d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+String(d.getMinutes()).padStart(2,"0")};
-  const REDIR=location.origin+location.pathname;
   let sb=null,user=null,state="",timer=0,busy=false,paused=false;
   function setBtn(){btn.classList.toggle("on",!!user);const t=user?"會員："+(user.email||"已登入"):"會員登入";btn.title=t;btn.setAttribute("aria-label",t)}
   // replace local pr_ data with the cloud copy and reload; a failed write puts the old data back
@@ -5006,30 +5004,42 @@ const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project
     if(!user||paused)return;
     if(document.hidden){if(LS.get("prsync_dirty")){clearTimeout(timer);reconcile()}}else reconcile(true);
   });
-  const G='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  // Email + password with email confirmation turned off in Supabase (ADR-0003): no mail is ever sent,
+  // so a forgotten password is reset by the site owner in the Supabase dashboard
   function loginDialog(){
-    const mail=el("input"),send=el("button","btn acct-g","寄登入連結給我"),g=el("button","btn ghost acct-g"),close=el("button","btn ghost","關閉"),msg=el("p","note");
-    mail.type="email";mail.autocomplete="email";mail.placeholder="你的 Email";mail.setAttribute("aria-label","Email");
-    g.innerHTML=G+"<span>用 Google 帳號登入</span>";msg.setAttribute("role","status");
-    const dl=sheetDialog("會員","登入彈唱練習室",[
-      el("p","","登入後，練習資料（自己加的歌、歌詞時間、標記、刷法、學習進度和設定）會存到雲端。換手機或電腦時登入同一個帳號，就能接著練。"),
-      mail,send,el("div","acct-or","或"),g,msg,el("p","note","不用設密碼，第一次登入就會自動建立帳號。錄音不會同步。")],[close]);
-    close.onclick=dl.close;
-    mail.onkeydown=e=>{if(e.key==="Enter")send.click()};
-    send.onclick=async()=>{
-      const email=mail.value.trim();
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.textContent="請輸入正確的 Email。";mail.focus();return}
-      send.disabled=true;msg.textContent="寄送中…";
-      const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:REDIR}});
-      send.disabled=false;
-      msg.textContent=!error?"已寄到 "+email+"。打開信裡的連結就會登入（找不到的話看看垃圾郵件）。"
-        :error.status===429?"寄太多次了，請過一分鐘再試。":"寄不出去："+error.message;
+    let signup=false;
+    const mail=el("input"),pw=el("input"),pw2=el("input"),go=el("button","btn acct-go"),sw=el("button","acct-switch"),close=el("button","btn ghost","關閉"),msg=el("p","note"),hint=el("p","note");
+    mail.type="email";mail.autocomplete="email";mail.placeholder="Email";mail.setAttribute("aria-label","Email");
+    pw.type=pw2.type="password";pw.placeholder="密碼";pw.setAttribute("aria-label","密碼");pw2.placeholder="再輸入一次密碼";pw2.setAttribute("aria-label","再輸入一次密碼");
+    sw.type="button";msg.setAttribute("role","status");
+    const dl=sheetDialog("會員","",[
+      el("p","","登入後，練習資料（自己加的歌、歌詞時間、標記、刷法和學習進度）會存到雲端。換手機或電腦時登入同一位會員，就能接著練。"),
+      mail,pw,pw2,go,msg,sw,hint],[close]);
+    const title=dl.d.querySelector("h2");
+    const mode=v=>{signup=v;title.textContent=v?"註冊會員":"登入彈唱練習室";go.textContent=v?"註冊並登入":"登入";
+      sw.textContent=v?"已經是會員？改成登入":"還不是會員？註冊一個";pw2.hidden=!v;pw.autocomplete=v?"new-password":"current-password";
+      hint.textContent=v?"密碼至少 6 個字，請自己記好：忘記密碼要請網站管理員幫忙重設。錄音不會同步。":"忘記密碼的話，請找網站管理員幫忙重設。";msg.textContent=""};
+    mode(false);
+    close.onclick=dl.close;sw.onclick=()=>{mode(!signup);mail.focus()};
+    [mail,pw,pw2].forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")go.click()});
+    go.onclick=async()=>{
+      const email=mail.value.trim(),password=pw.value;
+      if(!/^[^s@]+@[^s@]+.[^s@]+$/.test(email)){msg.textContent="請輸入正確的 Email。";mail.focus();return}
+      if(password.length<6){msg.textContent="密碼至少要 6 個字。";pw.focus();return}
+      if(signup&&password!==pw2.value){msg.textContent="兩次輸入的密碼不一樣。";pw2.focus();return}
+      go.disabled=true;msg.textContent=signup?"註冊中…":"登入中…";
+      const {data,error}=signup?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+      go.disabled=false;
+      if(!error&&data.session){dl.close();return}
+      const code=error&&error.code;
+      msg.textContent=!error?"註冊成功，但網站還設定成要驗證信箱，請通知網站管理員。"
+        :code==="invalid_credentials"?"Email 或密碼不對。"
+        :code==="user_already_exists"||code==="email_exists"?"這個 Email 已經註冊過了，請改成登入。"
+        :code==="weak_password"?"密碼太簡單了，換一個長一點的。"
+        :error.status===429?"嘗試太多次了，請過一會兒再試。"
+        :(signup?"註冊失敗：":"登入失敗：")+error.message;
     };
-    g.onclick=async()=>{
-      g.disabled=true;
-      const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:REDIR}});
-      if(error){g.disabled=false;msg.textContent="Google 登入失敗："+error.message}
-    };
+    setTimeout(()=>mail.focus(),0);
   }
   function meDialog(){
     const now=el("button","btn","立即同步"),out=el("button","btn ghost","登出"),close=el("button","btn ghost","關閉"),st=el("p","rn-meta",state);
@@ -5048,7 +5058,7 @@ const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project
   }
   btn.onclick=()=>{if(!sb)alert(state||"會員服務還在載入，請稍候再試。");else if(user)meDialog();else loginDialog()};
   const s=document.createElement("script");
-  s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
+  s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js";
   s.onerror=()=>{state="連不到會員服務，請檢查網路。"};
   s.onload=()=>{
     sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{storageKey:"prsync_auth"}});
