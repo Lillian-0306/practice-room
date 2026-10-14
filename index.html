@@ -823,6 +823,16 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .rn-body textarea:focus{outline:none;border-color:var(--accent)}
 .rn-body a{color:var(--accent);font-weight:700}
 .rn-meta{font-size:.82rem;color:var(--muted)}
+/* 會員登入 */
+.acct-btn{position:relative}
+.acct-btn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:#2FB36B;border:2px solid var(--surface)}
+.rn-body input[type=email]{width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px}
+.rn-body input[type=email]:focus{outline:none;border-color:var(--accent)}
+.acct-or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem;margin:14px 0 4px}
+.acct-or::before,.acct-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.btn.acct-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:8px}
+.btn.acct-g svg{width:20px;height:20px;flex:none}
+.acct-me{font-weight:700;word-break:break-all}
 
 /* auto-scroll control for reading sheet music (guitar 專案 only), pinned bottom-right */
 .wrap.as-moving{will-change:transform} /* sub-pixel slide while auto-scrolling */
@@ -1091,6 +1101,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     <button class="theme-btn" id="backupBtn" type="button" aria-label="資料備份（匯出、匯入）" title="資料備份（匯出、匯入）">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M8 7l4-4 4 4M12 3v12"/></svg>
     </button>
+    <button class="theme-btn acct-btn" id="acctBtn" type="button" aria-label="會員登入" title="會員登入" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    </button>
     <button class="theme-btn" id="themeBtn" type="button">
       <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -1319,7 +1332,8 @@ if(CLASS){
 
 /* ---------- storage ---------- */
 function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
-function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let syncHook=null; // set by 會員同步 while signed in
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(syncHook)syncHook()}
 // been here before? checked before anything below saves settings (used by the release notes)
 const RETURNING=(()=>{try{for(let i=0;i<localStorage.length;i++)if(/^pr_/.test(localStorage.key(i)))return true}catch(e){}return false})();
 
@@ -4602,7 +4616,7 @@ artFromUrl(); // a shared #art=… link opens that article
     {before:toSProj,el:()=>$("#vsongs .add-song"),
      title:"新增自己的歌",text:"貼上 YouTube 連結和歌詞，就能練自己想唱的歌：用「對時間」讓歌詞跟著影片，也可以上傳音檔讓網站找出旋律，做跟唱比對。"},
     {before:toSProj,el:()=>$("#vrFab"),title:"錄音",text:"右下角的麥克風按鈕可以錄下自己唱的。勾「一起播放影片」，按錄音時會順便播放剛剛看的影片；錄好可以馬上聽、下載下來。"},
-    {el:()=>$("#backupBtn"),title:"記得備份",text:"自己加的歌、歌詞時間和標記都只存在這個瀏覽器。按右上角的備份按鈕匯出成檔案，換裝置時再匯入。"},
+    {el:()=>$("#backupBtn"),title:"記得備份",text:"沒登入會員時，自己加的歌、歌詞時間和標記都只存在這個瀏覽器。按右上角的備份按鈕匯出成檔案，換裝置時再匯入。"},
     {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」選「歌唱專案導覽」。唱得開心！"}
   ];
   // 吉他 › 專案 on its own (the song-card steps of the main tour)
@@ -4887,7 +4901,7 @@ function backupDialog(){
   const exp=el("button","btn","匯出資料"),imp=el("button","btn ghost","匯入資料"),close=el("button","btn ghost","關閉"),inp=el("input"),msg=el("p","note");
   inp.type="file";inp.accept=".json,application/json";inp.hidden=true;
   const dl=sheetDialog("資料備份","匯出或匯入練習資料",[
-    el("p","","練習資料只存在這個瀏覽器。匯出會把吉他和歌唱的資料（樂譜筆記、重點段落、刷法、和弦進行、自己加的歌、歌詞時間、歌詞標記、旋律、學習進度和各種設定）存成一個檔案；換手機、換電腦或換瀏覽器時，在新的地方按「匯入資料」選這個檔案就好。"),
+    el("p","","沒登入會員時，練習資料只存在這個瀏覽器（登入後會自動同步到雲端）。匯出會把吉他和歌唱的資料（樂譜筆記、重點段落、刷法、和弦進行、自己加的歌、歌詞時間、歌詞標記、旋律、學習進度和各種設定）存成一個檔案；換手機、換電腦或換瀏覽器時，在新的地方按「匯入資料」選這個檔案就好。"),
     el("p","note","錄音不會保存，所以不在備份裡。"),inp,msg],[exp,imp,close]);
   close.onclick=dl.close;
   exp.onclick=()=>{
@@ -4921,6 +4935,132 @@ function backupDialog(){
   };
 }
 if(CLASS)$("#backupBtn").remove();else $("#backupBtn").onclick=backupDialog;
+// 會員同步 (Supabase): sign in with an email link or Google; all pr_ keys are kept as one row per member in
+// the user_data table (setup SQL in HANDOFF.md). Sync bookkeeping uses prsync_* keys, so it never lands in
+// backups or in the cloud copy. Not offered in 讚頌吉他班, and hidden until the project keys are filled in.
+const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project URL and the anon public key
+(function(){
+  const btn=$("#acctBtn");
+  if(CLASS||!SUPA_URL||!SUPA_KEY){btn.remove();return}
+  btn.hidden=false;
+  const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+  const prKeys=()=>Object.keys(localStorage).filter(k=>/^pr_/.test(k));
+  const snapshot=()=>{const d={};prKeys().forEach(k=>{d[k]=localStorage.getItem(k)});return d};
+  const same=(a,b)=>{const ka=Object.keys(a);return ka.length===Object.keys(b).length&&ka.every(k=>a[k]===b[k])};
+  const fmt=t=>{const d=new Date(t);return isNaN(d)?"":d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+String(d.getMinutes()).padStart(2,"0")};
+  const REDIR=location.origin+location.pathname;
+  let sb=null,user=null,state="",timer=0,busy=false,paused=false;
+  function setBtn(){btn.classList.toggle("on",!!user);const t=user?"會員："+(user.email||"已登入"):"會員登入";btn.title=t;btn.setAttribute("aria-label",t)}
+  // replace local pr_ data with the cloud copy and reload; a failed write puts the old data back
+  function apply(row){
+    const old=snapshot();
+    try{Object.keys(old).forEach(k=>localStorage.removeItem(k));Object.keys(row.data).forEach(k=>localStorage.setItem(k,row.data[k]))}
+    catch(e){prKeys().forEach(k=>localStorage.removeItem(k));Object.keys(old).forEach(k=>{try{localStorage.setItem(k,old[k])}catch(e2){}});
+      alert("雲端的資料太大，這個瀏覽器存不下，資料沒有變動。");return}
+    LS.set("prsync_at",row.updated_at);LS.set("prsync_dirty",null);location.reload();
+  }
+  async function push(){
+    const at=new Date().toISOString();
+    const {error}=await sb.from("user_data").upsert({user_id:user.id,data:snapshot(),updated_at:at});
+    if(error)throw error;
+    LS.set("prsync_at",at);LS.set("prsync_dirty",null);state="已同步・"+fmt(at);
+  }
+  // Compare with the cloud row. Only one side changed since the last sync → that side wins;
+  // both changed (or first sign-in on a device that already has data) → the member chooses.
+  // ask: on returning to the tab, ask before reloading with newer cloud data.
+  async function reconcile(ask){
+    if(busy||!user)return;busy=true;
+    try{
+      const {data:row,error}=await sb.from("user_data").select("data,updated_at").eq("user_id",user.id).maybeSingle();
+      if(error)throw error;
+      const mine=LS.get("prsync_uid")===user.id,dirty=!mine||!!LS.get("prsync_dirty"),local=snapshot();
+      LS.set("prsync_uid",user.id);
+      if(!row){await push();return}
+      if(same(local,row.data)){LS.set("prsync_at",row.updated_at);LS.set("prsync_dirty",null);state="已同步・"+fmt(row.updated_at);return}
+      const cloudNew=!mine||row.updated_at!==LS.get("prsync_at");
+      if(!cloudNew){if(dirty)await push();return}
+      if(!dirty||!prKeys().length){if(ask)askLoad(row);else apply(row);return}
+      choose(row,local);
+    }catch(e){console.warn(e);state="同步失敗，網路恢復後會再試。"}
+    finally{busy=false}
+  }
+  function askLoad(row){
+    const go=el("button","btn","載入最新資料"),later=el("button","btn ghost","等一下");
+    const dl=sheetDialog("會員同步","其他裝置更新了練習資料",[el("p","","雲端的資料在 "+fmt(row.updated_at)+" 更新過。載入會重新整理網頁，還沒存的錄音會不見。")],[go,later]);
+    go.onclick=()=>{dl.close();apply(row)};
+    later.onclick=()=>{paused=true;state="暫停同步：按「立即同步」載入雲端的資料。";dl.close()};
+  }
+  function choose(row,local){
+    const cloud=el("button","btn","用雲端的資料"),mine=el("button","btn ghost","用這台裝置的資料"),later=el("button","btn ghost","先不要，之後再決定");
+    const dl=sheetDialog("會員同步","要保留哪一份練習資料？",[
+      el("p","","雲端和這台裝置上的練習資料不一樣。選一份保留，另一份會被取代，無法復原。"),
+      el("p","rn-meta","雲端：最後更新 "+fmt(row.updated_at)+"，共 "+Object.keys(row.data).length+" 項"),
+      el("p","rn-meta","這台裝置：共 "+Object.keys(local).length+" 項"),
+      el("p","note","不確定的話，先按「之後再決定」，用右上角的資料備份把這台裝置的資料匯出留著。")],[cloud,mine,later]);
+    cloud.onclick=()=>{dl.close();apply(row)};
+    mine.onclick=()=>{dl.close();paused=false;push().catch(e=>{console.warn(e);state="同步失敗，網路恢復後會再試。"})};
+    later.onclick=()=>{paused=true;state="暫停同步：還沒選要保留哪一份資料，按「立即同步」再選。";dl.close()};
+  }
+  function schedule(){LS.set("prsync_dirty","1");clearTimeout(timer);if(!paused)timer=setTimeout(reconcile,4000)}
+  document.addEventListener("visibilitychange",()=>{
+    if(!user||paused)return;
+    if(document.hidden){if(LS.get("prsync_dirty")){clearTimeout(timer);reconcile()}}else reconcile(true);
+  });
+  const G='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  function loginDialog(){
+    const mail=el("input"),send=el("button","btn acct-g","寄登入連結給我"),g=el("button","btn ghost acct-g"),close=el("button","btn ghost","關閉"),msg=el("p","note");
+    mail.type="email";mail.autocomplete="email";mail.placeholder="你的 Email";mail.setAttribute("aria-label","Email");
+    g.innerHTML=G+"<span>用 Google 帳號登入</span>";msg.setAttribute("role","status");
+    const dl=sheetDialog("會員","登入彈唱練習室",[
+      el("p","","登入後，練習資料（自己加的歌、歌詞時間、標記、刷法、學習進度和設定）會存到雲端。換手機或電腦時登入同一個帳號，就能接著練。"),
+      mail,send,el("div","acct-or","或"),g,msg,el("p","note","不用設密碼，第一次登入就會自動建立帳號。錄音不會同步。")],[close]);
+    close.onclick=dl.close;
+    mail.onkeydown=e=>{if(e.key==="Enter")send.click()};
+    send.onclick=async()=>{
+      const email=mail.value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.textContent="請輸入正確的 Email。";mail.focus();return}
+      send.disabled=true;msg.textContent="寄送中…";
+      const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:REDIR}});
+      send.disabled=false;
+      msg.textContent=!error?"已寄到 "+email+"。打開信裡的連結就會登入（找不到的話看看垃圾郵件）。"
+        :error.status===429?"寄太多次了，請過一分鐘再試。":"寄不出去："+error.message;
+    };
+    g.onclick=async()=>{
+      g.disabled=true;
+      const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:REDIR}});
+      if(error){g.disabled=false;msg.textContent="Google 登入失敗："+error.message}
+    };
+  }
+  function meDialog(){
+    const now=el("button","btn","立即同步"),out=el("button","btn ghost","登出"),close=el("button","btn ghost","關閉"),st=el("p","rn-meta",state);
+    st.setAttribute("role","status");
+    const dl=sheetDialog("會員","已登入",[el("p","acct-me",user.email||""),
+      el("p","","修改練習資料幾秒後會自動同步到雲端；在其他裝置登入同一個帳號就能看到。"),st,
+      el("p","note","登出後，這台裝置上的資料會留著，只是不再同步。")],[now,out,close]);
+    close.onclick=dl.close;
+    now.onclick=async()=>{paused=false;clearTimeout(timer);now.disabled=true;st.textContent="同步中…";await reconcile();st.textContent=state;now.disabled=false};
+    out.onclick=async()=>{
+      out.disabled=true;clearTimeout(timer);
+      if(LS.get("prsync_dirty")&&!paused)await reconcile();
+      await sb.auth.signOut();
+      ["prsync_uid","prsync_at","prsync_dirty"].forEach(k=>LS.set(k,null));state="";dl.close();
+    };
+  }
+  btn.onclick=()=>{if(!sb)alert(state||"會員服務還在載入，請稍候再試。");else if(user)meDialog();else loginDialog()};
+  const s=document.createElement("script");
+  s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
+  s.onerror=()=>{state="連不到會員服務，請檢查網路。"};
+  s.onload=()=>{
+    sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{storageKey:"prsync_auth"}});
+    // supabase-js asks not to call it from inside this callback, hence the setTimeout
+    sb.auth.onAuthStateChange((ev,session)=>{
+      const was=user&&user.id;user=session&&session.user||null;setBtn();
+      syncHook=user?schedule:null;
+      if(user&&was!==user.id)setTimeout(reconcile,0);
+    });
+  };
+  document.head.append(s);
+})();
 const relList=r=>{const ul=el("ul");r.items.forEach(([b,s])=>{const li=el("li");li.append(el("b","",b),el("span","",s));ul.append(li)});return ul};
 const verDate=v=>v.split(".")[0].replace(/-/g,"/");
 // 讚頌吉他班 only gets entries marked class:true (guitar 專案 changes) and remembers them separately.
