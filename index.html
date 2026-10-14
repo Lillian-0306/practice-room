@@ -793,7 +793,12 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .rec-list li{border-top:1px solid var(--line);padding:12px 0}
 .rec-list .rec-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
 .rec-list audio{width:100%;height:40px}
-.rec-actions{display:flex;gap:6px}
+.rec-actions{display:flex;flex-wrap:wrap;gap:6px}
+.rec-list .rec-head{flex-wrap:wrap}
+.rec-where{font-size:.82rem;color:var(--muted);margin:6px 0 0}
+.rec-tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:1px;background:var(--accent-soft);color:var(--ink)}
+.rec-tag.cloud{background:var(--accent);color:var(--accent-on)}
+.rec-date{display:block;font-size:.78rem;font-weight:400;color:var(--muted)}
 .rec-actions a,.rec-actions button{font-size:.85rem;padding:4px 12px;min-height:34px;border:1.5px solid var(--line);border-radius:999px;background:transparent;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
 footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 /* release notes, shown once after an update */
@@ -1082,7 +1087,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     <p class="vrec-song" id="vrSong"></p>
     <p class="msg note rec-msg"></p>
     <ol class="rec-list"></ol>
-    <p class="vrec-hint">錄音只存在這個分頁，重新整理就會消失，想留下來記得按「下載」。戴耳機錄，才不會把影片的聲音也錄進去。</p>
+    <p class="vrec-hint">戴耳機錄，才不會把影片的聲音也錄進去。</p>
   </div>
   <button class="as-fab vrec-fab" id="vrFab" type="button" aria-expanded="false" aria-controls="vrPanel" aria-label="錄音">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
@@ -1314,7 +1319,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
   </section>
 
-  <footer>聲音皆由瀏覽器即時合成，錄音只存在這個分頁，不會上傳。戴耳機效果更好。</footer>
+  <footer>聲音皆由瀏覽器即時合成。錄音存在這台裝置；登入會員的話會存到你自己的雲端空間，只有你聽得到。戴耳機效果更好。</footer>
 </div>
 
 <script>
@@ -2044,27 +2049,111 @@ mSetBpm(ms.bpm);mRenderBeats();
 setPattern(pat);setProg(prog);
 
 /* ---------- recorder ---------- */
+// Saved recordings. Signed out → IndexedDB on this device (pr_recs). Signed in → the member's own folder in the
+// Supabase Storage bucket "recordings" (<uid>/<time>-<src>-<tenths of a second>.<ext>, at most REC_MAX per member,
+// policies in HANDOFF.md); a take that cannot go up stays on the device and can be sent up later with 存到雲端.
+// recCloud is set by the 會員 code: {sb, uid} while signed in.
+let recCloud=null;
+const REC_MAX=20,REC_SRC={"吉他練習":"g","歌唱練習":"s","歌唱專案":"v"},recViews=new Set();
+const recRefresh=()=>recViews.forEach(f=>f());
+const recExt=t=>/mp4/.test(t)?"m4a":/ogg/.test(t)?"ogg":"webm";
+const recDB=(()=>{
+  let p=null;
+  const open=()=>p||(p=new Promise((res,rej)=>{
+    if(!window.indexedDB){rej(new Error("no indexedDB"));return}
+    const r=indexedDB.open("pr_recs",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("recs",{keyPath:"id"});
+    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+  }));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{
+    const t=db.transaction("recs",mode),q=fn(t.objectStore("recs"));
+    t.oncomplete=()=>res(q&&q.result);t.onerror=t.onabort=()=>rej(t.error);
+  }));
+  return {all:()=>tx("readonly",s=>s.getAll()),put:r=>tx("readwrite",s=>s.put(r)),del:id=>tx("readwrite",s=>s.delete(id)),clear:()=>tx("readwrite",s=>s.clear())};
+})();
+const recBucket=()=>recCloud.sb.storage.from("recordings");
+// every cloud take of this member: {path, src, at, secs, type}
+async function recCloudList(){
+  const {data,error}=await recBucket().list(recCloud.uid,{limit:100,sortBy:{column:"name",order:"desc"}});
+  if(error)throw error;
+  return data.map(f=>{const m=/^(\d+)-(\w)-(\d+)\.(\w+)$/.exec(f.name);
+    return m&&{path:recCloud.uid+"/"+f.name,src:m[2],at:+m[1],secs:m[3]/10,type:(f.metadata&&f.metadata.mimetype)||"audio/"+(m[4]==="m4a"?"mp4":m[4])}}).filter(Boolean);
+}
+async function recUpload(src,blob,secs,at){
+  const base=(blob.type||"audio/webm").split(";")[0];
+  const path=recCloud.uid+"/"+at+"-"+src+"-"+Math.round(secs*10)+"."+recExt(base);
+  const {error}=await recBucket().upload(path,blob,{contentType:base,upsert:false});
+  if(error)throw error;
+}
+// 從這台裝置清除 / a member deleting themselves
+const recClearLocal=()=>recDB.clear().catch(()=>{}).then(recRefresh);
+async function recClearCloud(){
+  const all=await recCloudList();if(!all.length)return;
+  const {error}=await recBucket().remove(all.map(r=>r.path));if(error)throw error;
+}
 function recorder(root,prefix){
   const btn=root.querySelector(".rec-btn"),clock=root.querySelector(".rec-clock"),timeBox=root.querySelector(".rec-time"),
-        msg=root.querySelector(".rec-msg"),list=root.querySelector(".rec-list");
-  let mr=null,stream=null,chunks=[],t0=0,iv=null,count=0;
+        msg=root.querySelector(".rec-msg"),list=root.querySelector(".rec-list"),src=REC_SRC[prefix];
+  let mr=null,stream=null,chunks=[],t0=0,iv=null,urls=[],drawN=0;
   const fmt=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+  const when=t=>{const d=new Date(t);return (d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+String(d.getMinutes()).padStart(2,"0")};
+  const where=el("p","rec-where");list.before(where);
+  // the saved takes of this recorder, newest first: this device's, then (signed in) the cloud's
+  async function draw(){
+    const n=++drawN;let local=[],cloud=[],cloudErr=false,total=0;
+    try{local=(await recDB.all()).filter(r=>r.src===src)}catch(e){}
+    if(recCloud){try{const all=await recCloudList();total=all.length;cloud=all.filter(r=>r.src===src)}catch(e){console.warn(e);cloudErr=true}}
+    if(n!==drawN)return;
+    urls.forEach(u=>URL.revokeObjectURL(u));urls=[];
+    let signed={};
+    if(cloud.length){const {data}=await recBucket().createSignedUrls(cloud.map(r=>r.path),3600);(data||[]).forEach(d=>{if(d.signedUrl)signed[d.path]=d.signedUrl});if(n!==drawN)return}
+    where.textContent=!recCloud?"錄音會存在這台裝置，重新整理也還在。登入會員可以存到雲端，換裝置也聽得到。"
+      :cloudErr?"連不到雲端，先顯示這台裝置上的錄音。"
+      :"已登入：新的錄音會存到你的雲端空間（"+total+" / "+REC_MAX+" 段，所有錄音加起來），只有你聽得到。";
+    const items=[...local.map(r=>({...r,local:true})),...cloud].sort((a,b)=>b.at-a.at);
+    list.innerHTML="";
+    items.forEach((r,i)=>{
+      const li=el("li"),head=el("div","rec-head"),name=prefix+"-"+new Date(r.at).toISOString().slice(0,16).replace(/[-:T]/g,"")+"."+recExt(r.type);
+      const url=r.local?URL.createObjectURL(r.blob):signed[r.path];if(r.local)urls.push(url);
+      const au=el("audio");au.controls=true;au.preload="metadata";if(url)au.src=url;
+      const title=el("b","","第 "+(items.length-i)+" 段　"+fmt(r.secs));title.append(el("span","rec-tag"+(r.local?"":" cloud"),r.local?"這台裝置":"雲端"),el("span","rec-date",when(r.at)));
+      const acts=el("div","rec-actions");
+      const dl=el("a","","下載");dl.download=name;
+      if(r.local)dl.href=url;
+      else dl.href="#",dl.onclick=async e=>{e.preventDefault();const {data}=await recBucket().createSignedUrl(r.path,600,{download:name});if(data)location.href=data.signedUrl};
+      acts.append(dl);
+      if(r.local&&recCloud){const up=el("button","","存到雲端");up.type="button";
+        up.onclick=async()=>{up.disabled=true;msg.textContent="上傳中…";
+          try{await recUpload(src,r.blob,r.secs,r.at);await recDB.del(r.id);msg.textContent="已存到雲端。";recRefresh()}
+          catch(e){up.disabled=false;msg.textContent=recFail(e)}};
+        acts.append(up)}
+      const del=el("button","","刪除");del.type="button";
+      del.onclick=async()=>{
+        if(!confirm("要刪除「第 "+(items.length-i)+" 段」嗎？"+(r.local?"":"雲端上的這段會一起刪掉，")+"刪除後無法復原。"))return;
+        try{if(r.local)await recDB.del(r.id);else{const {error}=await recBucket().remove([r.path]);if(error)throw error}msg.textContent="";recRefresh()}
+        catch(e){console.warn(e);msg.textContent="刪除失敗，請稍後再試。"}};
+      acts.append(del);
+      head.append(title,acts);li.append(head,au);list.append(li);
+    });
+  }
+  const recFail=e=>/row-level security|unauthorized|403/i.test((e&&e.message)||"")?"雲端已經存滿 "+REC_MAX+" 段了，先刪掉一些舊的錄音再存。"
+    :"存到雲端失敗（"+((e&&e.message)||"網路問題")+"）。";
+  async function keep(blob,secs){
+    const at=Date.now();
+    if(recCloud){
+      msg.textContent="存到雲端中…";
+      try{await recUpload(src,blob,secs,at);msg.textContent="";recRefresh();return}
+      catch(e){console.warn(e);msg.textContent=recFail(e)+"這段先存在這台裝置。"}
+    }
+    try{await recDB.put({id:at+"-"+Math.random().toString(36).slice(2,7),src,at,secs,type:blob.type||"audio/webm",blob})}
+    catch(e){console.warn(e);msg.textContent="這台裝置存不下這段錄音（可能空間不夠或是無痕模式），請直接下載。";
+      const url=URL.createObjectURL(blob),a=el("a","","下載這段錄音");a.href=url;a.download=prefix+"."+recExt(blob.type);msg.append(" ",a);return}
+    recRefresh();
+  }
+  recViews.add(draw);draw();
   function pickType(){
     if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return "";
     return ["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg"].find(t=>MediaRecorder.isTypeSupported(t))||"";
-  }
-  function addTake(blob,secs){
-    count++;
-    const url=URL.createObjectURL(blob),li=el("li"),head=el("div","rec-head");
-    const ext=/mp4/.test(blob.type)?"m4a":/ogg/.test(blob.type)?"ogg":"webm";
-    const au=el("audio");au.controls=true;au.src=url;au.preload="metadata";
-    const dl=el("a","","下載");dl.href=url;dl.download=prefix+"-"+count+"."+ext;
-    const del=el("button","","刪除");
-    del.onclick=()=>{URL.revokeObjectURL(url);li.remove()};
-    const acts=el("div","rec-actions");acts.append(dl,del);
-    head.append(el("b","","第 "+count+" 段　"+fmt(secs)),acts);
-    li.append(head,au);list.prepend(li);
-    while(list.children.length>10){const old=list.lastElementChild;old.querySelector("button").click();}
   }
   async function start(){
     msg.textContent="";
@@ -2077,7 +2166,7 @@ function recorder(root,prefix){
     mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
     mr.onstop=()=>{
       const secs=(performance.now()-t0)/1000;
-      if(chunks.length)addTake(new Blob(chunks,{type:mr.mimeType||type||"audio/webm"}),secs);
+      if(chunks.length)keep(new Blob(chunks,{type:mr.mimeType||type||"audio/webm"}),secs);
       stream.getTracks().forEach(t=>t.stop());stream=null;mr=null;
     };
     mr.start();t0=performance.now();
@@ -4786,6 +4875,11 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-14.1",title:"錄音會保存下來了",items:[
+    ["重新整理也還在","錄音不會再因為重新整理或關掉網頁就不見，會存在這台裝置。"],
+    ["登入會員存到雲端","登入會員的話，新的錄音會存到你自己的雲端空間，只有你聽得到，換手機或電腦登入也聽得到。每位會員最多存 20 段。"],
+    ["存到雲端","登入前錄的音會標「這台裝置」，按「存到雲端」就能放上去。"]
+  ]},
   {v:"2026-10-14.1",class:true,title:"會員登入：練習資料跟著你走",items:[
     ["註冊會員","右上角多了人像按鈕。用 Email 和密碼註冊就能登入，不用收驗證信。"],
     ["自動同步","登入後，練習資料修改幾秒就會存到雲端。換手機或電腦，登入同一位會員就能接著練。"],
@@ -5001,7 +5095,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
   }
   function askLoad(row){
     const go=el("button","btn","載入最新資料"),later=el("button","btn ghost","等一下");
-    const dl=sheetDialog("會員同步","其他裝置更新了練習資料",[el("p","","雲端的資料在 "+fmt(row.updated_at)+" 更新過。載入會重新整理網頁，還沒存的錄音會不見。")],[go,later]);
+    const dl=sheetDialog("會員同步","其他裝置更新了練習資料",[el("p","","雲端的資料在 "+fmt(row.updated_at)+" 更新過。載入會重新整理網頁，正在錄的音會中斷。")],[go,later]);
     go.onclick=()=>{dl.close();apply(row)};
     later.onclick=()=>{paused=true;state="暫停同步：按「立即同步」載入雲端的資料。";dl.close()};
   }
@@ -5037,7 +5131,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     const title=dl.d.querySelector("h2");
     const mode=v=>{signup=v;title.textContent=v?"註冊會員":"登入彈唱練習室";go.textContent=v?"註冊並登入":"登入";
       sw.textContent=v?"已經是會員？改成登入":"還不是會員？註冊一個";pw2.hidden=!v;pw.autocomplete=v?"new-password":"current-password";
-      hint.textContent=v?"密碼至少 6 個字，請自己記好：忘記密碼要請網站管理員幫忙重設。錄音不會同步。":"忘記密碼的話，請找網站管理員幫忙重設。";msg.textContent=""};
+      hint.textContent=v?"密碼至少 6 個字，請自己記好：忘記密碼要請網站管理員幫忙重設。":"忘記密碼的話，請找網站管理員幫忙重設。";msg.textContent=""};
     mode(false);
     close.onclick=dl.close;sw.onclick=()=>{mode(!signup);mail.focus()};
     [mail,pw,pw2].forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")go.click()});
@@ -5066,7 +5160,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     clearTimeout(timer);
     await sb.auth.signOut({scope:"local"});
     ["prsync_uid","prsync_at","prsync_dirty"].forEach(k=>LS.set(k,null));state="";paused=false;
-    if(wipe){prKeys().forEach(k=>LS.set(k,null));location.reload()}
+    if(wipe){prKeys().forEach(k=>LS.set(k,null));await recClearLocal();location.reload()}
   }
   function meDialog(){
     const now=el("button","btn","立即同步"),out=el("button","btn ghost","登出"),close=el("button","btn ghost","關閉"),st=el("p","rn-meta",state),del=el("button","acct-del","刪除會員");
@@ -5101,12 +5195,14 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     const inp=el("input","acct-confirm"),go=el("button","btn danger","永久刪除"),cancel=el("button","btn ghost","取消"),msg=el("p","note");
     inp.type="text";inp.placeholder="輸入「刪除」";inp.setAttribute("aria-label","輸入「刪除」確認");inp.autocomplete="off";go.disabled=true;msg.setAttribute("role","status");
     const dl=sheetDialog("會員","永久刪除會員？",[
-      el("p","","會員 "+(user.email||"")+" 和雲端資料會永久刪除，無法復原。這台裝置上的練習資料會留著，網站會回到沒登入的狀態。"),
+      el("p","","會員 "+(user.email||"")+" 和雲端資料（包括雲端上的錄音）會永久刪除，無法復原。這台裝置上的練習資料會留著，網站會回到沒登入的狀態。"),
       el("p","","確定的話，在下面輸入「刪除」兩個字。"),inp,msg],[go,cancel]);
     cancel.onclick=dl.close;
     inp.oninput=()=>{go.disabled=inp.value.trim()!=="刪除"};
     go.onclick=async()=>{
       go.disabled=true;msg.textContent="刪除中…";
+      // the recordings are files, not rows, so they are not removed with the member: delete them first
+      try{await recClearCloud()}catch(e){console.warn(e);go.disabled=false;msg.textContent="刪除雲端錄音失敗，請稍後再試。（"+e.message+"）";return}
       const {error}=await sb.rpc("delete_me");
       if(error){console.warn(error);go.disabled=false;msg.textContent="刪除失敗，請稍後再試。（"+error.message+"）";return}
       // the member is gone, so the server may refuse a normal sign-out: drop the saved session ourselves
@@ -5126,6 +5222,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     sb.auth.onAuthStateChange((ev,session)=>{
       const was=user&&user.id;user=session&&session.user||null;setBtn();
       syncHook=user?schedule:null;
+      if((recCloud&&recCloud.uid)!==(user&&user.id)){recCloud=user?{sb,uid:user.id}:null;recRefresh()}
       if(user&&was!==user.id)setTimeout(reconcile,0);
     });
   };

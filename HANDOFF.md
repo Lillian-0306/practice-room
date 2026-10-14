@@ -116,16 +116,32 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
     revoke execute on function public.delete_me() from public, anon;
     grant execute on function public.delete_me() to authenticated;
     ```
+  - **錄音保存**：`recorder()` 錄完交給 `keep()`。沒登入存在這台裝置的 IndexedDB（資料庫 `pr_recs`、store `recs`：`{id, src, at, secs, type, blob}`，`recDB`）；登入（會員程式在 onAuthStateChange 設 `recCloud={sb, uid}`）存到 Supabase Storage 私有 bucket `recordings`，路徑 `<uid>/<毫秒時間>-<src>-<十分之一秒>.<ext>`（src：g 吉他常用、s 歌唱常用、v 歌唱專案，`REC_SRC`），檔名就帶著來源和長度，不另開資料表。每位會員最多 `REC_MAX`＝20 段（policy 也擋）。上傳失敗（存滿或網路）就先存在裝置，之後可按「存到雲端」。清單顯示裝置＋雲端兩種（標「這台裝置」／「雲端」），雲端的用 1 小時簽名網址播放、下載用 `createSignedUrl(…,{download})`；刪除要確認。登出選「從這台裝置清除」會清 IndexedDB；刪除會員前先 `recClearCloud()` 刪掉雲端錄音（檔案不會跟著帳號 cascade）。錄音不在 `pr_` 快照、備份檔裡。正式專案 2026-10-14 已套用（migration：create_recordings_bucket），重建時在 SQL Editor 執行：
+    ```sql
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('recordings', 'recordings', false, 20971520, array['audio/webm','audio/mp4','audio/ogg','audio/x-m4a','audio/mpeg']);
+    create or replace function public.rec_count() returns int language sql stable security invoker set search_path = '' as $$
+      select count(*)::int from storage.objects
+      where bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid()::text)
+    $$;
+    revoke execute on function public.rec_count() from public, anon;
+    grant execute on function public.rec_count() to authenticated;
+    create policy "rec own read" on storage.objects for select to authenticated
+      using (bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid()::text));
+    create policy "rec own insert" on storage.objects for insert to authenticated
+      with check (bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid()::text) and public.rec_count() < 20);
+    create policy "rec own delete" on storage.objects for delete to authenticated
+      using (bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid()::text));
+    ```
   - Authentication › Sign In / Providers › Email：保持啟用，**關閉 Confirm email**（內建寄信服務只寄給專案成員、每小時 2 封，不能給一般會員用）。
   - Project Settings › API Keys：網頁用 **Publishable key**（`sb_publishable_…`）填進 `SUPA_KEY`；Secret key 和舊的 service_role 絕對不能放進網頁。舊的 anon key 預計 2026 年底停用。
-  - 免費方案：一週沒活動專案會暫停（要到後台恢復），沒有自動備份。
+  - 免費方案：一週沒活動專案會暫停（要到後台恢復），沒有自動備份。檔案空間 1 GB、流量每月 10 GB（5 GB 有快取＋5 GB 沒快取），錄音約每分鐘 0.5–1 MB。
 
 ## 建議下一步
 （已完成：GitHub Pages 部署、lookahead 節拍器、麥克風調音器、音高曲線與目標音練習、和弦擴充與橫按線、錄音回放。）
 1. 做成 PWA（manifest + service worker）以便離線使用，並自帶字型。
-2. 錄音存進 IndexedDB，重新整理後還在。
-3. 和弦圖支援起始品位，加入更多高把位和弦；節奏型態可選擇。
-4. 程式規模變大時，改用 Vite 並拆成模組（audio、guitar、singing、storage）。
+2. 和弦圖支援起始品位，加入更多高把位和弦；節奏型態可選擇。
+3. 程式規模變大時，改用 Vite 並拆成模組（audio、guitar、singing、storage）。
 
 ## 給 Claude Code 的起始提示（可直接貼上）
 > 請閱讀 `HANDOFF.md` 與 `index.html`。這是一個繁體中文的吉他與歌唱互動學習網頁。先用 `python3 -m http.server` 跑起來確認可用，然後從「建議下一步」的第 1 項開始，一次做一項，每項完成後讓我確認再繼續。保持單一檔案架構，除非我同意才拆分模組。
