@@ -4937,7 +4937,7 @@ if(CLASS)$("#backupBtn").remove();else $("#backupBtn").onclick=backupDialog;
 // 會員同步 (Supabase): sign in with email + password; all pr_ keys are kept as one row per member in
 // the user_data table (setup SQL in HANDOFF.md). Sync bookkeeping uses prsync_* keys, so it never lands in
 // backups or in the cloud copy. Not offered in 讚頌吉他班, and hidden until the project keys are filled in.
-const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project URL and the Publishable key (never the secret key)
+const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishable_XpgVcZ6Z--te39EuV_wriQ_jHnR3XYG"; // Supabase › Project Settings › API: Project URL and the Publishable key (never the secret key)
 (function(){
   const btn=$("#acctBtn");
   if(CLASS||!SUPA_URL||!SUPA_KEY){btn.remove();return}
@@ -4975,7 +4975,8 @@ const SUPA_URL="",SUPA_KEY=""; // Supabase › Project Settings › API: Project
       LS.set("prsync_uid",user.id);
       if(!row){await push();return}
       if(same(local,row.data)){LS.set("prsync_at",row.updated_at);LS.set("prsync_dirty",null);state="已同步・"+fmt(row.updated_at);return}
-      const cloudNew=!mine||row.updated_at!==LS.get("prsync_at");
+      // compare as times: the server writes +00:00 where toISOString writes Z
+      const cloudNew=!mine||Date.parse(row.updated_at)!==Date.parse(LS.get("prsync_at"));
       if(!cloudNew){if(dirty)await push();return}
       if(!dirty||!prKeys().length){if(ask)askLoad(row);else apply(row);return}
       choose(row,local);

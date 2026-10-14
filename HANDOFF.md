@@ -92,7 +92,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 沒有自動化測試。
 - 進度只存在單一瀏覽器，不跨裝置；右上角「資料備份」（`backupDialog()`，同學版不顯示）可以把所有 `pr_` 開頭的 localStorage 匯出成 JSON（`{app:"practice-room", ver:1, at, data:{key: 原字串}}`），匯入時確認後整批取代並重新整理，寫入失敗會還原。
 - **會員同步（Supabase）**：右上角人像按鈕（`#acctBtn`，同學版不顯示；`SUPA_URL`／`SUPA_KEY` 常數空白時也不顯示）。登入方式：Email＋密碼，Supabase 關閉 Confirm email，所以完全不寄信（見 ADR-0003）；忘記密碼由管理員在 Authentication › Users 重設。登入後所有 `pr_` 鍵以一筆 JSON 存在 `user_data` 表（每位會員一筆），`save()` 會呼叫 `syncHook`，修改 4 秒後自動上傳，切到背景也會上傳；回到分頁時檢查雲端是否較新（會先詢問再重新整理）。同步記錄用 `prsync_uid`／`prsync_at`／`prsync_dirty`，登入狀態存在 `prsync_auth`（都不是 `pr_` 開頭，不會進備份或雲端）。只有一邊改過就以那邊為準；兩邊都改過、或第一次在已有資料的裝置登入，會跳出「要保留哪一份」讓使用者選。supabase-js 只在完整版從 jsDelivr 延遲載入（固定 2.117.2，支援新的 Publishable key）。
-  - 資料表 SQL（Supabase › SQL Editor）：
+  - 正式專案：`practice-room`（ref `dfggqpukvgxdoojayjxc`，東京），2026-10-14 已套用下面的 SQL（兩個 migration：create_user_data、revoke_rls_auto_enable_from_api）。重建時在 SQL Editor 執行：
     ```sql
     create table public.user_data (
       user_id uuid primary key references auth.users on delete cascade,
@@ -100,9 +100,13 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
       updated_at timestamptz not null default now()
     );
     alter table public.user_data enable row level security;
-    create policy "own row read" on public.user_data for select using (auth.uid() = user_id);
-    create policy "own row insert" on public.user_data for insert with check (auth.uid() = user_id);
-    create policy "own row update" on public.user_data for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+    create policy "own row read" on public.user_data for select to authenticated using ((select auth.uid()) = user_id);
+    create policy "own row insert" on public.user_data for insert to authenticated with check ((select auth.uid()) = user_id);
+    create policy "own row update" on public.user_data for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+    revoke all on public.user_data from anon;
+    grant select, insert, update on public.user_data to authenticated;
+    -- Supabase 建專案時附帶的函式，不需要開放給網頁呼叫
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
     ```
   - Authentication › Sign In / Providers › Email：保持啟用，**關閉 Confirm email**（內建寄信服務只寄給專案成員、每小時 2 封，不能給一般會員用）。
   - Project Settings › API Keys：網頁用 **Publishable key**（`sb_publishable_…`）填進 `SUPA_KEY`；Secret key 和舊的 service_role 絕對不能放進網頁。舊的 anon key 預計 2026 年底停用。
