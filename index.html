@@ -832,6 +832,10 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 .btn.acct-go{width:100%;margin-top:10px}
 .acct-switch{display:block;margin:4px auto 0;padding:8px;border:0;background:none;color:var(--accent);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;min-height:44px}
 .acct-me{font-weight:700;word-break:break-all}
+.acct-del{display:inline-block;margin:10px 0 2px;padding:6px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:.82rem;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.acct-del:hover{color:#E5484D}
+.rn-body input.acct-confirm{width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px}
+.rn-body input.acct-confirm:focus{outline:none;border-color:#E5484D}
 
 /* auto-scroll control for reading sheet music (guitar 專案 only), pinned bottom-right */
 .wrap.as-moving{will-change:transform} /* sub-pixel slide while auto-scrolling */
@@ -1332,7 +1336,7 @@ if(CLASS){
 /* ---------- storage ---------- */
 function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
 let syncHook=null; // set by 會員同步 while signed in
-function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(syncHook)syncHook()}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(syncHook)syncHook(k)}
 // been here before? checked before anything below saves settings (used by the release notes)
 const RETURNING=(()=>{try{for(let i=0;i<localStorage.length;i++)if(/^pr_/.test(localStorage.key(i)))return true}catch(e){}return false})();
 
@@ -4615,7 +4619,7 @@ artFromUrl(); // a shared #art=… link opens that article
     {before:toSProj,el:()=>$("#vsongs .add-song"),
      title:"新增自己的歌",text:"貼上 YouTube 連結和歌詞，就能練自己想唱的歌：用「對時間」讓歌詞跟著影片，也可以上傳音檔讓網站找出旋律，做跟唱比對。"},
     {before:toSProj,el:()=>$("#vrFab"),title:"錄音",text:"右下角的麥克風按鈕可以錄下自己唱的。勾「一起播放影片」，按錄音時會順便播放剛剛看的影片；錄好可以馬上聽、下載下來。"},
-    {el:()=>$("#backupBtn"),title:"記得備份",text:"沒登入會員時，自己加的歌、歌詞時間和標記都只存在這個瀏覽器。按右上角的備份按鈕匯出成檔案，換裝置時再匯入。"},
+    {el:()=>$("#backupBtn"),title:"記得備份",text:"登入會員（右上角的人像）後，練習資料會自動同步到雲端。沒登入時，自己加的歌、歌詞時間和標記都只存在這個瀏覽器，可以按這個備份按鈕匯出成檔案，換裝置時再匯入。"},
     {el:()=>$("#helpBtn"),title:"隨時再看一次",text:"想再看這份說明，按右上角的「？」選「歌唱專案導覽」。唱得開心！"}
   ];
   // 吉他 › 專案 on its own (the song-card steps of the main tour)
@@ -4782,6 +4786,15 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-14.1",class:true,title:"會員登入：練習資料跟著你走",items:[
+    ["註冊會員","右上角多了人像按鈕。用 Email 和密碼註冊就能登入，不用收驗證信。"],
+    ["自動同步","登入後，練習資料修改幾秒就會存到雲端。換手機或電腦，登入同一位會員就能接著練。"],
+    ["兩邊都改過時","如果這台裝置和雲端的資料都改過，會問你要保留哪一份，不會偷偷蓋掉。"],
+    ["外觀各自保留","深色／淺色和網頁風格不會同步，手機和電腦可以用不同的樣子。"],
+    ["登出","可以選擇把資料留在這台裝置，或從這台裝置清除（適合在別人的電腦上練習）。"],
+    ["刪除會員","在會員視窗最下面，輸入「刪除」確認後，會員和雲端資料會永久刪除。"],
+    ["小提醒","密碼請自己記好，忘記的話要請網站管理員幫忙重設。錄音不會同步。"]
+  ]},
   {v:"2026-10-13.1",title:"歌唱力學習地圖",items:[
     ["新的學習地圖","唱歌 › 學習最上面多了「歌唱力學習地圖」：用輕鬆的口吻聊「唱歌好聽」到底是什麼，音準、節奏、發聲各三個層次，加上表現力。點標題展開。"],
     ["直接去練","文章最後有「去練習」按鈕，可以跳到音高偵測器、暖聲清單、錄音回放，或到專案的歌詞上標記唱法。"],
@@ -4936,23 +4949,26 @@ function backupDialog(){
 if(CLASS)$("#backupBtn").remove();else $("#backupBtn").onclick=backupDialog;
 // 會員同步 (Supabase): sign in with email + password; all pr_ keys are kept as one row per member in
 // the user_data table (setup SQL in HANDOFF.md). Sync bookkeeping uses prsync_* keys, so it never lands in
-// backups or in the cloud copy. Not offered in 讚頌吉他班, and hidden until the project keys are filled in.
+// backups or in the cloud copy. 外觀設定 (theme, style) stay per device and are never synced (ADR-0002).
+// 讚頌吉他班 shares the same members and data (same origin). Hidden until the project keys are filled in.
 const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishable_XpgVcZ6Z--te39EuV_wriQ_jHnR3XYG"; // Supabase › Project Settings › API: Project URL and the Publishable key (never the secret key)
 (function(){
   const btn=$("#acctBtn");
-  if(CLASS||!SUPA_URL||!SUPA_KEY){btn.remove();return}
+  if(!SUPA_URL||!SUPA_KEY){btn.remove();return}
   btn.hidden=false;
   const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
-  const prKeys=()=>Object.keys(localStorage).filter(k=>/^pr_/.test(k));
+  const DEVICE=["pr_theme","pr_style"],synced=k=>/^pr_/.test(k)&&!DEVICE.includes(k);
+  const prKeys=()=>Object.keys(localStorage).filter(synced);
   const snapshot=()=>{const d={};prKeys().forEach(k=>{d[k]=localStorage.getItem(k)});return d};
+  const clean=d=>{const o={};Object.keys(d).filter(synced).forEach(k=>{o[k]=d[k]});return o}; // older cloud rows may still hold 外觀設定
   const same=(a,b)=>{const ka=Object.keys(a);return ka.length===Object.keys(b).length&&ka.every(k=>a[k]===b[k])};
   const fmt=t=>{const d=new Date(t);return isNaN(d)?"":d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+String(d.getMinutes()).padStart(2,"0")};
   let sb=null,user=null,state="",timer=0,busy=false,paused=false;
   function setBtn(){btn.classList.toggle("on",!!user);const t=user?"會員："+(user.email||"已登入"):"會員登入";btn.title=t;btn.setAttribute("aria-label",t)}
   // replace local pr_ data with the cloud copy and reload; a failed write puts the old data back
   function apply(row){
-    const old=snapshot();
-    try{Object.keys(old).forEach(k=>localStorage.removeItem(k));Object.keys(row.data).forEach(k=>localStorage.setItem(k,row.data[k]))}
+    const old=snapshot(),data=clean(row.data);
+    try{Object.keys(old).forEach(k=>localStorage.removeItem(k));Object.keys(data).forEach(k=>localStorage.setItem(k,data[k]))}
     catch(e){prKeys().forEach(k=>localStorage.removeItem(k));Object.keys(old).forEach(k=>{try{localStorage.setItem(k,old[k])}catch(e2){}});
       alert("雲端的資料太大，這個瀏覽器存不下，資料沒有變動。");return}
     LS.set("prsync_at",row.updated_at);LS.set("prsync_dirty",null);location.reload();
@@ -4974,7 +4990,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
       const mine=LS.get("prsync_uid")===user.id,dirty=!mine||!!LS.get("prsync_dirty"),local=snapshot();
       LS.set("prsync_uid",user.id);
       if(!row){await push();return}
-      if(same(local,row.data)){LS.set("prsync_at",row.updated_at);LS.set("prsync_dirty",null);state="已同步・"+fmt(row.updated_at);return}
+      if(same(local,clean(row.data))){LS.set("prsync_at",row.updated_at);LS.set("prsync_dirty",null);state="已同步・"+fmt(row.updated_at);return}
       // compare as times: the server writes +00:00 where toISOString writes Z
       const cloudNew=!mine||Date.parse(row.updated_at)!==Date.parse(LS.get("prsync_at"));
       if(!cloudNew){if(dirty)await push();return}
@@ -4993,14 +5009,15 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     const cloud=el("button","btn","用雲端的資料"),mine=el("button","btn ghost","用這台裝置的資料"),later=el("button","btn ghost","先不要，之後再決定");
     const dl=sheetDialog("會員同步","要保留哪一份練習資料？",[
       el("p","","雲端和這台裝置上的練習資料不一樣。選一份保留，另一份會被取代，無法復原。"),
-      el("p","rn-meta","雲端：最後更新 "+fmt(row.updated_at)+"，共 "+Object.keys(row.data).length+" 項"),
+      el("p","rn-meta","雲端：最後更新 "+fmt(row.updated_at)+"，共 "+Object.keys(clean(row.data)).length+" 項"),
       el("p","rn-meta","這台裝置：共 "+Object.keys(local).length+" 項"),
-      el("p","note","不確定的話，先按「之後再決定」，用右上角的資料備份把這台裝置的資料匯出留著。")],[cloud,mine,later]);
+      // 讚頌吉他班 has no 資料備份 button
+      el("p","note",CLASS?"不確定的話，先按「之後再決定」。":"不確定的話，先按「之後再決定」，用右上角的資料備份把這台裝置的資料匯出留著。")],[cloud,mine,later]);
     cloud.onclick=()=>{dl.close();apply(row)};
     mine.onclick=()=>{dl.close();paused=false;push().catch(e=>{console.warn(e);state="同步失敗，網路恢復後會再試。"})};
     later.onclick=()=>{paused=true;state="暫停同步：還沒選要保留哪一份資料，按「立即同步」再選。";dl.close()};
   }
-  function schedule(){LS.set("prsync_dirty","1");clearTimeout(timer);if(!paused)timer=setTimeout(reconcile,4000)}
+  function schedule(k){if(!synced(k))return;LS.set("prsync_dirty","1");clearTimeout(timer);if(!paused)timer=setTimeout(reconcile,4000)}
   document.addEventListener("visibilitychange",()=>{
     if(!user||paused)return;
     if(document.hidden){if(LS.get("prsync_dirty")){clearTimeout(timer);reconcile()}}else reconcile(true);
@@ -5014,7 +5031,8 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     pw.type=pw2.type="password";pw.placeholder="密碼";pw.setAttribute("aria-label","密碼");pw2.placeholder="再輸入一次密碼";pw2.setAttribute("aria-label","再輸入一次密碼");
     sw.type="button";msg.setAttribute("role","status");
     const dl=sheetDialog("會員","",[
-      el("p","","登入後，練習資料（自己加的歌、歌詞時間、標記、刷法和學習進度）會存到雲端。換手機或電腦時登入同一位會員，就能接著練。"),
+      el("p","",CLASS?"登入後，練習資料（樂譜筆記、重點段落、刷法和和弦進行）會存到雲端。換手機或電腦時登入同一位會員，就能接著練。"
+        :"登入後，練習資料（自己加的歌、歌詞時間、標記、刷法和學習進度）會存到雲端。換手機或電腦時登入同一位會員，就能接著練。"),
       mail,pw,pw2,go,msg,sw,hint],[close]);
     const title=dl.d.querySelector("h2");
     const mode=v=>{signup=v;title.textContent=v?"註冊會員":"登入彈唱練習室";go.textContent=v?"註冊並登入":"登入";
@@ -5025,7 +5043,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     [mail,pw,pw2].forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")go.click()});
     go.onclick=async()=>{
       const email=mail.value.trim(),password=pw.value;
-      if(!/^[^s@]+@[^s@]+.[^s@]+$/.test(email)){msg.textContent="請輸入正確的 Email。";mail.focus();return}
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.textContent="請輸入正確的 Email。";mail.focus();return}
       if(password.length<6){msg.textContent="密碼至少要 6 個字。";pw.focus();return}
       if(signup&&password!==pw2.value){msg.textContent="兩次輸入的密碼不一樣。";pw2.focus();return}
       go.disabled=true;msg.textContent=signup?"註冊中…":"登入中…";
@@ -5042,20 +5060,61 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     };
     setTimeout(()=>mail.focus(),0);
   }
+  // sign out on this device only (scope local keeps the member signed in elsewhere);
+  // wipe also removes this device's 練習資料, leaving 外觀設定 alone
+  async function signOut(wipe){
+    clearTimeout(timer);
+    await sb.auth.signOut({scope:"local"});
+    ["prsync_uid","prsync_at","prsync_dirty"].forEach(k=>LS.set(k,null));state="";paused=false;
+    if(wipe){prKeys().forEach(k=>LS.set(k,null));location.reload()}
+  }
   function meDialog(){
-    const now=el("button","btn","立即同步"),out=el("button","btn ghost","登出"),close=el("button","btn ghost","關閉"),st=el("p","rn-meta",state);
-    st.setAttribute("role","status");
+    const now=el("button","btn","立即同步"),out=el("button","btn ghost","登出"),close=el("button","btn ghost","關閉"),st=el("p","rn-meta",state),del=el("button","acct-del","刪除會員");
+    st.setAttribute("role","status");del.type="button";
     const dl=sheetDialog("會員","已登入",[el("p","acct-me",user.email||""),
-      el("p","","修改練習資料幾秒後會自動同步到雲端；在其他裝置登入同一個帳號就能看到。"),st,
-      el("p","note","登出後，這台裝置上的資料會留著，只是不再同步。")],[now,out,close]);
+      el("p","","修改練習資料幾秒後會自動同步到雲端；在其他裝置登入同一位會員就能看到。外觀設定（深色／淺色、網頁風格）每台裝置各自保留。"),st,del],[now,out,close]);
     close.onclick=dl.close;
     now.onclick=async()=>{paused=false;clearTimeout(timer);now.disabled=true;st.textContent="同步中…";await reconcile();st.textContent=state;now.disabled=false};
-    out.onclick=async()=>{
-      out.disabled=true;clearTimeout(timer);
-      if(LS.get("prsync_dirty")&&!paused)await reconcile();
-      await sb.auth.signOut();
-      ["prsync_uid","prsync_at","prsync_dirty"].forEach(k=>LS.set(k,null));state="";dl.close();
+    out.onclick=()=>{dl.close();outDialog()};
+    del.onclick=()=>{dl.close();deleteDialog()};
+  }
+  function outDialog(){
+    const keep=el("button","btn","登出，資料留在這台裝置"),wipe=el("button","btn danger","登出並從這台裝置清除"),cancel=el("button","btn ghost","取消"),msg=el("p","note");
+    msg.setAttribute("role","status");
+    const dl=sheetDialog("會員","要登出嗎？",[
+      el("p","","雲端資料不會受影響，之後再登入就能拿回來。"),
+      el("p","","在別人的電腦或手機上練習的話，選「從這台裝置清除」，下一個人就看不到你的歌和筆記。"),msg],[keep,wipe,cancel]);
+    cancel.onclick=dl.close;
+    const go=async w=>{
+      keep.disabled=wipe.disabled=true;
+      // unsynced edits go up first, so clearing this device never loses them
+      if(LS.get("prsync_dirty")){paused=false;msg.textContent="先同步還沒存到雲端的修改…";await reconcile()}
+      if(w&&LS.get("prsync_dirty")){keep.disabled=wipe.disabled=false;
+        msg.textContent="還有修改沒同步到雲端（"+(state||"可能是網路問題")+"）。處理好再清除，或先選「資料留在這台裝置」。";return}
+      dl.close();await signOut(w);
     };
+    keep.onclick=()=>go(false);wipe.onclick=()=>go(true);
+  }
+  // 刪除會員: the delete_me() database function removes this member (and, by cascade, the 雲端資料);
+  // this device's 練習資料 stays, like signing out
+  function deleteDialog(){
+    const inp=el("input","acct-confirm"),go=el("button","btn danger","永久刪除"),cancel=el("button","btn ghost","取消"),msg=el("p","note");
+    inp.type="text";inp.placeholder="輸入「刪除」";inp.setAttribute("aria-label","輸入「刪除」確認");inp.autocomplete="off";go.disabled=true;msg.setAttribute("role","status");
+    const dl=sheetDialog("會員","永久刪除會員？",[
+      el("p","","會員 "+(user.email||"")+" 和雲端資料會永久刪除，無法復原。這台裝置上的練習資料會留著，網站會回到沒登入的狀態。"),
+      el("p","","確定的話，在下面輸入「刪除」兩個字。"),inp,msg],[go,cancel]);
+    cancel.onclick=dl.close;
+    inp.oninput=()=>{go.disabled=inp.value.trim()!=="刪除"};
+    go.onclick=async()=>{
+      go.disabled=true;msg.textContent="刪除中…";
+      const {error}=await sb.rpc("delete_me");
+      if(error){console.warn(error);go.disabled=false;msg.textContent="刪除失敗，請稍後再試。（"+error.message+"）";return}
+      // the member is gone, so the server may refuse a normal sign-out: drop the saved session ourselves
+      dl.close();
+      Object.keys(localStorage).filter(k=>/^prsync_/.test(k)).forEach(k=>LS.set(k,null));
+      alert("會員已刪除。");location.reload();
+    };
+    setTimeout(()=>inp.focus(),0);
   }
   btn.onclick=()=>{if(!sb)alert(state||"會員服務還在載入，請稍候再試。");else if(user)meDialog();else loginDialog()};
   const s=document.createElement("script");
