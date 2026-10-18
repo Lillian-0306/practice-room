@@ -354,6 +354,41 @@ section.panel[hidden]{display:none}
 .lmod.done>summary .lbadge{background:var(--ok);color:#fff}
 .lmod[open]>summary .lchev{transform:rotate(180deg)}
 .lmod>.lintro{margin:-6px 4px 14px}
+/* 吉他 › 學習: 練習追蹤 */
+.trk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.trk-stat{background:var(--bg);border-radius:10px;padding:10px 8px;text-align:center}
+.trk-stat b{display:block;font-size:1.3rem;line-height:1.2}
+.trk-stat span{font-size:.78rem;color:var(--muted)}
+@media (max-width:480px){.trk-stats{grid-template-columns:repeat(2,1fr)}}
+.trk-now{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 4px}
+.trk-now .btn{min-width:150px}
+.trk-clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.1rem}
+.trk-state{font-size:.86rem;color:var(--muted);margin:4px 0 0}
+.trk-state.on{color:var(--ok)}
+.trk-h3{font-size:1rem;margin:18px 0 8px}
+.heat{overflow:hidden}
+.heat-body{display:flex;gap:4px}
+.heat-days{display:grid;grid-template-rows:repeat(7,14px);gap:3px;font-size:.66rem;color:var(--muted);line-height:14px;margin-top:17px}
+.heat-months{display:grid;gap:3px;height:14px;font-size:.66rem;color:var(--muted);margin-bottom:3px;white-space:nowrap}
+.heat-grid{display:grid;grid-template-rows:repeat(7,14px);grid-auto-flow:column;gap:3px}
+.heat-c{width:14px;height:14px;border-radius:3px;border:0;padding:0;background:var(--line);cursor:pointer}
+.heat-c.lv1{background:color-mix(in srgb,var(--accent) 30%,var(--surface))}
+.heat-c.lv2{background:color-mix(in srgb,var(--accent) 55%,var(--surface))}
+.heat-c.lv3{background:color-mix(in srgb,var(--accent) 80%,var(--surface))}
+.heat-c.lv4{background:var(--accent)}
+.heat-c.future{visibility:hidden}
+.heat-c.today{outline:2px solid var(--ink);outline-offset:1px}
+.heat-c.sel{outline:2px solid var(--accent);outline-offset:1px}
+.heat-legend{display:flex;align-items:center;gap:3px;justify-content:flex-end;font-size:.72rem;color:var(--muted);margin-top:8px}
+.heat-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.heat-legend span{margin:0 4px}
+.trk-day{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--accent-soft)}
+.trk-day b{margin-right:auto}
+.trk-day .pill{min-height:32px;padding:2px 12px;font-size:.85rem}
+.prac-live{font-size:.86rem;font-weight:700;color:var(--ok);font-variant-numeric:tabular-nums}
+.prac-live:empty{display:none}
+.prac-live{display:inline-flex;align-items:center;gap:8px}
+.prac-live .pill{min-height:32px;padding:2px 12px;font-size:.82rem;color:var(--ink)}
 /* 歌唱 › 學習: 歌唱力學習地圖 (one article) */
 .smap-art>h3:first-child{border-top:0;padding-top:0;margin-top:4px}
 .smap-art h4{font-size:1rem;margin:14px 0 4px}
@@ -2798,6 +2833,7 @@ function renderSongs(){
     sheet.hidden=true;
     if(s.file){const pdf=el("a","note","下載原始 PDF");pdf.href=SITE+encodeURIComponent(s.file);pdf.target="_blank";pdf.rel="noopener";actions.append(open,pdf)}
     else actions.append(open);
+    if(!CLASS)actions.append(el("span","prac-live")); // 練習計時 running: shown next to the buttons
     const toggle=()=>{
       if(!sheet.childElementCount){
         const pgs=[];
@@ -2816,6 +2852,7 @@ function renderSongs(){
       sheet.hidden=!sheet.hidden;
       open.textContent=sheet.hidden?"開啟樂譜":"收起樂譜";
       if(!sheet.hidden)sheet.scrollIntoView({behavior:"smooth",block:"start"});
+      if(!sheet.hidden)pracAsk();
     };
     open.onclick=toggle;
     card.append(el("h3","",s.title),el("p","by",s.by),meta);
@@ -4410,7 +4447,142 @@ function learnProgress(){
 }
 // 學習 is a stack of modules: the learning map first, then topic modules that hold articles (ARTS keys).
 // Add a module = one entry here; its articles appear as cards and in the side list as one item.
+/* ---------- guitar: 練習追蹤 (學習) ---------- */
+// Minutes practised per day (pr_gpractice: {"YYYY-MM-DD": seconds}, synced with the other pr_ data).
+// Counted automatically while a guitar tool is sounding or running — 跟著節拍換和弦, 節拍器, a song card's
+// 示範音檔 or 節拍器, 自動捲譜, 調音器, 錄音 — or while 練習計時 runs; 補記 adds minutes by hand.
+// A tick every 5 s adds the real time since the last tick, capped at 30 s, so a sleeping laptop adds nothing.
+const dayKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+let gPrac=(v=>v&&typeof v==="object"&&!Array.isArray(v)?v:{})(load("pr_gpractice",{}));
+let pracTimer=0,pracLast=0,pracDirty=0;const pracViews=new Set();
+// what is counting right now ("" = nothing)
+function gActiveName(){
+  if(pracTimer)return "練習計時";
+  if(playing)return "跟著節拍換和弦";
+  if(mOn)return "節拍器";
+  if(songMetroOff)return "歌曲節拍器";
+  if([...document.querySelectorAll("#guitar audio")].some(a=>!a.paused))return "示範音檔";
+  if($("#asPlay")&&$("#asPlay").getAttribute("aria-pressed")==="true")return "自動捲譜";
+  if(tunerOn)return "調音器";
+  if($("#recG .rec-time")&&$("#recG .rec-time").classList.contains("recording"))return "錄音";
+  return "";
+}
+function pracFlush(){Object.keys(gPrac).forEach(k=>{gPrac[k]=Math.round(gPrac[k]);if(gPrac[k]<=0)delete gPrac[k]});save("pr_gpractice",gPrac);pracDirty=0}
+function pracTick(){
+  const now=Date.now(),name=gActiveName();
+  if(name&&pracLast){const dt=Math.min(now-pracLast,30000)/1000,k=dayKey(new Date());gPrac[k]=(gPrac[k]||0)+dt;pracDirty+=dt}
+  pracLast=name?now:0;
+  if(pracDirty>=30||(!name&&pracDirty))pracFlush();
+  pracViews.forEach(f=>f(name));
+}
+setInterval(pracTick,5000);
+const pracSave=()=>{pracTick();if(pracDirty)pracFlush()};
+// 練習計時 on / off. It lives only in this page, so closing the page ends it (pagehide saves what was counted).
+function pracSet(on){pracTick();pracTimer=on?Date.now():0;pracLast=on?pracTimer:0;pracTick();pracLive()}
+// 在專案顯示計時 (pr_prac_live, on unless turned off in 練習追蹤)
+let pracShow=load("pr_prac_live",true)!==false;
+function pracLive(){
+  const e=pracTimer?Math.floor((Date.now()-pracTimer)/1000):0;
+  const t="● 練習計時中 "+Math.floor(e/60)+":"+String(e%60).padStart(2,"0");
+  document.querySelectorAll(".prac-live").forEach(x=>{
+    if(!(pracTimer&&pracShow)){x.textContent="";return}
+    // the time, then a 停止 button (built once, so it keeps focus while the clock ticks)
+    if(!x.firstChild){const b=el("button","pill","■ 停止");b.type="button";b.setAttribute("aria-label","停止練習計時");b.onclick=()=>pracSet(false);x.append(el("span"),b)}
+    x.firstChild.textContent=t;
+  });
+}
+setInterval(()=>{if(pracTimer)pracLive()},1000);
+// 開啟樂譜 asks once per visit (not again after 不用了, and not while the timer already runs)
+let pracAsked=false;
+function pracAsk(){
+  if(CLASS||pracTimer||pracAsked)return;pracAsked=true;
+  const yes=el("button","btn","開始計時"),no=el("button","btn ghost","不用了");
+  const dl=sheetDialog("練習追蹤","要開始練習計時嗎？",[el("p","","開始後會記錄這次練了多久，關掉網頁就會自動結束。練習時間可以在 吉他 › 學習 › 練習追蹤 看到，也可以在那裡停止計時。")],[yes,no]);
+  yes.onclick=()=>{dl.close();pracSet(true)};no.onclick=dl.close;yes.focus();
+}
+addEventListener("pagehide",pracSave);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)pracSave()});
+const fmtMin=s=>{const m=Math.round((s||0)/60);return m<60?m+" 分鐘":Math.floor(m/60)+" 小時"+(m%60?" "+m%60+" 分":"")};
+function pracStats(){
+  const t=new Date();t.setHours(0,0,0,0);const at=n=>{const d=new Date(t);d.setDate(t.getDate()-n);return gPrac[dayKey(d)]||0};
+  const dow=(t.getDay()+6)%7;let week=0;for(let i=0;i<=dow;i++)week+=at(i);
+  // 連續天數: days in a row with at least a minute, counting back from today (or from yesterday if today is still empty)
+  let streak=0,i=at(0)>=60?0:1;while(at(i)>=60){streak++;i++}
+  return {today:at(0),week,streak,total:Object.values(gPrac).reduce((a,b)=>a+(+b||0),0)};
+}
+function renderTrack(sec,head){
+  const sub=head.querySelector(".ltime");
+  const stat=(n)=>{const d=el("div","trk-stat"),b=el("b");d.append(b,el("span","",n));return {d,b}};
+  const sT=stat("今天"),sW=stat("這週"),sS=stat("連續天數"),sA=stat("總共");
+  const stats=el("div","trk-stats");stats.append(sT.d,sW.d,sS.d,sA.d);
+  const go=el("button","btn"),clock=el("span","trk-clock"),now=el("div","trk-now"),state=el("p","trk-state");
+  go.type="button";now.append(go,clock);
+  const showL=el("label","ci-chk"),showC=el("input");showC.type="checkbox";showC.checked=pracShow;
+  showC.onchange=()=>{pracShow=showC.checked;save("pr_prac_live",pracShow);pracLive()};
+  showL.append(showC,"在專案頁面顯示計時");
+  go.onclick=()=>pracSet(!pracTimer);
+  // heatmap: one column per week (Monday on top), as many weeks as fit, up to a year
+  const heat=el("div","heat"),months=el("div","heat-months"),grid=el("div","heat-grid"),days=el("div","heat-days"),body=el("div","heat-body"),right=el("div");
+  ["一","","三","","五","","日"].forEach(t=>days.append(el("span","",t)));
+  right.append(months,grid);body.append(days,right);heat.append(body);
+  const legend=el("div","heat-legend");legend.append(el("span","","少"));
+  ["","lv1","lv2","lv3","lv4"].forEach(c=>{const i=el("i","heat-c "+c);i.style.cursor="default";legend.append(i)});legend.append(el("span","","多"));
+  const sum=el("p","note");
+  const day=el("div","trk-day"),dayT=el("b");day.append(dayT);
+  let sel=dayKey(new Date()),weeks=0;
+  const lv=s=>s<=0?"":s<15*60?"lv1":s<30*60?"lv2":s<60*60?"lv3":"lv4";
+  const WD="日一二三四五六";
+  const label=d=>(d.getMonth()+1)+"/"+d.getDate()+"（"+WD[d.getDay()]+"）";
+  [[-5,"－5 分"],[5,"＋5 分"],[15,"＋15 分"],[30,"＋30 分"]].forEach(([m,t])=>{const p=el("button","pill",t);p.type="button";
+    p.onclick=()=>{gPrac[sel]=Math.max(0,(gPrac[sel]||0)+m*60);pracFlush();draw();paint(gActiveName())};day.append(p)});
+  function drawDay(){const d=new Date(sel+"T00:00:00");dayT.textContent=label(d)+"："+(gPrac[sel]?fmtMin(gPrac[sel]):"沒有練習紀錄")+(sel===dayKey(new Date())?"（今天）":"")}
+  function draw(){
+    const w=heat.clientWidth-22,n=Math.max(8,Math.min(53,Math.floor((w+3)/17)));weeks=n;
+    const today=new Date();today.setHours(0,0,0,0);const tk=dayKey(today);
+    const start=new Date(today);start.setDate(today.getDate()-(today.getDay()+6)%7-(n-1)*7);
+    grid.innerHTML="";months.innerHTML="";months.style.gridTemplateColumns=grid.style.gridTemplateColumns="repeat("+n+",14px)";
+    let total=0,daysOn=0,lastM=-1;
+    for(let c=0;c<n;c++){
+      const wk=new Date(start);wk.setDate(start.getDate()+c*7);
+      // month name over the first week that starts in that month
+      const m=el("span","",wk.getMonth()!==lastM&&(c>0||wk.getDate()<=7)?(wk.getMonth()+1)+"月":"");lastM=wk.getMonth();months.append(m);
+      for(let r=0;r<7;r++){
+        const d=new Date(wk);d.setDate(wk.getDate()+r);const k=dayKey(d),s=gPrac[k]||0;
+        const b=el("button","heat-c "+lv(s));b.type="button";
+        if(d>today)b.classList.add("future"),b.tabIndex=-1;
+        else{total+=s;if(s>=60)daysOn++;b.setAttribute("aria-label",label(d)+"："+(s?fmtMin(s):"沒有練習"));b.title=b.getAttribute("aria-label");
+          b.onclick=()=>{sel=k;grid.querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");drawDay()}}
+        if(k===tk)b.classList.add("today");if(k===sel)b.classList.add("sel");
+        grid.append(b);
+      }
+    }
+    sum.textContent="最近 "+n+" 週：練了 "+daysOn+" 天，共 "+fmtMin(total)+"。點格子可以看那天練了多久，也能補記。";
+    drawDay();
+  }
+  function paint(name){
+    const s=pracStats();
+    sT.b.textContent=fmtMin(s.today);sW.b.textContent=fmtMin(s.week);sS.b.textContent=s.streak+" 天";sA.b.textContent=fmtMin(s.total);
+    sub.textContent="今天 "+fmtMin(s.today)+(s.streak?"・連續 "+s.streak+" 天":"");
+    go.textContent=pracTimer?"■ 停止計時":"▶ 開始練習計時";
+    if(pracTimer){const e=Math.floor((Date.now()-pracTimer)/1000);clock.textContent=Math.floor(e/60)+":"+String(e%60).padStart(2,"0")}else clock.textContent="";
+    state.classList.toggle("on",!!name);
+    state.textContent=name?"● 正在記錄練習時間（"+name+"）"+(pracTimer?"，關掉網頁會自動結束":""):"沒在記錄。用節拍器、跟著節拍換和弦、示範音檔、自動捲譜、調音器或錄音時會自動記錄；不用工具練習時，按「開始練習計時」。在專案開啟樂譜時也會問你要不要開始計時。";
+  }
+  const h3=t=>el("h3","trk-h3",t);
+  sec.append(el("div","block trk"));
+  const box=sec.lastChild;box.append(stats,now,state,showL,h3("練習熱力圖"),heat,legend,sum,day);
+  let lastW=0;new ResizeObserver(()=>{const w=heat.clientWidth;if(w&&w!==lastW){lastW=w;draw()}}).observe(heat);
+  let lastDay=dayKey(new Date());
+  pracViews.add(name=>{paint(name);
+    // refresh the colours now and then while practising, and when the date changes
+    const k=dayKey(new Date());if(k!==lastDay){lastDay=k;sel=k;draw()}else if(name&&sec.open)drawCell()});
+  function drawCell(){const b=grid.querySelector(".today");if(b){b.className="heat-c today "+lv(gPrac[dayKey(new Date())]||0)+(sel===dayKey(new Date())?" sel":"")}if(sel===dayKey(new Date()))drawDay()}
+  setInterval(()=>{if(pracTimer)paint(gActiveName())},1000);
+  draw();paint(gActiveName());
+}
 const LMODS=[
+ {id:"track",t:"練習追蹤",sub:"",
+  icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M7 13h2M11 13h2M15 13h2M7 17h2M11 17h2"/></svg>',d:"記錄每天練了多久。用練習室的吉他工具時會自動計時，也可以手動計時或補記；熱力圖顏色越深，那天練得越久。紀錄存在這個瀏覽器，登入會員會一起同步。"},
  {id:"map",t:"民謠吉他學習地圖",sub:"四個階段＋學習資源",
   icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>',d:"從入門到風格分流的四個階段。會了就打勾，進度會存在這個瀏覽器；有「去練習」的項目可以直接跳到練習室的工具；有底線的字可以點開說明文章。"}
 ];
@@ -4425,6 +4597,7 @@ function renderLearn(){
     head.append(badge,el("h2","",m.t),el("span","lchev","▾"),el("span","ltime",m.sub));
     const intro=el("p","lintro");intro.append(artText(m.d));sec.append(head,intro);
     if(m.id==="map")renderMap(sec,head);
+    if(m.id==="track")renderTrack(sec,head);
     box.append(sec);
   });
   const wrap=el("div","lart-wrap");wrap.hidden=true;box.append(wrap);
@@ -4875,6 +5048,12 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-18.1",title:"吉他練習追蹤",items:[
+    ["自動記錄練習時間","用節拍器、跟著節拍換和弦、示範音檔、自動捲譜、調音器或錄音時，會自動記下練了多久；不用工具時可以按「開始練習計時」。"],
+    ["練習熱力圖","吉他 › 學習的「練習追蹤」用格子顯示每天練了多久，顏色越深練越久；也看得到今天、這週、連續天數和總練習時間。"],
+    ["補記","點熱力圖的格子可以看那天的紀錄，忘了計時也能補記或修正。"],
+    ["開樂譜就計時","在吉他 › 專案按「開啟樂譜」時，會問你要不要開始練習計時；開始後按鈕旁會顯示計時，可以直接按「停止」（不想看到計時可以在練習追蹤關掉），關掉網頁也會自動結束。"]
+  ]},
   {v:"2026-10-14.1",title:"錄音會保存下來了",items:[
     ["重新整理也還在","錄音不會再因為重新整理或關掉網頁就不見，會存在這台裝置。"],
     ["登入會員存到雲端","登入會員的話，新的錄音會存到你自己的雲端空間，只有你聽得到，換手機或電腦登入也聽得到。每位會員最多存 20 段。"],
