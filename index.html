@@ -255,7 +255,7 @@ p{margin:0}
 :root[data-style="soft"] .subtab[aria-selected="true"]{box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000)}
 :root[data-style="soft"] .key{border-radius:14px 14px 20px 20px}
 :root[data-style="soft"] .bk{border-radius:0 0 12px 12px}
-:root[data-style="soft"] .string-btn,:root[data-style="soft"] .pattern>*,:root[data-style="soft"] .prog>*{border-radius:14px}
+:root[data-style="soft"] .peg,:root[data-style="soft"] .pattern>*,:root[data-style="soft"] .prog>*{border-radius:14px}
 :root[data-style="soft"] .chord-name,:root[data-style="soft"] .now .cur,:root[data-style="soft"] .metro-bpm b,:root[data-style="soft"] .pitch-note{font-family:var(--num);font-weight:700}
 :root[data-style="soft"] .theme-btn{border:0;background:var(--surface);box-shadow:0 3px 0 var(--line)}
 :root[data-style="soft"] .sidenav{border-right:0;box-shadow:6px 0 24px -16px rgba(0,0,0,.35)}
@@ -717,14 +717,63 @@ section.panel[hidden]{display:none}
 .tips{margin:10px 0 0;padding-left:1.1em;color:var(--muted);font-size:.93rem}
 .tips li{margin-bottom:3px}
 
-/* tuning */
-.tuning{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
-.string-btn{border:1.5px solid var(--line);border-radius:10px;background:transparent;padding:10px 0;display:flex;flex-direction:column;align-items:center;min-height:64px}
-.string-btn b{font-size:1.3rem;font-family:var(--serif)}
-.string-btn small{color:var(--muted);font-size:.72rem}
-.string-btn:active,.string-btn.on,.string-btn.match{background:var(--accent-soft);border-color:var(--accent)}
-.string-btn.tuned{background:var(--ok);border-color:var(--ok);color:#fff}
-.string-btn.tuned small{color:#fff}
+/* tuning: gauge + headstock */
+.tn-stage{border-radius:20px;padding:14px 14px 18px;border:1px solid var(--line);
+  background:radial-gradient(120% 75% at 50% 0%,color-mix(in srgb,var(--accent) 12%,var(--surface)),var(--surface) 72%)}
+.tn-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tn-seg{display:inline-flex;padding:3px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
+.tn-seg button{border:0;background:transparent;color:var(--muted);font-weight:700;font-size:.88rem;padding:6px 14px;min-height:34px;border-radius:99px}
+.tn-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-on);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.tn-done{font-size:.84rem;font-weight:700;color:var(--ok);padding:5px 12px;border-radius:99px;background:color-mix(in srgb,var(--ok) 13%,var(--surface))}
+.tn-done[hidden]{display:none}
+.tn-gauge{display:block;width:100%;max-width:400px;margin:6px auto 0;overflow:visible}
+.tn-arc{fill:none;stroke:url(#tnTrack);stroke-width:12;stroke-linecap:round;opacity:.22}
+.tn-okz{fill:none;stroke:var(--ok);stroke-width:12;opacity:.55}
+.tn-trail{fill:none;stroke:var(--warn);stroke-width:5;stroke-linecap:round;transition:stroke .15s}
+.tn-trail.good{stroke:var(--ok)}
+.tn-tick{stroke:var(--muted);stroke-width:1.2;opacity:.6}
+.tn-tick.big{stroke:var(--ink);stroke-width:2;opacity:.85}
+.tn-lab{fill:var(--muted);font-size:10px;text-anchor:middle;font-variant-numeric:tabular-nums}
+.tn-note{fill:var(--ink);font-family:var(--serif);font-weight:900;font-size:70px;text-anchor:middle;transition:fill .15s}
+.tn-note.good{fill:var(--ok)}
+.tn-oct{font-size:24px;font-weight:700;fill:var(--muted)}
+.tn-str{fill:var(--muted);font-size:12px;text-anchor:middle;font-variant-numeric:tabular-nums}
+.tn-bub .b{fill:var(--accent);transition:fill .15s}
+.tn-bub .halo{fill:var(--ok);opacity:0;transform-box:fill-box;transform-origin:center}
+.tn-bub text{fill:var(--accent-on);font-size:13px;font-weight:800;text-anchor:middle;font-variant-numeric:tabular-nums}
+.tn-bub.idle{opacity:.28}
+.tn-bub.off .b{fill:var(--warn)}
+.tn-bub.off text,.tn-bub.good text{fill:var(--surface)}
+.tn-bub.good .b{fill:var(--ok)}
+.tn-bub.good .halo{animation:tnHalo 1.2s ease-out infinite}
+@keyframes tnHalo{from{opacity:.45;transform:scale(1)}to{opacity:0;transform:scale(1.9)}}
+.tn-hint{display:flex;justify-content:center;margin-top:2px;min-height:38px}
+.tn-hint span{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:99px;font-weight:700;font-size:.98rem;background:var(--bg);color:var(--muted);text-align:center}
+.tn-hint[data-s="low"] span,.tn-hint[data-s="high"] span,.tn-hint[data-s="far"] span{background:color-mix(in srgb,var(--warn) 13%,var(--surface));color:var(--warn)}
+.tn-hint[data-s="good"] span{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)}
+.tn-head{position:relative;width:min(100%,340px);height:262px;margin:10px auto 0}
+.tn-head>svg{position:absolute;left:50%;top:0;width:150px;height:262px;margin-left:-75px;overflow:visible}
+.tn-s{stroke:#D9D2C3;transition:stroke .15s}
+.tn-s.cur{stroke:var(--accent)}
+.tn-s.tuned{stroke:var(--ok)}
+.peg{position:absolute;width:54px;height:54px;margin-top:-27px;border-radius:50%;padding:0;
+  border:1.5px solid var(--line);color:var(--ink);background:linear-gradient(160deg,var(--surface),color-mix(in srgb,var(--ink) 7%,var(--surface)));
+  box-shadow:0 3px 8px rgba(0,0,0,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;transition:background .15s,border-color .15s,box-shadow .15s,color .15s}
+.peg b{font-family:var(--serif);font-size:1.3rem}
+.peg small{color:var(--muted);font-size:.66rem}
+.peg .ck{position:absolute;top:-5px;right:-5px;width:21px;height:21px;border-radius:50%;background:var(--ok);color:var(--surface);border:2px solid var(--surface);display:none;place-items:center}
+.peg.l{right:calc(50% + 79px)}
+.peg.r{left:calc(50% + 79px)}
+.peg.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),0 3px 8px rgba(0,0,0,.16)}
+.peg.on,.peg.cur{border-color:var(--accent);background:var(--accent-soft)}
+.peg.cur{animation:tnPeg 1.4s ease-in-out infinite}
+@keyframes tnPeg{50%{box-shadow:0 0 0 6px var(--accent-soft),0 3px 8px rgba(0,0,0,.16)}}
+.peg.tuned{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface));animation:none}
+.peg.tuned .ck{display:grid}
+.tn-go{display:flex;justify-content:center;margin-top:16px}
+.tn-btn{display:inline-flex;align-items:center;gap:8px;min-width:170px;justify-content:center;border-radius:99px;padding:12px 26px;font-size:1.02rem;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+.tn-btn.on{background:var(--surface);color:var(--accent);border:1.5px solid var(--accent);box-shadow:none}
+@media (prefers-reduced-motion:reduce){.tn-bub.good .halo,.peg.cur{animation:none}}
 
 /* player */
 .now{display:flex;align-items:baseline;gap:10px;margin:12px 0}
@@ -760,6 +809,15 @@ section.panel[hidden]{display:none}
 .metro-bpm span{display:block;text-align:center;font-size:.8rem;color:var(--muted)}
 .round{width:52px;height:52px;border-radius:50%;padding:0;font-size:1.6rem;line-height:1}
 .metro-row{margin:10px 0}
+.vol-row{display:flex;align-items:center;gap:10px}
+.vol-row input{flex:1;min-width:0;max-width:260px}
+.vol-row output{font-size:.85rem;color:var(--muted);min-width:3.2em;font-variant-numeric:tabular-nums}
+.mf-more{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.mf-lbl{font-size:.78rem;color:var(--muted);margin:10px 0 6px}
+.mf-snds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.mf-snds .pill{min-height:34px;padding:4px 0;font-size:.82rem;justify-content:center}
+/* the metronome panel is taller now: open it beside the buttons instead of above them */
+.ascroll #mfPanel{right:calc(100% + 12px);bottom:0;max-height:calc(100dvh - 24px);overflow:auto}
 .beats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0}
 .beats i{width:24px;height:24px;border-radius:50%;background:var(--line);transition:transform .06s,background .06s}
 .beats i.acc{box-shadow:inset 0 0 0 3px var(--accent)}
@@ -1098,6 +1156,11 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
         <div class="as-ends" aria-hidden="true"><span>慢</span><span>快</span></div>
       </div>
     </div>
+    <div class="mf-more">
+      <div class="as-speed"><label for="mfVol">音量<b id="mfVolV">100%</b></label><input type="range" id="mfVol" min="0" max="150" step="5" value="100" data-svol></div>
+      <div class="mf-lbl" id="mfSndL">音色</div>
+      <div class="mf-snds" id="mfSnd" role="group" aria-labelledby="mfSndL"></div>
+    </div>
   </div>
   <button class="mf-fab" id="mfFab" type="button" aria-expanded="false" aria-controls="mfPanel" aria-label="節拍器">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 3h5l4 18h-13z"/><path d="M12 16l5-9"/><path d="M8 16h8"/></svg>
@@ -1193,19 +1256,27 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>調音</h2><p>點每條弦聽標準音，或打開麥克風調音器，讓它告訴你偏高還是偏低。</p></header>
-      <div class="tuning" id="tuning"></div>
-      <p class="note" style="margin-top:10px">由粗到細：6 弦 E、5 弦 A、4 弦 D、3 弦 G、2 弦 B、1 弦 E。</p>
-
-      <h3 class="sub-h">麥克風調音器</h3>
-      <div class="pitch-out">
-        <div class="pitch-note" id="tNote">—</div>
-        <div class="pitch-sub" id="tSub">按下開始，彈一條空弦</div>
-        <div class="pitch-hint" id="tHint"></div>
+      <header><h2>調音</h2><p>打開麥克風調音器，彈一條空弦，指針會告訴你偏高還是偏低；在中間綠色區停住就準了。</p></header>
+      <div class="tn-stage">
+        <div class="tn-bar">
+          <div class="tn-seg" role="group" aria-label="調音模式"><button type="button" id="tAutoBtn" aria-pressed="true">自動辨識弦</button><button type="button" id="tManBtn" aria-pressed="false">指定弦</button></div>
+          <span class="tn-done" id="tDone" hidden></span>
+        </div>
+        <svg class="tn-gauge" viewBox="0 0 300 172" aria-hidden="true">
+          <defs><linearGradient id="tnTrack" x1="0" x2="1"><stop offset="0" style="stop-color:var(--warn)"/><stop offset=".5" style="stop-color:var(--ok)"/><stop offset="1" style="stop-color:var(--warn)"/></linearGradient></defs>
+          <path class="tn-arc" d="M32.5 117.3A125 125 0 0 1 267.5 117.3"/>
+          <path class="tn-okz" d="M137.8 35.6A125 125 0 0 1 162.2 35.6"/>
+          <path class="tn-trail" id="tTrail" d=""/>
+          <g id="tTicks"></g>
+          <text class="tn-note" id="tNoteT" x="150" y="128"><tspan id="tNote">—</tspan><tspan class="tn-oct" id="tOct"></tspan></text>
+          <text class="tn-str" id="tStr" x="150" y="156"></text>
+          <g class="tn-bub idle" id="tBub" transform="translate(150 35)"><circle class="halo" r="19"/><circle class="b" r="19"/><text id="tCents" dy=".36em"></text></g>
+        </svg>
+        <div class="tn-hint" id="tHint" data-s="idle" aria-live="polite"><span>按下「開始調音」，彈一條空弦</span></div>
+        <div class="tn-head" id="tuning"></div>
+        <div class="tn-go"><button class="btn tn-btn" id="tunerBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>開始調音</span></button></div>
       </div>
-      <div class="meter tight" aria-hidden="true"><div class="zone"></div><div class="dot" id="tDot"></div></div>
-      <div class="meter-labels"><span>太低・轉緊</span><span>準</span><span>太高・轉鬆</span></div>
-      <div class="row" style="margin-top:14px"><button class="btn" id="tunerBtn">開始調音</button><span class="note">安靜的環境效果最好，手機靠近音孔。</span></div>
+      <p class="note" style="margin-top:10px">點琴頭上的弦鈕：沒開調音器時會播那條弦的標準音，並改成只調那一條。安靜的環境效果最好，手機靠近音孔，一次彈一條弦。</p>
       <p class="msg note" id="tunerMsg"></p>
     </div>
 
@@ -1220,6 +1291,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       <div class="row metro-row"><span class="lbl">拍號</span><div class="row" id="mMeter" role="group" aria-label="拍號"></div></div>
       <div class="row metro-row"><span class="lbl">細分</span><div class="row" id="mSub" role="group" aria-label="細分拍"></div></div>
       <div class="row metro-row"><span class="lbl">音色</span><div class="row" id="mSnd" role="group" aria-label="節拍器音色"></div></div>
+      <div class="metro-row vol-row"><span class="lbl">音量</span><input type="range" id="mVol" min="0" max="150" step="5" value="100" aria-label="節拍器音量"><output id="mVolV" for="mVol">100%</output></div>
       <div class="beats" id="mBeats" aria-hidden="true"></div>
       <div class="row"><button class="btn" id="mBtn">開始</button><button class="btn ghost" id="mTap">點按測速</button><span class="note" id="mTapInfo"></span></div>
     </div>
@@ -1408,13 +1480,15 @@ function tone(freq,dur,type,vol){
   o.connect(g).connect(c.destination);
   o.start(t);o.stop(t+dur+0.05);
 }
+let sndGain=1; // loudness trim (sound × 音量), set by playSnd()
 // level: 2 bar start, 1 beat, 0 subdivision (true/false still mean bar start / beat)
 function click(when,level){
   if(level===true)level=2;else if(level===false||level==null)level=1;
   const c=audio(),o=c.createOscillator(),g=c.createGain();
   o.type="square";o.frequency.value=[800,1000,1500][level];
-  g.gain.setValueAtTime([0.035,0.07,0.09][level],when);
-  g.gain.exponentialRampToValueAtTime(0.001,when+0.04);
+  const v=Math.max(1e-4,[0.035,0.07,0.09][level]*sndGain);
+  g.gain.setValueAtTime(v,when);
+  g.gain.exponentialRampToValueAtTime(Math.min(0.001,v),when+0.04);
   o.connect(g).connect(c.destination);o.start(when);o.stop(when+0.05);
 }
 // muted strum ("chuck"): a short band-passed noise burst
@@ -1433,14 +1507,16 @@ const noteName=m=>NOTES[((m%12)+12)%12]+(Math.floor(m/12)-1);
 /* ---------- microphone (shared by tuner & pitch detector) ---------- */
 let micStream=null,micCtx=null,analyser=null,micBuf=null,raf=null;
 const MIC_OPTS={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
-async function openMic(){
+// guitar: 4096-sample window (enough periods of the low E) behind a 60 Hz–1.4 kHz band filter that drops rumble and hiss
+async function openMic(guitar){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){const e=new Error("unsupported");e.name="NotSupportedError";throw e;}
   micStream=await navigator.mediaDevices.getUserMedia(MIC_OPTS);
   micCtx=new AC();
-  const src=micCtx.createMediaStreamSource(micStream);
-  analyser=micCtx.createAnalyser();analyser.fftSize=2048;
+  let node=micCtx.createMediaStreamSource(micStream);
+  analyser=micCtx.createAnalyser();analyser.fftSize=guitar?4096:2048;
   micBuf=new Float32Array(analyser.fftSize);
-  src.connect(analyser);
+  if(guitar)[["highpass",60],["lowpass",1400]].forEach(([t,f])=>{const b=micCtx.createBiquadFilter();b.type=t;b.frequency.value=f;node.connect(b);node=b});
+  node.connect(analyser);
 }
 function closeMic(){
   if(raf)cancelAnimationFrame(raf);raf=null;
@@ -1693,59 +1769,137 @@ drawChord("C");
 
 /* ---------- guitar: tuning ---------- */
 const TUNE=[["E","6 弦",40],["A","5 弦",45],["D","4 弦",50],["G","3 弦",55],["B","2 弦",59],["E","1 弦",64]];
-const strBtns=[];
-TUNE.forEach(t=>{
-  const b=el("button","string-btn");
-  b.append(el("b","",t[0]),el("small","",t[1]));
-  b.addEventListener("click",()=>{
-    pluck(midiFreq(t[2]),audio().currentTime,0.5);
-    b.classList.add("on");setTimeout(()=>b.classList.remove("on"),500);
+// 3+3 headstock: 4·5·6 弦 on the left (top→bottom), 3·2·1 弦 on the right; each string runs from its post to the nut
+const strBtns=[],strLines=[];
+(()=>{
+  const NS="http://www.w3.org/2000/svg",Y=[150,100,50,50,100,150],NUT=[53,62,71,79,88,97],W=[2.4,2,1.7,1.3,1.05,.9];
+  const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 150 262");svg.setAttribute("aria-hidden","true");
+  svg.innerHTML='<defs><linearGradient id="tnWood" x1="0" x2="1"><stop offset="0" stop-color="#5A3318"/><stop offset=".45" stop-color="#8A5428"/><stop offset="1" stop-color="#5A3318"/></linearGradient>'
+    +'<linearGradient id="tnFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E2018"/><stop offset="1" stop-color="#1B130E"/></linearGradient>'
+    +'<linearGradient id="tnMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F4F2"/><stop offset=".55" stop-color="#B9B7B2"/><stop offset="1" stop-color="#85837E"/></linearGradient>'
+    +'<radialGradient id="tnPost" cx=".35" cy=".35"><stop offset="0" stop-color="#FFF"/><stop offset=".6" stop-color="#BDBAB4"/><stop offset="1" stop-color="#77746E"/></radialGradient>'
+    +'<filter id="tnSh" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".3"/></filter></defs>';
+  const sv=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.append(e);return e};
+  TUNE.forEach((t,i)=>{const l=i<3;sv("rect",{x:l?-2:126,y:Y[i]-4.5,width:26,height:9,rx:3,fill:"url(#tnMetal)"})});
+  sv("path",{fill:"url(#tnWood)",filter:"url(#tnSh)",d:"M44 262L36 230Q18 166 20 66Q22 20 46 9Q75 0 104 9Q128 20 130 66Q132 166 114 230L106 262Z"});
+  sv("path",{fill:"url(#tnFace)",d:"M48 258L41 228Q24 166 26 68Q28 26 49 15Q75 7 101 15Q122 26 124 68Q126 166 109 228L102 258Z"});
+  sv("path",{fill:"none",stroke:"#C9A36B","stroke-opacity":.35,"stroke-width":.8,d:"M60 34Q75 28 90 34"}); // little inlay line
+  sv("path",{fill:"#0E0A08",stroke:"#C9A36B","stroke-opacity":.4,"stroke-width":.8,d:"M67 236Q66 222 75 216Q84 222 83 236Z"}); // truss rod cover
+  TUNE.forEach((t,i)=>{const x=i<3?40:110;
+    strLines.push(sv("line",{class:"tn-s",x1:x,y1:Y[i],x2:NUT[i],y2:262,"stroke-width":W[i],"stroke-linecap":"round"}));
+    sv("circle",{cx:x,cy:Y[i],r:6.5,fill:"url(#tnPost)",stroke:"#55524D","stroke-width":.6});sv("circle",{cx:x,cy:Y[i],r:1.8,fill:"#3A3834"})});
+  sv("rect",{x:44,y:252,width:62,height:10,rx:1.5,fill:"#EFE6D2",stroke:"#BFB49C","stroke-width":.6}); // nut
+  $("#tuning").append(svg);
+  TUNE.forEach((t,i)=>{
+    const b=el("button","peg "+(i<3?"l":"r"));b.type="button";b.style.top=Y[i]+"px";
+    const ck=el("i","ck");ck.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+    b.append(el("b","",t[0]),el("small","",t[1]),ck);
+    b.setAttribute("aria-label",t[1]+" "+t[0]);
+    b.addEventListener("click",()=>{
+      tunerPick(i);
+      if(!tunerOn){pluck(midiFreq(t[2]),audio().currentTime,0.5);b.classList.add("on");setTimeout(()=>b.classList.remove("on"),500)}
+    });
+    $("#tuning").append(b);strBtns.push(b);
   });
-  $("#tuning").append(b);strBtns.push(b);
-});
+})();
 
 /* ---------- guitar: microphone tuner ---------- */
-let tunerOn=false,tHist=[];
+// YIN pitch detection (de Cheveigné & Kawahara 2002): the cumulative-mean-normalised difference picks the first
+// dip under the threshold, so a strong 2nd harmonic of the low strings doesn't read as an octave too high.
+let yinD=new Float32Array(0);
+function yin(buf,sr,fMin,fMax){
+  let rms=0;for(let i=0;i<buf.length;i++)rms+=buf[i]*buf[i];
+  if(Math.sqrt(rms/buf.length)<0.006)return 0;
+  const W=buf.length>>1,tMin=Math.max(2,Math.floor(sr/fMax)),tMax=Math.min(W-2,Math.ceil(sr/fMin));
+  if(yinD.length<tMax+2)yinD=new Float32Array(tMax+2);
+  const d=yinD;let run=0,tau=-1;d[0]=1;
+  for(let t=1;t<=tMax+1;t++){let s=0;for(let j=0;j<W;j++){const x=buf[j]-buf[j+t];s+=x*x}run+=s;d[t]=run?s*t/run:1}
+  for(let t=tMin;t<=tMax;t++)if(d[t]<0.15){while(t<tMax&&d[t+1]<d[t])t++;tau=t;break}
+  if(tau<0){let b=tMin;for(let t=tMin;t<=tMax;t++)if(d[t]<d[b])b=t;if(d[b]>0.3)return 0;tau=b}
+  const a=d[tau-1],b=d[tau],c=d[tau+1],den=a+c-2*b;
+  return sr/(den?tau+(a-c)/(2*den):tau);
+}
+// tAuto: follow whichever string is played, else tune tSel. A string counts as tuned after holding ±4 音分 for half a second.
+let tunerOn=false,tHist=[],tAuto=true,tSel=0,tCur=-1,tCents=null,tShow=0,tGood=0,tPrev=0,tQuiet=0,tHz=0;
+const tTuned=new Set();
 const median=a=>{const s=a.slice().sort((x,y)=>x-y);return s[s.length>>1]};
-function tunerLoop(){
-  const f=readPitch();
-  if(f>60&&f<1000){
-    tHist.push(freqMidi(f));if(tHist.length>7)tHist.shift();
-    const m=median(tHist);
-    let si=0;OPEN.forEach((o,i)=>{if(Math.abs(m-o)<Math.abs(m-OPEN[si]))si=i});
-    const cents=Math.round((m-OPEN[si])*100),t=TUNE[si];
-    $("#tNote").textContent=t[0];
-    $("#tSub").textContent=t[1]+"　目標 "+midiFreq(OPEN[si]).toFixed(1)+" Hz　你 "+midiFreq(m).toFixed(1)+" Hz";
-    const ok=Math.abs(cents)<=5;
-    $("#tHint").textContent=Math.abs(cents)>100?"差很多，先把弦大致轉到接近 "+t[0]+" 再微調"
-      :ok?"準了！":cents<0?"偏低 "+(-cents)+" 音分，把弦轉緊一點":"偏高 "+cents+" 音分，把弦轉鬆一點";
-    const dot=$("#tDot");dot.style.left=(50+Math.max(-50,Math.min(50,cents)))+"%";
-    dot.classList.toggle("good",ok);
-    strBtns.forEach((b,i)=>{b.classList.toggle("match",i===si&&!ok);b.classList.toggle("tuned",i===si&&ok)});
-  }else{
-    tHist=[];
-    $("#tHint").textContent="";$("#tSub").textContent="彈一條空弦，讓它響久一點";
-    $("#tDot").classList.remove("good");
+(()=>{ // gauge ticks every 5 音分, labelled every 25 (±50 → ±70°)
+  const g=$("#tTicks"),NS="http://www.w3.org/2000/svg",P=(r,a)=>[(150+r*Math.sin(a)).toFixed(1),(160-r*Math.cos(a)).toFixed(1)];
+  for(let c=-50;c<=50;c+=5){
+    const a=c*1.4*Math.PI/180,big=c%25===0,[x1,y1]=P(big?103:109,a),[x2,y2]=P(115,a);
+    const l=document.createElementNS(NS,"line");
+    Object.entries({x1,y1,x2,y2,class:"tn-tick"+(big?" big":"")}).forEach(([k,v])=>l.setAttribute(k,v));g.append(l);
+    if(big){const [x,y]=P(94,a),t=document.createElementNS(NS,"text");t.setAttribute("x",x);t.setAttribute("y",+y+3.5);t.setAttribute("class","tn-lab");t.textContent=c>0?"+"+c:c;g.append(t)}
   }
+})();
+function tunerPick(i){tSel=i;tunerAuto(false)}
+function tunerAuto(v){
+  tAuto=v;$("#tAutoBtn").setAttribute("aria-pressed",v);$("#tManBtn").setAttribute("aria-pressed",!v);
+  if(!v&&tCents==null&&tCur>=0)tSel=tCur;
+  tunerPaint();
+}
+$("#tAutoBtn").onclick=()=>tunerAuto(true);
+$("#tManBtn").onclick=()=>tunerAuto(false);
+function ding(){
+  const c=audio(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime;
+  o.frequency.value=1760;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.08,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+0.35);
+  o.connect(g).connect(c.destination);o.start(t);o.stop(t+0.4);
+}
+function tunerPaint(){
+  const i=tCents!=null?tCur:tAuto?-1:tSel,c=tCents,good=c!=null&&Math.abs(c)<=4;
+  $("#tNote").textContent=i<0?"—":TUNE[i][0];$("#tOct").textContent=i<0?"":Math.floor(OPEN[i]/12)-1;
+  $("#tNoteT").classList.toggle("good",good);
+  $("#tStr").textContent=i<0?"":TUNE[i][1]+"　目標 "+midiFreq(OPEN[i]).toFixed(1)+" Hz"+(c!=null?"　你 "+tHz.toFixed(1)+" Hz":"");
+  const a=Math.max(-50,Math.min(50,c==null?0:tShow))*1.4*Math.PI/180,x=(150+125*Math.sin(a)).toFixed(1),y=(160-125*Math.cos(a)).toFixed(1),bub=$("#tBub");
+  bub.setAttribute("transform","translate("+x+" "+y+")");
+  bub.classList.toggle("idle",c==null);bub.classList.toggle("good",good);bub.classList.toggle("off",c!=null&&!good);
+  $("#tCents").textContent=c==null?"":good?"✓":(c>0?"+":"")+Math.round(c);
+  const tr=$("#tTrail");tr.setAttribute("d",c==null||Math.abs(a)<0.01?"":"M150 35A125 125 0 0 "+(a>0?1:0)+" "+x+" "+y);tr.classList.toggle("good",good);
+  const s=c==null?"idle":good?"good":Math.abs(c)>100?"far":c<0?"low":"high",hint=$("#tHint");hint.dataset.s=s;
+  hint.firstChild.textContent=c==null?(!tunerOn?"按下「開始調音」，彈一條空弦":tTuned.size===6?"六條弦都調好了！":"彈一條空弦，讓它響久一點")
+    :s==="far"?"差很多，先把弦大致轉到接近 "+TUNE[i][0]
+    :good?"準了！":c<0?"偏低 "+Math.round(-c)+" 音分 · 把弦轉緊一點":"偏高 "+Math.round(c)+" 音分 · 把弦轉鬆一點";
+  if(c==null&&tunerOn&&tTuned.size===6)hint.dataset.s="good";
+  const done=$("#tDone");done.hidden=!tunerOn;done.textContent="已調好 "+tTuned.size+" / 6";
+  strBtns.forEach((b,k)=>{
+    b.classList.toggle("cur",k===tCur&&c!=null&&!tTuned.has(k));b.classList.toggle("tuned",tTuned.has(k));
+    b.classList.toggle("sel",!tAuto&&k===tSel);
+    strLines[k].classList.toggle("cur",k===tCur&&c!=null);strLines[k].classList.toggle("tuned",tTuned.has(k));
+  });
+}
+function tunerLoop(now){
+  analyser.getFloatTimeDomainData(micBuf);
+  const f=yin(micBuf,micCtx.sampleRate,70,1000),dt=tPrev?Math.min(100,now-tPrev):16;tPrev=now;
+  if(f){
+    tQuiet=0;tHist.push(freqMidi(f));if(tHist.length>5)tHist.shift();
+    const m=median(tHist);
+    let si=tSel;if(tAuto){si=0;OPEN.forEach((o,k)=>{if(Math.abs(m-o)<Math.abs(m-OPEN[si]))si=k})}
+    if(si!==tCur||tCents==null){tShow=(m-OPEN[si])*100;tGood=0}
+    tCur=si;tCents=(m-OPEN[si])*100;tHz=midiFreq(m);
+    if(Math.abs(tCents)<=4){
+      tGood+=dt;
+      if(tGood>=500&&!tTuned.has(si)&&tHist.length>=5){tTuned.add(si);ding();if(navigator.vibrate)navigator.vibrate(40)}
+    }else{tGood=0;if(Math.abs(tCents)>10&&tHist.length>=5)tTuned.delete(si)}
+  }else if(++tQuiet>15){tHist=[];tCents=null;tGood=0}
+  if(tCents!=null)tShow+=(tCents-tShow)*0.25; // needle eases toward the reading
+  tunerPaint();
   raf=requestAnimationFrame(tunerLoop);
 }
 async function startTuner(){
   stopSing();stopKara();
   try{
-    await openMic();tunerOn=true;
-    $("#tunerBtn").textContent="停止調音";$("#tunerMsg").textContent="";
-    $("#tSub").textContent="彈一條空弦，讓它響久一點";
-    tunerLoop();
+    await openMic(true);tunerOn=true;tPrev=0;
+    $("#tunerBtn span").textContent="停止調音";$("#tunerBtn").classList.add("on");$("#tunerMsg").textContent="";tunerPaint();
+    raf=requestAnimationFrame(tunerLoop);
   }catch(e){closeMic();micError($("#tunerMsg"),e)}
 }
 function stopTuner(){
   if(!tunerOn)return;
-  tunerOn=false;closeMic();tHist=[];
-  $("#tunerBtn").textContent="開始調音";
-  $("#tNote").textContent="—";$("#tSub").textContent="按下開始，彈一條空弦";$("#tHint").textContent="";
-  $("#tDot").style.left="50%";$("#tDot").classList.remove("good");
-  strBtns.forEach(b=>b.classList.remove("match","tuned"));
+  tunerOn=false;closeMic();tHist=[];tCents=null;tCur=-1;tGood=0;tTuned.clear();
+  $("#tunerBtn span").textContent="開始調音";$("#tunerBtn").classList.remove("on");
+  tunerPaint();
 }
+tunerPaint();
 $("#tunerBtn").onclick=()=>tunerOn?stopTuner():startTuner();
 
 /* ---------- guitar: progression player (Web Audio lookahead scheduler) ---------- */
@@ -2006,7 +2160,6 @@ const SUBS=[{n:"無",k:1},{n:"八分",k:2},{n:"三連音",k:3},{n:"十六分",k:
 // Metronome sounds, all synthesized. fn(time, level 0–2, beat index in bar)
 let noiseBuf=null;
 function noise(c){if(!noiseBuf||noiseBuf.sampleRate!==c.sampleRate){const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;noiseBuf=b}return noiseBuf}
-let sndGain=1; // per-sound loudness trim, set by playSnd()
 function env(c,t,peak,dur){const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,peak*sndGain),t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);g.connect(c.destination);return g}
 function tn(c,t,type,f,dest,dur,f2){const o=c.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);o.connect(dest);o.start(t);o.stop(t+dur+0.02)}
 function nz(c,t,dest,dur,type,freq,q){const s=c.createBufferSource(),f=c.createBiquadFilter();s.buffer=noise(c);f.type=type;f.frequency.value=freq;if(q)f.Q.value=q;s.connect(f).connect(dest);s.start(t,Math.random()*0.5,dur+0.02)}
@@ -2025,9 +2178,11 @@ const MSOUNDS=[
   {n:"拍手",k:1,fn:(t,lv)=>{const c=audio(),v=VOL[lv];[0,0.011,0.022].forEach((d,i)=>nz(c,t+d,env(c,t+d,(i===2?0.7:0.45)*v,i===2?0.15:0.012),i===2?0.15:0.012,"bandpass",1200,1.2))}},
   {n:"邊擊",k:0.35,fn:(t,lv)=>{const c=audio();tn(c,t,"triangle",[1300,1700,2000][lv],env(c,t,0.35*VOL[lv],0.03),0.03);nz(c,t,env(c,t,0.25*VOL[lv],0.015),0.015,"highpass",3000)}}
 ];
-function playSnd(s,t,lv,beat){sndGain=s.k;s.fn(t,lv,beat);sndGain=1}
-const ms=Object.assign({bpm:80,meter:2,sub:0,snd:0},load("pr_metro",{}));
-ms.bpm=Math.max(30,Math.min(240,ms.bpm|0||80));if(!METERS[ms.meter])ms.meter=2;if(!SUBS[ms.sub])ms.sub=0;if(!MSOUNDS[ms.snd])ms.snd=0;
+// vol: 音量 in % (0–150, default 100); the curve makes the slider feel even
+function playSnd(s,t,lv,beat,vol){vol=vol==null?100:vol;if(vol<=0)return;sndGain=s.k*Math.pow(vol/100,1.5);s.fn(t,lv,beat);sndGain=1}
+const volTxt=v=>v+"%";
+const ms=Object.assign({bpm:80,meter:2,sub:0,snd:0,vol:100},load("pr_metro",{}));
+ms.bpm=Math.max(30,Math.min(240,ms.bpm|0||80));if(!METERS[ms.meter])ms.meter=2;if(!SUBS[ms.sub])ms.sub=0;if(!MSOUNDS[ms.snd])ms.snd=0;ms.vol=Math.max(0,Math.min(150,+ms.vol||0));
 let mOn=false,mSched=null,mNext=0,mTick=0,mTimers=[],taps=[];
 let songMetroOff=null; // stops whichever song-card metronome is running
 function mSave(){save("pr_metro",ms)}
@@ -2042,13 +2197,16 @@ SUBS.forEach((s,i)=>{const b=el("button","pill",s.n);b.setAttribute("aria-presse
   b.onclick=()=>{ms.sub=i;mSave();$("#mSub").querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i));mTick=0};$("#mSub").append(b)});
 MSOUNDS.forEach((s,i)=>{const b=el("button","pill",s.n);b.setAttribute("aria-pressed",i===ms.snd);
   b.onclick=()=>{ms.snd=i;mSave();$("#mSnd").querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i));
-    if(!mOn){const t=audio().currentTime+0.03;playSnd(s,t,2,0);playSnd(s,t+0.3,1,1)}}; // short preview when stopped
+    if(!mOn){const t=audio().currentTime+0.03;playSnd(s,t,2,0,ms.vol);playSnd(s,t+0.3,1,1,ms.vol)}}; // short preview when stopped
   $("#mSnd").append(b)});
+$("#mVol").value=ms.vol;$("#mVolV").textContent=volTxt(ms.vol);
+$("#mVol").addEventListener("input",e=>{ms.vol=+e.target.value;$("#mVolV").textContent=volTxt(ms.vol);mSave()});
+$("#mVol").addEventListener("change",()=>{if(!mOn)playSnd(MSOUNDS[ms.snd],audio().currentTime+0.03,1,0,ms.vol)});
 function mSchedule(t){
   const m=METERS[ms.meter],k=SUBS[ms.sub].k,pos=mTick%k,beat=Math.floor(mTick/k)%m.beats;
   let lv=0;
   if(pos===0)lv=beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1;
-  playSnd(MSOUNDS[ms.snd],t,lv,beat);
+  playSnd(MSOUNDS[ms.snd],t,lv,beat,ms.vol);
   if(pos===0){const c=audio(),id=setTimeout(()=>{mTimers=mTimers.filter(x=>x!==id);
     if(mOn)[...$("#mBeats").children].forEach((d,i)=>d.classList.toggle("on",i===beat))},Math.max(0,(t-c.currentTime)*1000));mTimers.push(id)}
 }
@@ -2271,7 +2429,24 @@ const FOLD_DEF={kara:true}; // sections that start folded
 // count-in before 跳到 / 小節循環 (on or off for each), shared by all songs
 const ciPref=Object.assign({jump:true,loop:true},load("pr_countin",{}));
 // sound of the song-card metronome and the count-in, shared by all songs (starts from the 常用 choice)
-let songSnd=(v=>MSOUNDS[v]?v:ms.snd)(load("pr_song_snd",ms.snd));
+let songSnd=(v=>MSOUNDS[v]?v:ms.snd)(load("pr_song_snd",ms.snd)),songVol=Math.max(0,Math.min(150,+load("pr_song_vol",100)||0));
+function setSongSnd(i){
+  songSnd=i;save("pr_song_snd",i);
+  document.querySelectorAll("button[data-snd]").forEach(x=>x.setAttribute("aria-pressed",+x.dataset.snd===i));
+}
+function setSongVol(v){
+  songVol=v;save("pr_song_vol",v);
+  document.querySelectorAll("input[data-svol]").forEach(x=>{if(+x.value!==v)x.value=v;x.setAttribute("aria-valuetext",volTxt(v));if(x.nextSibling)x.nextSibling.textContent=volTxt(v)});
+}
+function songPreview(vol){const s=MSOUNDS[songSnd],t=audio().currentTime+0.03;playSnd(s,t,2,0,vol);playSnd(s,t+0.3,1,1,vol)}
+// one volume slider (with its % readout) for the song metronome
+function songVolRow(cls){
+  const row=el("div",cls),r=el("input"),o=el("output","",volTxt(songVol));
+  r.type="range";r.min=0;r.max=150;r.step=5;r.value=songVol;r.dataset.svol="";r.setAttribute("aria-label","節拍器音量");
+  r.addEventListener("input",()=>setSongVol(+r.value));
+  r.addEventListener("change",()=>{if(!songMetroOff)songPreview(songVol)});
+  row.append(el("span","lbl","音量"),r,o);return row;
+}
 function foldSection(kind,label,...content){
   const wrap=el("div","fold-sec"),btn=el("button","fold-h"),body=el("div","fold-body");
   btn.type="button";btn.dataset.kind=kind;body.id="fold-"+(++foldSeq);btn.setAttribute("aria-controls",body.id);
@@ -2353,7 +2528,7 @@ function player(src,bpm){
     const c=audio();if(pmNext<c.currentTime)pmNext=c.currentTime+0.02;
     while(pmNext<c.currentTime+LOOKAHEAD){
       const m=METERS[pmMeter],beat=pmTick%m.beats,t=pmNext;
-      playSnd(MSOUNDS[songSnd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat);
+      playSnd(MSOUNDS[songSnd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat,songVol);
       const id=setTimeout(()=>{pmTimers=pmTimers.filter(x=>x!==id);
         if(pmOn)[...pmDots.children].forEach((d,i)=>d.classList.toggle("on",i===beat))},Math.max(0,(t-c.currentTime)*1000));
       pmTimers.push(id);pmNext+=60/pmBpm();pmTick++;
@@ -2377,9 +2552,7 @@ function player(src,bpm){
   pmRow.append(pmBtn,pmTempo);pmDraw();
   const pmSnds=el("div","row");
   MSOUNDS.forEach((s,i)=>{const b=el("button","pill",s.n);b.dataset.snd=i;b.setAttribute("aria-pressed",i===songSnd);
-    b.onclick=()=>{songSnd=i;save("pr_song_snd",i);
-      document.querySelectorAll(".player button[data-snd]").forEach(x=>x.setAttribute("aria-pressed",+x.dataset.snd===i));
-      if(!pmOn){const t=audio().currentTime+0.03;playSnd(s,t,2,0);playSnd(s,t+0.3,1,1)}}; // short preview when stopped
+    b.onclick=()=>{setSongSnd(i);if(!pmOn)songPreview(songVol)}; // short preview when stopped
     pmSnds.append(b)});
   const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
   speeds.append(dial,range,presets);showSpeed();
@@ -2444,7 +2617,7 @@ function player(src,bpm){
     if(!ciPref[kind]){au.play();return}
     const c=audio(),beat=(barT(n+1)-barT(n))/4/ratio,t0=c.currentTime+0.15;
     for(let k=0;k<4;k++){const t=t0+k*beat;
-      ciTimers.push(setTimeout(()=>{playSnd(MSOUNDS[songSnd],t,k?1:2,k);
+      ciTimers.push(setTimeout(()=>{playSnd(MSOUNDS[songSnd],t,k?1:2,k,songVol);
         ciTimers.push(setTimeout(()=>{nowEl.textContent="預備拍 "+"●".repeat(k+1)+"○".repeat(3-k)},Math.max(0,(t-c.currentTime)*1000)))},
         Math.max(0,(t-c.currentTime-0.08)*1000)))}
     ciTimers.push(setTimeout(()=>{ciTimers=[];ciOwn=true;au.play();ciOwn=false},Math.max(0,(t0+4*beat-c.currentTime)*1000)));
@@ -2492,7 +2665,7 @@ function player(src,bpm){
   };
   const barSec=foldSection("bars","小節跳轉",jumpRow,nowRow,barNote);
   renderLoops();
-  box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmSnds,pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
+  box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmSnds,songVolRow("row vol-row"),pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
   syncBars();
   return box;
 }
@@ -2989,9 +3162,16 @@ renderSongs();
     const l=on?"暫停節拍器":"開始節拍器";play.setAttribute("aria-label",l);play.title=l;
     song.textContent=p?"「"+p.closest(".song").querySelector("h3").textContent.split(/\s*\+\s*/)[0]+"」":"";
     if(p){range.value=p._metro.bpm();lv.textContent="♩="+p._metro.bpm();range.setAttribute("aria-valuetext",lv.textContent)}
+    $("#mfVol").value=songVol;$("#mfVolV").textContent=volTxt(songVol);
   }
   play.onclick=()=>{const p=target();if(p)p._metro.toggle()};
   range.addEventListener("input",()=>{const p=target();if(p)p._metro.set(+range.value)});
+  // 音量 / 音色 are shared by every song's metronome and the count-in
+  const vol=$("#mfVol");vol.value=songVol;$("#mfVolV").textContent=volTxt(songVol);
+  vol.addEventListener("input",()=>{setSongVol(+vol.value);$("#mfVolV").textContent=volTxt(songVol)});
+  vol.addEventListener("change",()=>{if(!songMetroOff)songPreview(songVol)});
+  MSOUNDS.forEach((s,i)=>{const b=el("button","pill",s.n);b.type="button";b.dataset.snd=i;b.setAttribute("aria-pressed",i===songSnd);
+    b.onclick=()=>{setSongSnd(i);if(!songMetroOff)songPreview(songVol)};$("#mfSnd").append(b)});
   document.addEventListener("pmchange",render);
   // only one of the two panels open at a time
   function setOpen(v){
@@ -5048,6 +5228,17 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-18.3",class:true,title:"節拍器可以調音量和音色",items:[
+    ["節拍器音量","歌曲卡片的節拍器多了「音量」，覺得太吵或聽不清楚都可以調；跳到某段前的預備拍也跟著這個音量。"],
+    ["右下角也能調","右下角的節拍器按鈕打開後，除了速度，現在也可以調音量、換音色，不用捲回歌曲卡片。"]
+  ]},
+  {v:"2026-10-18.2",title:"調音器改版、節拍器音量",items:[
+    ["新的調音畫面","像調音 App 一樣的弧形指針，中間綠色區就是準；琴頭上的六個弦鈕會顯示正在調哪一條、哪幾條已經調好（打勾）。"],
+    ["更準的聽音","換成專門抓樂器音高的方法，低音的 6 弦、5 弦比較不會被聽成高八度，也會濾掉環境的低頻雜音和嘶嘶聲，指針更穩。"],
+    ["調好會提示","在準的位置停住半秒，會「叮」一聲並打勾；六條都調好會告訴你。"],
+    ["自動或指定弦","預設彈哪條就調哪條；切到「指定弦」或點琴頭上的弦鈕，就只調那一條（沒開調音器時也會播那條弦的標準音）。"],
+    ["節拍器音量","吉他 › 常用的節拍器可以調音量了（0–150%）。"]
+  ]},
   {v:"2026-10-18.1",title:"吉他練習追蹤",items:[
     ["自動記錄練習時間","用節拍器、跟著節拍換和弦、示範音檔、自動捲譜、調音器或錄音時，會自動記下練了多久；不用工具時可以按「開始練習計時」。"],
     ["練習熱力圖","吉他 › 學習的「練習追蹤」用格子顯示每天練了多久，顏色越深練越久；也看得到今天、這週、連續天數和總練習時間。"],
