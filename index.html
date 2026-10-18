@@ -770,7 +770,9 @@ section.panel[hidden]{display:none}
 @keyframes tnPeg{50%{box-shadow:0 0 0 6px var(--accent-soft),0 3px 8px rgba(0,0,0,.16)}}
 .peg.tuned{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface));animation:none}
 .peg.tuned .ck{display:grid}
-.tn-go{display:flex;justify-content:center;margin-top:16px}
+.tn-go{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tn-reset{display:inline-flex;align-items:center;gap:6px;border-radius:99px;min-height:44px;padding:8px 18px}
+.tn-reset[hidden]{display:none}
 .tn-btn{display:inline-flex;align-items:center;gap:8px;min-width:170px;justify-content:center;border-radius:99px;padding:12px 26px;font-size:1.02rem;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
 .tn-btn.on{background:var(--surface);color:var(--accent);border:1.5px solid var(--accent);box-shadow:none}
 @media (prefers-reduced-motion:reduce){.tn-bub.good .halo,.peg.cur{animation:none}}
@@ -1274,7 +1276,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
         </svg>
         <div class="tn-hint" id="tHint" data-s="idle" aria-live="polite"><span>按下「開始調音」，彈一條空弦</span></div>
         <div class="tn-head" id="tuning"></div>
-        <div class="tn-go"><button class="btn tn-btn" id="tunerBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>開始調音</span></button></div>
+        <div class="tn-go"><button class="btn tn-btn" id="tunerBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>開始調音</span></button><button class="btn ghost tn-reset" id="tReset" type="button" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>重新開始</button></div>
       </div>
       <p class="note" style="margin-top:10px">點琴頭上的弦鈕：沒開調音器時會播那條弦的標準音，並改成只調那一條。安靜的環境效果最好，手機靠近音孔，一次彈一條弦。</p>
       <p class="msg note" id="tunerMsg"></p>
@@ -1819,7 +1821,8 @@ function yin(buf,sr,fMin,fMax){
   const a=d[tau-1],b=d[tau],c=d[tau+1],den=a+c-2*b;
   return sr/(den?tau+(a-c)/(2*den):tau);
 }
-// tAuto: follow whichever string is played, else tune tSel. A string counts as tuned after holding ±4 音分 for half a second.
+// tAuto: follow whichever string is played, else tune tSel. A string is checked after holding ±4 音分 for 0.6 s
+// and stays checked (also after 停止調音) until 重新開始.
 let tunerOn=false,tHist=[],tAuto=true,tSel=0,tCur=-1,tCents=null,tShow=0,tGood=0,tPrev=0,tQuiet=0,tHz=0;
 const tTuned=new Set();
 const median=a=>{const s=a.slice().sort((x,y)=>x-y);return s[s.length>>1]};
@@ -1839,6 +1842,7 @@ function tunerAuto(v){
   tunerPaint();
 }
 $("#tAutoBtn").onclick=()=>tunerAuto(true);
+$("#tReset").onclick=()=>{tTuned.clear();tGood=0;tunerPaint()};
 $("#tManBtn").onclick=()=>tunerAuto(false);
 function ding(){
   const c=audio(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime;
@@ -1858,9 +1862,10 @@ function tunerPaint(){
   const s=c==null?"idle":good?"good":Math.abs(c)>100?"far":c<0?"low":"high",hint=$("#tHint");hint.dataset.s=s;
   hint.firstChild.textContent=c==null?(!tunerOn?"按下「開始調音」，彈一條空弦":tTuned.size===6?"六條弦都調好了！":"彈一條空弦，讓它響久一點")
     :s==="far"?"差很多，先把弦大致轉到接近 "+TUNE[i][0]
-    :good?"準了！":c<0?"偏低 "+Math.round(-c)+" 音分 · 把弦轉緊一點":"偏高 "+Math.round(c)+" 音分 · 把弦轉鬆一點";
+    :good?(tTuned.has(i)?"準了！這條弦調好了":"準了！保持住…"):c<0?"偏低 "+Math.round(-c)+" 音分 · 把弦轉緊一點":"偏高 "+Math.round(c)+" 音分 · 把弦轉鬆一點";
   if(c==null&&tunerOn&&tTuned.size===6)hint.dataset.s="good";
-  const done=$("#tDone");done.hidden=!tunerOn;done.textContent="已調好 "+tTuned.size+" / 6";
+  const done=$("#tDone");done.hidden=!tunerOn&&!tTuned.size;done.textContent="已調好 "+tTuned.size+" / 6";
+  $("#tReset").hidden=!tTuned.size;
   strBtns.forEach((b,k)=>{
     b.classList.toggle("cur",k===tCur&&c!=null&&!tTuned.has(k));b.classList.toggle("tuned",tTuned.has(k));
     b.classList.toggle("sel",!tAuto&&k===tSel);
@@ -1878,8 +1883,8 @@ function tunerLoop(now){
     tCur=si;tCents=(m-OPEN[si])*100;tHz=midiFreq(m);
     if(Math.abs(tCents)<=4){
       tGood+=dt;
-      if(tGood>=500&&!tTuned.has(si)&&tHist.length>=5){tTuned.add(si);ding();if(navigator.vibrate)navigator.vibrate(40)}
-    }else{tGood=0;if(Math.abs(tCents)>10&&tHist.length>=5)tTuned.delete(si)}
+      if(tGood>=600&&!tTuned.has(si)&&tHist.length>=5){tTuned.add(si);ding();if(navigator.vibrate)navigator.vibrate(40)}
+    }else tGood=0;
   }else if(++tQuiet>15){tHist=[];tCents=null;tGood=0}
   if(tCents!=null)tShow+=(tCents-tShow)*0.25; // needle eases toward the reading
   tunerPaint();
@@ -1895,7 +1900,7 @@ async function startTuner(){
 }
 function stopTuner(){
   if(!tunerOn)return;
-  tunerOn=false;closeMic();tHist=[];tCents=null;tCur=-1;tGood=0;tTuned.clear();
+  tunerOn=false;closeMic();tHist=[];tCents=null;tCur=-1;tGood=0;
   $("#tunerBtn span").textContent="開始調音";$("#tunerBtn").classList.remove("on");
   tunerPaint();
 }
@@ -5228,6 +5233,10 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-18.4",title:"調音打勾會保留",items:[
+    ["調好就一直打勾","在準的位置停住約 0.6 秒，那條弦就打勾，之後不會因為又彈偏而消失，停止調音也還在。"],
+    ["重新開始","按調音器下方的「重新開始」，所有勾勾清掉，可以從頭再調一次。"]
+  ]},
   {v:"2026-10-18.3",class:true,title:"節拍器可以調音量和音色",items:[
     ["節拍器音量","歌曲卡片的節拍器多了「音量」，覺得太吵或聽不清楚都可以調；跳到某段前的預備拍也跟著這個音量。"],
     ["右下角也能調","右下角的節拍器按鈕打開後，除了速度，現在也可以調音量、換音色，不用捲回歌曲卡片。"]
