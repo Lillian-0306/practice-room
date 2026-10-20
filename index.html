@@ -1482,11 +1482,11 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音。按「出題」會先給你 Do，再播一個音，或同時播兩、三個音，請點出聽到的所有唱名（不用照順序）。</p></header>
+      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音。按「出題」會先給你 Do，再播一個音，或同時播兩、三個音。一個音的題目點了就對答案；兩、三個音的題目點完所有唱名（不用照順序）再按「送出」。</p></header>
       <div class="row metro-row"><span class="lbl">音域</span><div class="row" id="earRange" role="group" aria-label="音域"></div></div>
       <div class="row metro-row"><span class="lbl">題目</span><div class="row" id="earCount" role="group" aria-label="每題幾個音"></div></div>
       <div class="piano" id="piano"><div class="keys" id="keys"></div></div>
-      <div class="row" style="margin-top:14px"><button class="btn" id="quizBtn">出題</button><button class="btn ghost" id="replayBtn">再聽一次</button><span class="score" id="score">答對 0 / 0</span></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="quizBtn">出題</button><button class="btn" id="earSubmit" type="button" hidden disabled>送出</button><button class="btn ghost" id="replayBtn">再聽一次</button><span class="score" id="score">答對 0 / 0</span></div>
       <p class="msg" id="quizMsg"></p>
     </div>
 
@@ -4515,10 +4515,12 @@ const SOLF=["Do","Do♯","Re","Re♯","Mi","Fa","Fa♯","Sol","Sol♯","La","La�
 const solf=m=>SOLF[(m-60)%12],solfFull=m=>{const k=(m-60)%12;return SOLF[k]+(FLAT[k]?"（"+FLAT[k]+"）":"")};
 const WHITE=[60,62,64,65,67,69,71,72],BLACK=[[61,0],[63,1],[66,3],[68,4],[70,5]]; // [midi, white key it sits after]
 const ear=Object.assign({chrom:false,count:1},load("pr_ear",{}));ear.chrom=!!ear.chrom;if(![1,2,3].includes(ear.count))ear.count=1;
-const keyEl={};let quiz=null,ans=[],right=0,total=0;
+// quiz stays after answering (再聽一次 replays it, the 紅綠 marks stay) until the next 出題; done = already answered
+const keyEl={};let quiz=null,done=false,ans=[],right=0,total=0;
 function pressKey(m,b){
   tone(midiFreq(m),1.1);
-  if(quiz){answer(m,b);return}
+  if(quiz&&!done){answer(m,b);return}
+  if(done)return;
   b.classList.add("on");setTimeout(()=>b.classList.remove("on"),300);
 }
 WHITE.forEach(m=>{
@@ -4537,7 +4539,7 @@ function earPills(box,opts,cur,onPick){
 }
 function earReset(){
   save("pr_ear",ear);$("#piano").classList.toggle("chrom",ear.chrom);
-  quiz=null;ans=[];right=0;total=0;clearMarks();
+  quiz=null;done=false;ans=[];right=0;total=0;clearMarks();earSubmitUI();
   $("#score").textContent="答對 0 / 0";$("#quizMsg").textContent="";
 }
 earPills($("#earRange"),[[false,"基礎（Do–Do）"],[true,"含升降"]],ear.chrom,v=>{ear.chrom=v;earReset()});
@@ -4549,30 +4551,39 @@ function playTarget(){
   setTimeout(()=>quiz.forEach(m=>tone(midiFreq(m),1.4,"triangle",v)),1000);
 }
 const list=a=>[...a].sort((x,y)=>x-y).map(solfFull).join("、");
+// 送出 shows for 2–3 note questions and works once exactly that many keys are picked
+function earSubmitUI(){
+  const s=$("#earSubmit"),multi=!!quiz&&quiz.length>1&&!done;
+  s.hidden=!multi;s.disabled=!multi||ans.length!==quiz.length;
+}
 function answer(m,btn){
   if(quiz.length>1){
     // pick notes in any order; tapping a picked key again un-picks it
     const i=ans.indexOf(m);
     if(i>=0){ans.splice(i,1);btn.classList.remove("on")}else{ans.push(m);btn.classList.add("on")}
-    if(ans.length<quiz.length){$("#quizMsg").textContent="已選 "+ans.length+" / "+quiz.length+" 個音";return}
-  }else ans=[m];
-  total++;const ok=ans.every(a=>quiz.includes(a));if(ok)right++;
+    $("#quizMsg").textContent="已選 "+ans.length+" / "+quiz.length+" 個音"+(ans.length===quiz.length?"，按「送出」對答案":ans.length>quiz.length?"，選太多了，點一下可以取消":"");
+    earSubmitUI();return;
+  }
+  ans=[m];check();
+}
+function check(){
+  done=true;earSubmitUI();
+  total++;const ok=ans.length===quiz.length&&ans.every(a=>quiz.includes(a));if(ok)right++;
   clearMarks();
   ans.forEach(a=>{if(!quiz.includes(a))keyEl[a].classList.add("wrong")});
   quiz.forEach(q=>keyEl[q].classList.add("right"));
   $("#quizMsg").textContent=ok?"答對了，是 "+list(quiz)+"。":"正確是 "+list(quiz)+"，你答 "+list(ans)+"。";
   $("#score").textContent="答對 "+right+" / "+total;
-  quiz=null;ans=[];
-  setTimeout(clearMarks,ear.count>1?2200:1400);
 }
+$("#earSubmit").onclick=()=>{if(quiz&&!done&&ans.length===quiz.length)check()};
 $("#quizBtn").onclick=()=>{
-  clearMarks();ans=[];
+  clearMarks();ans=[];done=false;
   const pool=ear.chrom?[...WHITE,...BLACK.map(b=>b[0])]:WHITE;
   const pick=()=>pool[Math.floor(Math.random()*pool.length)];
   quiz=[];
   // distinct notes; a lone Do is asked less often since it's the reference
   while(quiz.length<ear.count){const n=pick();if(quiz.includes(n))continue;if(ear.count===1&&n===60&&Math.random()<0.7)continue;quiz.push(n)}
-  $("#quizMsg").textContent=ear.count>1?"聽，這 "+ear.count+" 個音是哪些唱名？":"聽，這是哪一個唱名？";playTarget();
+  $("#quizMsg").textContent=ear.count>1?"聽，這 "+ear.count+" 個音是哪些唱名？選好按「送出」。":"聽，這是哪一個唱名？";earSubmitUI();playTarget();
 };
 $("#replayBtn").onclick=()=>{
   if(!quiz){$("#quizMsg").textContent="先按「出題」。";return;}
@@ -5442,6 +5453,10 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-20.1",title:"聽音辨唱名：選好再送出",items:[
+    ["按送出才對答案","兩個音、三個音的題目，點完唱名後按「送出」才對答案，送出前可以點一下取消重選。"],
+    ["答案會留著","對完答案後紅綠標示會一直留著，按「再聽一次」可以再聽剛才那題，按「出題」才換下一題。"]
+  ]},
   {v:"2026-10-18.5",title:"節拍器大改版",items:[
     ["速度轉盤","像轉旋鈕一樣轉動轉盤調速度（轉一圈 60 BPM），也可以按住 −／＋ 連續調，範圍 20–300 BPM；中間會顯示速度術語，例如 Andante 行板。"],
     ["每一拍的強弱","點拍子格可以切換強、中、弱、靜音；拍號可以自己設每小節 1–12 拍、以 2／4／8 分音符為一拍。"],
