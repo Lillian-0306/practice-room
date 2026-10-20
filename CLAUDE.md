@@ -1,5 +1,9 @@
 # 彈唱練習室
 
+Verifying in the preview: `docs/agents/preview-testing.md`.
+Before committing: `node tools/check.js` (scripts parse, 版本公告 order); a fresh clone enables it as a hook with `git config core.hooksPath tools/hooks`.
+Project map and how each feature works: `HANDOFF.md`.
+
 ## Agent skills
 
 ### Issue tracker

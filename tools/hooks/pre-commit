@@ -1,0 +1,10 @@
+#!/bin/sh
+# Enabled with: git config core.hooksPath tools/hooks
+# Checks the staged index.html, not the working copy.
+tmp=$(mktemp -d) || exit 1
+mkdir -p "$tmp/tools"
+cp tools/check.js "$tmp/tools/check.js"
+git show :index.html > "$tmp/index.html" || { rm -rf "$tmp"; exit 1; }
+node "$tmp/tools/check.js"; status=$?
+rm -rf "$tmp"
+exit $status

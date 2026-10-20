@@ -5553,7 +5553,7 @@ const RELEASES=[
     ["登入會員存到雲端","登入會員的話，新的錄音會存到你自己的雲端空間，只有你聽得到，換手機或電腦登入也聽得到。每位會員最多存 20 段。"],
     ["存到雲端","登入前錄的音會標「這台裝置」，按「存到雲端」就能放上去。"]
   ]},
-  {v:"2026-10-14.1",class:true,title:"會員登入：練習資料跟著你走",items:[
+  {v:"2026-10-14",class:true,title:"會員登入：練習資料跟著你走",items:[
     ["註冊會員","右上角多了人像按鈕。用 Email 和密碼註冊就能登入，不用收驗證信。"],
     ["自動同步","登入後，練習資料修改幾秒就會存到雲端。換手機或電腦，登入同一位會員就能接著練。"],
     ["兩邊都改過時","如果這台裝置和雲端的資料都改過，會問你要保留哪一份，不會偷偷蓋掉。"],
@@ -5905,10 +5905,12 @@ const relList=r=>{const ul=el("ul");r.items.forEach(([b,s])=>{const li=el("li");
 const verDate=v=>v.split(".")[0].replace(/-/g,"/");
 // 讚頌吉他班 only gets entries marked class:true (guitar 專案 changes) and remembers them separately.
 (function(){
+  // compare 2026-10-20.10 after 2026-10-20.9 (plain string order would not); no .n counts as .0
+  const verKey=v=>{const m=/^(\d{4}-\d{2}-\d{2})(?:\.(\d+))?$/.exec(v||"");return m?m[1]+"."+String(m[2]||0).padStart(4,"0"):String(v)};
   const r=(CLASS?RELEASES.filter(x=>x.class):RELEASES)[0],KEY=CLASS?"pr_seen_ver_class":"pr_seen_ver";
   // class visitors used to share pr_seen_ver; whatever they already saw there counts as read
   const seen=load(KEY,null)||(CLASS?load("pr_seen_ver",null):null);
-  if(!r||(seen&&seen>=r.v))return;
+  if(!r||(seen&&verKey(seen)>=verKey(r.v)))return;
   if(!RETURNING){save(KEY,r.v);return} // brand-new visitor: nothing to announce
   const ok=el("button","btn","我知道了");
   // 我知道了 (or Esc) marks this version as read

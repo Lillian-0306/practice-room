@@ -1,0 +1,6 @@
+# Text files are LF in the repo and in the working copy on every machine.
+* text=auto eol=lf
+*.mp3 binary
+*.pdf binary
+*.jpg binary
+*.png binary
