@@ -935,7 +935,10 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 @media (hover:none){.key kbd,.bk kbd{display:none}}
 /* keys keep a real-piano shape: about 1 : 2.7 for a white key, so they grow with the width (never shorter than 150px) */
 .piano .key{height:max(150px,34cqw);padding-bottom:6px} /* labels a bit lower so the black keys can be longer */
-.piano .bk{height:48%}
+/* black keys end 5px above the white-key names as they sit with the key numbers shown, so ticking the numbers
+   on or off never changes them; touch screens have no numbers */
+.piano .bk{height:calc(100% - 86px)}
+@media (hover:none){.piano .bk{height:calc(100% - 62px)}}
 .piano.nokbd kbd{display:none}
 .ear-kbd{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.95rem}
 .ear-kbd input{width:20px;height:20px;accent-color:var(--accent)}
@@ -5491,6 +5494,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-20.7",title:"黑鍵長度修正",items:[
+    ["黑鍵不會忽長忽短","聽音辨唱名沒勾「在琴鍵上顯示對應的按鍵」時，黑鍵會變得比較短；現在不管勾不勾，黑鍵都一樣長，剛好停在唱名上方。"]
+  ]},
   {v:"2026-10-20.6",title:"琴鍵一直看得到黑鍵",items:[
     ["鍵盤只用來彈","按鍵盤的 1–8、Q W R T Y 只會發出聲音，不會選答案；作答請直接點琴鍵，這樣可以先自己試彈找音，再點出答案。"],
     ["深色模式的琴鍵","深色模式下琴鍵不再黑白顛倒，一樣是白鍵白、黑鍵黑。"],
