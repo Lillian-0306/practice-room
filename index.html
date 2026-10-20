@@ -5479,6 +5479,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-20.5",class:true,title:"打開就回到上次的位置",items:[
+    ["記住看到哪裡","關掉網頁再打開，會自動回到上次停留的頁面和捲到的那一段，不用再從頭找。每台裝置各自記住。"]
+  ]},
   {v:"2026-10-20.4",title:"可以不播提示音 Do",items:[
     ["隱藏提示音 Do","聽音辨唱名多了「隱藏提示音 Do」：勾選後出題和再聽一次都不先播 Do，直接聽題目，練絕對音感或更難的挑戰。"]
   ]},
@@ -5915,6 +5918,35 @@ function openReport(){
 // on phones the nav is a drawer: close it first
 $("#navReport").onclick=()=>{closeNav();openReport()};
 if(CONTACT_EMAIL)$("#navFoot").hidden=false; // shown once a mailbox is set
+
+/* ---------- reopen where you left off ---------- */
+// Remembers 吉他／歌唱 and the section at the top of the screen (+ how far into it), per device (not a pr_ key,
+// so it isn't synced or backed up). 常用／學習／專案 are already remembered by showSub. Links with #art= / #yt= win.
+(function(){
+  const KEY=CLASS?"last_view_class":"last_view",SEL=".block,.song,.lmod,.lstage";
+  const anchors=()=>[...document.querySelectorAll(SEL)].filter(e=>e.offsetParent&&!e.closest("[hidden],dialog"));
+  function remember(){
+    const list=anchors();let at=-1;
+    list.forEach((e,i)=>{if(e.getBoundingClientRect().top<=80)at=i}); // the last one that starts above the top = the deepest
+    const v={mode:document.body.dataset.mode,i:at,off:at<0?0:Math.round(-list[at].getBoundingClientRect().top),y:Math.round(scrollY)};
+    try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}
+  }
+  let t=0;
+  addEventListener("scroll",()=>{clearTimeout(t);t=setTimeout(remember,400)},{passive:true});
+  addEventListener("pagehide",remember);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")remember()});
+  let v=null;try{v=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!v||/^#(art|yt)=/.test(location.hash))return;
+  if(!CLASS&&(v.mode==="guitar"||v.mode==="singing")&&document.body.dataset.mode!==v.mode)$("#tab-"+v.mode).click();
+  if("scrollRestoration" in history)history.scrollRestoration="manual";
+  const go=()=>{const e=anchors()[v.i];
+    if(e)window.scrollTo({top:Math.max(0,e.getBoundingClientRect().top+scrollY+v.off),behavior:"instant"});else window.scrollTo({top:v.y||0,behavior:"instant"})};
+  go();
+  // images and fonts can still move things: go again after load, unless the reader has already scrolled
+  let moved=false;const mark=()=>{moved=true};
+  ["wheel","touchstart","keydown","pointerdown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true}));
+  addEventListener("load",()=>{if(!moved)go()});
+})();
 })();
 </script>
 </body>

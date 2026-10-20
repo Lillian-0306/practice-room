@@ -59,6 +59,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
 - 工具：`$`、`el`、`load/save`（localStorage，皆 try/catch）、`midiFreq/freqMidi/noteName`。
 - 麥克風（調音器與音高偵測共用，一次只開一個）：`openMic/closeMic/readPitch/autoCorrelate`；調音器用 `openMic(true)`（4096 樣本、60 Hz 高通＋1.4 kHz 低通）和 `yin()`（YIN，門檻 0.15，抓不到就取 <0.3 的最低點，拋物線內插），歌唱仍用 autoCorrelate，錯誤訊息由 `micError()` 統一處理。
 - 音訊：`audio()` 懶建立 AudioContext；`pluck()` 用 Karplus-Strong 合成吉他聲；`tone()` 用振盪器加包絡；`click()` 節拍器。
+- 回到上次的位置：捲動停 0.4 秒、切到背景或關頁時，把吉他／歌唱和畫面頂端的段落（`.block/.song/.lmod/.lstage` 裡最後一個頂端在 80px 以上的，記第幾個和往下幾 px）存在 `last_view`（同學版 `last_view_class`；故意不用 `pr_`，不同步、不進備份，每台裝置各自記）；打開時切回模式、捲回該段落，load 後若使用者還沒動再對齊一次（圖片載入會位移）；網址有 `#art=`／`#yt=` 時不還原。常用／學習／專案本來就由 `pr_*_sub` 記住。
 - 分頁：`.mode` 按鈕切換 `body[data-mode]`，CSS 變數 `--accent` 隨模式在琥珀（吉他）與鈷藍（歌唱）間切換。切換時會停止另一邊的節拍器、調音器、麥克風、呼吸練習與錄音。
 - 吉他：`CH` 和弦資料表（`f` 為六弦品位，-1 不彈、0 空弦；`fg` 為手指編號；`b` 為橫按 `[品位, 起弦, 終弦]`；`s` 為圖上起始品位，品位一律寫絕對值）、`renderChord(svg, 名稱)` 可畫進任何 svg、`GROUPS`、`drawChord()`、`strum()`；調音器 `tunerLoop/startTuner/stopTuner/tunerPaint/tunerPick`（狀態 `tAuto/tSel/tCur/tCents/tTuned`）；跟拍播放 `scheduler()` 與節拍器 `mScheduler()` 都每 25ms 預排未來 120ms，UI 用 setTimeout 對齊；刷法資料 `PATS`（`beats`、`sub` 每拍格數、`slots` 為 D/U/X/空字串），`click(時間, 等級 0–2)`、`chuck()` 切音。
 - 錄音：`recorder(root, 檔名前綴)` 產生元件，吉他 `recG`、歌唱 `recS`。
