@@ -922,33 +922,40 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .orb span{font-size:1.9rem;font-weight:700;color:var(--accent)}
 
 /* keyboard */
+/* piano keys keep real-piano colours in every theme: white keys light, black keys dark */
+.piano{--kw:#FCFBF8;--kw-ink:#1F1B2D;--kw-mute:#6E6A80;--kw-line:#D9D5E6;--kb:#25212F;--kb-ink:#F3F1F8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .piano{--kw:#E9E7EF;--kw-line:#B9B4C8;--kb:#14121B}}
+:root[data-theme="dark"] .piano{--kw:#E9E7EF;--kw-line:#B9B4C8;--kb:#14121B}
 .keys{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
-.key{border:1.5px solid var(--line);border-radius:6px 6px 12px 12px;background:var(--surface);height:150px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:10px;gap:2px;transition:background .1s}
+.key{border:1.5px solid var(--kw-line);border-radius:6px 6px 12px 12px;background:var(--kw);color:var(--kw-ink);height:150px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:10px;gap:2px;transition:background .1s}
 .key b{font-family:var(--serif);font-size:1.1rem;white-space:nowrap}
-.key small{color:var(--muted);font-size:.72rem}
-.key kbd{font:inherit;font-size:.68rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-top:4px;line-height:1.5}
+.key small{color:var(--kw-mute);font-size:.72rem}
+.key kbd{font:inherit;font-size:.68rem;font-weight:700;color:var(--kw-mute);border:1px solid var(--kw-line);border-radius:5px;padding:0 5px;margin-top:4px;line-height:1.5}
 .bk kbd{font:inherit;font-size:.6rem;font-weight:700;opacity:.75;border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-bottom:3px;line-height:1.4}
 @media (hover:none){.key kbd,.bk kbd{display:none}}
 /* keys keep a real-piano shape: about 1 : 2.7 for a white key, so they grow with the width (never shorter than 150px) */
-.piano .key{height:max(150px,34cqw)}
-.piano .bk{height:55%}
+.piano .key{height:max(150px,34cqw);padding-bottom:6px} /* labels a bit lower so the black keys can be longer */
+.piano .bk{height:48%}
 .piano.nokbd kbd{display:none}
 .ear-kbd{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.95rem}
 .ear-kbd input{width:20px;height:20px;accent-color:var(--accent)}
 @media (hover:none){.ear-kbd-row{display:none}}
-.key.on{background:var(--accent-soft);border-color:var(--accent)}
-.key.right{background:var(--ok);border-color:var(--ok);color:#fff}
-.key.right small{color:#fff}
-.key.wrong{background:var(--warn);border-color:var(--warn);color:#fff}
-.key.wrong small{color:#fff}
-.piano{position:relative;container-type:inline-size}
-.bk{position:absolute;top:0;width:10%;height:58%;transform:translateX(-50%);z-index:1;border:0;border-radius:0 0 8px 8px;background:var(--ink);color:var(--surface);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;padding:0 0 6px;transition:background .1s}
+.key.hit{box-shadow:inset 0 -6px 0 color-mix(in srgb,var(--accent) 60%,transparent)}
+.bk.hit{box-shadow:inset 0 -5px 0 var(--accent)}
+.key.on{background:color-mix(in srgb,var(--accent) 28%,var(--kw));border-color:var(--accent)}
+.key.right{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.key.wrong{background:var(--warn);border-color:var(--warn);color:var(--surface)}
+.key.right small,.key.wrong small,.key.right kbd,.key.wrong kbd{color:var(--surface);border-color:currentColor}
+.piano{position:relative;container-type:inline-size;width:90%;max-width:680px;margin-inline:auto}
+@media (max-width:520px){.piano{width:100%}} /* phones: keys are already small */
+.bk{position:absolute;top:0;width:10%;height:58%;transform:translateX(-50%);z-index:1;border:0;border-radius:0 0 8px 8px;background:var(--kb);color:var(--kb-ink);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;padding:0 0 6px;transition:background .1s}
 .bk b{font-family:var(--serif);font-size:.78rem;white-space:nowrap}
 .bk small{font-size:.62rem;opacity:.8}
 .bk.on{background:var(--accent);color:var(--accent-on)}
-.bk.right{background:var(--ok);color:#fff}
-.bk.wrong{background:var(--warn);color:#fff}
-.piano:not(.chrom) .bk{display:none}
+.bk.right{background:var(--ok);color:var(--surface)}
+.bk.wrong{background:var(--warn);color:var(--surface)}
+.piano:not(.chrom) .bk{cursor:default} /* 基礎: black keys only for the look, no names, not playable */
+.piano:not(.chrom) .bk>*{visibility:hidden}
 
 .score{font-weight:700}
 .msg{min-height:1.7em;margin-top:8px}
@@ -1492,7 +1499,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音（電腦也可以按鍵盤上排的 1–8，對應 Do 到高音 Do；含升降時黑鍵是 Q、W、R、T、Y）。按「出題」會先給你 Do（可以勾選隱藏），再播一個音，或同時播兩、三個音。一個音的題目點了就對答案；兩、三個音的題目點完所有唱名（不用照順序）再按「送出」。</p></header>
+      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音（電腦也可以按鍵盤上排的 1–8 彈 Do 到高音 Do，含升降時黑鍵是 Q、W、R、T、Y；鍵盤只發出聲音，作答請點琴鍵）。按「出題」會先給你 Do（可以勾選隱藏），再播一個音，或同時播兩、三個音。一個音的題目點了就對答案；兩、三個音的題目點完所有唱名（不用照順序）再按「送出」。</p></header>
       <div class="row metro-row"><span class="lbl">音域</span><div class="row" id="earRange" role="group" aria-label="音域"></div></div>
       <div class="row metro-row"><span class="lbl">題目</span><div class="row" id="earCount" role="group" aria-label="每題幾個音"></div></div>
       <div class="row metro-row"><span class="lbl">提示音</span><label class="ear-kbd"><input type="checkbox" id="earNoDo"> 隱藏提示音 Do（不先播 Do，直接聽題目）</label></div>
@@ -4532,6 +4539,7 @@ const ear=Object.assign({chrom:false,count:1,kbd:true,noDo:false},load("pr_ear",
 // quiz stays after answering (再聽一次 replays it, the 紅綠 marks stay) until the next 出題; done = already answered
 const keyEl={};let quiz=null,done=false,ans=[],right=0,total=0;
 function pressKey(m,b){
+  if(!ear.chrom&&!WHITE.includes(m))return; // 基礎: black keys are just drawn
   tone(midiFreq(m),1.1);
   if(quiz&&!done){answer(m,b);return}
   if(done)return;
@@ -4547,13 +4555,16 @@ BLACK.forEach(([m,after])=>{
   b.style.left=((after+1)/8*100)+"%";b.setAttribute("aria-label",solfFull(m));b.onclick=()=>pressKey(m,b);
   $("#piano").append(b);keyEl[m]=b;
 });
-// number keys 1–8 on the top row play Do…Do, Q W R T Y the black keys in 含升降 (same as clicking) while the keyboard is on screen
+// number keys 1–8 on the top row play Do…Do, Q W R T Y the black keys in 含升降, while the keyboard is on screen.
+// Only for playing: answers are picked by clicking the keys.
 document.addEventListener("keydown",e=>{
   const n=/^Digit([1-8])$/.exec(e.code),bm=ear.chrom?BLACK_KEYS[e.code]:0;
   if(!n&&!bm||e.repeat||e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||"")||e.target.isContentEditable)return;
   const p=$("#piano");if(!p.offsetParent||document.querySelector("dialog[open]"))return;
   const r=p.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;
-  e.preventDefault();const m=n?WHITE[+n[1]-1]:bm;pressKey(m,keyEl[m]);
+  e.preventDefault();const m=n?WHITE[+n[1]-1]:bm,b=keyEl[m];
+  tone(midiFreq(m),1.1); // just playing: never picks an answer
+  b.classList.remove("hit");void b.offsetWidth;b.classList.add("hit");setTimeout(()=>b.classList.remove("hit"),220);
 });
 function earPills(box,opts,cur,onPick){
   opts.forEach(([v,t])=>{const b=el("button","pill",t);b.setAttribute("aria-pressed",v===cur);
@@ -4561,6 +4572,7 @@ function earPills(box,opts,cur,onPick){
 }
 function earReset(){
   save("pr_ear",ear);$("#piano").classList.toggle("chrom",ear.chrom);
+  BLACK.forEach(([m])=>{keyEl[m].tabIndex=ear.chrom?0:-1;keyEl[m].toggleAttribute("aria-hidden",!ear.chrom)});
   quiz=null;done=false;ans=[];right=0;total=0;clearMarks();earSubmitUI();
   $("#score").textContent="答對 0 / 0";$("#quizMsg").textContent="";
 }
@@ -5479,6 +5491,12 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-20.6",title:"琴鍵一直看得到黑鍵",items:[
+    ["鍵盤只用來彈","按鍵盤的 1–8、Q W R T Y 只會發出聲音，不會選答案；作答請直接點琴鍵，這樣可以先自己試彈找音，再點出答案。"],
+    ["深色模式的琴鍵","深色模式下琴鍵不再黑白顛倒，一樣是白鍵白、黑鍵黑。"],
+    ["琴鍵小一點","聽音辨唱名的琴鍵整體縮小一點、置中，寬螢幕上不會佔滿整排（手機維持原本大小）。"],
+    ["黑鍵保持顯示","聽音辨唱名選「基礎（Do–Do）」時，琴鍵上也會畫出黑鍵，看起來跟真的鋼琴一樣；這時黑鍵不標名稱、也不能按，選「含升降」才會出現名稱並可以彈。"]
+  ]},
   {v:"2026-10-20.5",class:true,title:"打開就回到上次的位置",items:[
     ["記住看到哪裡","關掉網頁再打開，會自動回到上次停留的頁面和捲到的那一段，不用再從頭找。每台裝置各自記住。"]
   ]},
