@@ -929,7 +929,9 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .key kbd{font:inherit;font-size:.68rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-top:4px;line-height:1.5}
 .bk kbd{font:inherit;font-size:.6rem;font-weight:700;opacity:.75;border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-bottom:3px;line-height:1.4}
 @media (hover:none){.key kbd,.bk kbd{display:none}}
-@media (hover:hover){.piano:not(.nokbd) .key{height:182px}.piano:not(.nokbd) .bk{height:96px}} /* room for the key number under the black keys */
+/* keys keep a real-piano shape: about 1 : 2.7 for a white key, so they grow with the width (never shorter than 150px) */
+.piano .key{height:max(150px,34cqw)}
+.piano .bk{height:55%}
 .piano.nokbd kbd{display:none}
 .ear-kbd{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.95rem}
 .ear-kbd input{width:20px;height:20px;accent-color:var(--accent)}
@@ -939,7 +941,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .key.right small{color:#fff}
 .key.wrong{background:var(--warn);border-color:var(--warn);color:#fff}
 .key.wrong small{color:#fff}
-.piano{position:relative}
+.piano{position:relative;container-type:inline-size}
 .bk{position:absolute;top:0;width:10%;height:58%;transform:translateX(-50%);z-index:1;border:0;border-radius:0 0 8px 8px;background:var(--ink);color:var(--surface);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;padding:0 0 6px;transition:background .1s}
 .bk b{font-family:var(--serif);font-size:.78rem;white-space:nowrap}
 .bk small{font-size:.62rem;opacity:.8}
@@ -1490,9 +1492,10 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
 
     <div class="block">
-      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音（電腦也可以按鍵盤上排的 1–8，對應 Do 到高音 Do；含升降時黑鍵是 Q、W、R、T、Y）。按「出題」會先給你 Do，再播一個音，或同時播兩、三個音。一個音的題目點了就對答案；兩、三個音的題目點完所有唱名（不用照順序）再按「送出」。</p></header>
+      <header><h2>聽音辨唱名</h2><p>點琴鍵聽聲音（電腦也可以按鍵盤上排的 1–8，對應 Do 到高音 Do；含升降時黑鍵是 Q、W、R、T、Y）。按「出題」會先給你 Do（可以勾選隱藏），再播一個音，或同時播兩、三個音。一個音的題目點了就對答案；兩、三個音的題目點完所有唱名（不用照順序）再按「送出」。</p></header>
       <div class="row metro-row"><span class="lbl">音域</span><div class="row" id="earRange" role="group" aria-label="音域"></div></div>
       <div class="row metro-row"><span class="lbl">題目</span><div class="row" id="earCount" role="group" aria-label="每題幾個音"></div></div>
+      <div class="row metro-row"><span class="lbl">提示音</span><label class="ear-kbd"><input type="checkbox" id="earNoDo"> 隱藏提示音 Do（不先播 Do，直接聽題目）</label></div>
       <div class="row metro-row ear-kbd-row"><span class="lbl">鍵盤</span><label class="ear-kbd"><input type="checkbox" id="earKbd"> 在琴鍵上顯示對應的按鍵</label></div>
       <div class="piano" id="piano"><div class="keys" id="keys"></div></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="quizBtn">出題</button><button class="btn" id="earSubmit" type="button" hidden disabled>送出</button><button class="btn ghost" id="replayBtn">再聽一次</button><span class="score" id="score">答對 0 / 0</span></div>
@@ -4525,7 +4528,7 @@ const solf=m=>SOLF[(m-60)%12],solfFull=m=>{const k=(m-60)%12;return SOLF[k]+(FLA
 const WHITE=[60,62,64,65,67,69,71,72],BLACK=[[61,0],[63,1],[66,3],[68,4],[70,5]]; // [midi, white key it sits after]
 // computer keys: top-row 1–8 = white keys; the letter under the gap between two digits = the black key there
 const BLACK_KEYS={KeyQ:61,KeyW:63,KeyR:66,KeyT:68,KeyY:70};
-const ear=Object.assign({chrom:false,count:1,kbd:true},load("pr_ear",{}));ear.chrom=!!ear.chrom;ear.kbd=ear.kbd!==false;if(![1,2,3].includes(ear.count))ear.count=1;
+const ear=Object.assign({chrom:false,count:1,kbd:true,noDo:false},load("pr_ear",{}));ear.noDo=!!ear.noDo;ear.chrom=!!ear.chrom;ear.kbd=ear.kbd!==false;if(![1,2,3].includes(ear.count))ear.count=1;
 // quiz stays after answering (再聽一次 replays it, the 紅綠 marks stay) until the next 出題; done = already answered
 const keyEl={};let quiz=null,done=false,ans=[],right=0,total=0;
 function pressKey(m,b){
@@ -4561,15 +4564,17 @@ function earReset(){
   quiz=null;done=false;ans=[];right=0;total=0;clearMarks();earSubmitUI();
   $("#score").textContent="答對 0 / 0";$("#quizMsg").textContent="";
 }
+$("#earNoDo").checked=ear.noDo;
+$("#earNoDo").onchange=e=>{ear.noDo=e.target.checked;save("pr_ear",ear)};
 $("#earKbd").checked=ear.kbd;$("#piano").classList.toggle("nokbd",!ear.kbd);
 $("#earKbd").onchange=e=>{ear.kbd=e.target.checked;save("pr_ear",ear);$("#piano").classList.toggle("nokbd",!ear.kbd)}; // only the labels; the keys still work
 earPills($("#earRange"),[[false,"基礎（Do–Do）"],[true,"含升降"]],ear.chrom,v=>{ear.chrom=v;earReset()});
 earPills($("#earCount"),[[1,"一個音"],[2,"兩個音（同時）"],[3,"三個音（同時）"]],ear.count,v=>{ear.count=v;earReset()});
 function clearMarks(){Object.values(keyEl).forEach(k=>k.classList.remove("right","wrong","on"))}
 function playTarget(){
-  tone(midiFreq(60),0.9);
+  if(!ear.noDo)tone(midiFreq(60),0.9); // the reference Do, unless 隱藏提示音 Do
   const v=0.3/Math.sqrt(quiz.length); // keep chords from getting louder than single notes
-  setTimeout(()=>quiz.forEach(m=>tone(midiFreq(m),1.4,"triangle",v)),1000);
+  setTimeout(()=>quiz.forEach(m=>tone(midiFreq(m),1.4,"triangle",v)),ear.noDo?50:1000);
 }
 const list=a=>[...a].sort((x,y)=>x-y).map(solfFull).join("、");
 // 送出 shows for 2–3 note questions and works once exactly that many keys are picked
@@ -5474,6 +5479,12 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-20.4",title:"可以不播提示音 Do",items:[
+    ["隱藏提示音 Do","聽音辨唱名多了「隱藏提示音 Do」：勾選後出題和再聽一次都不先播 Do，直接聽題目，練絕對音感或更難的挑戰。"]
+  ]},
+  {v:"2026-10-20.3",title:"琴鍵比例更像真的鋼琴",items:[
+    ["琴鍵比例","聽音辨唱名的琴鍵會跟著畫面寬度等比例變長，在電腦的寬畫面上不會再扁扁的；取消「在琴鍵上顯示對應的按鍵」也不會變短。"]
+  ]},
   {v:"2026-10-20.2",title:"聽音辨唱名可以用鍵盤彈",items:[
     ["數字鍵彈琴","用電腦時，按鍵盤上排的 1–8 就會彈 Do、Re、Mi、Fa、Sol、La、Si、高音 Do，作答也可以直接按數字；琴鍵上會標出對應的按鍵，不想看到可以取消勾選「在琴鍵上顯示對應的按鍵」。"],
     ["黑鍵用字母","選「含升降」時，黑鍵是數字下面那排的 Q、W、R、T、Y（Do♯、Re♯、Fa♯、Sol♯、La♯），位置剛好在兩個數字中間，跟琴鍵排列一樣。"]
