@@ -237,10 +237,10 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
     create policy "rec own delete" on storage.objects for delete to authenticated
       using (bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid()::text));
     ```
-  - **吉他專案自己加的歌**（只有完整版、只有自己看得到）：吉他 › 專案最下面「＋ 新增歌曲」（`gSongForm()`），歌單存在 `pr_my_gsongs`（`[{id, title, by, bpm, chords, yt, pages:[{id, w, h, cloud}], audio:[{id, label, type, cloud}]}]`，跟其他 `pr_` 一起同步），卡片和內建歌曲共用 `gSongCard()`，放在 `#songs` 裡的 `#gmy`（`display:contents`，`renderMyG()` 只重畫這一塊）。
+  - **吉他專案自己加的歌**（只有完整版、只有自己看得到）：吉他 › 專案最下面「＋ 新增歌曲」（`gSongForm()`），歌單存在 `pr_my_gsongs`（`[{id, title, by, bpm, chords, yt, ytStart, pages:[{id, w, h, cloud}], audio:[{id, label, type, cloud}]}]`，跟其他 `pr_` 一起同步），卡片和內建歌曲共用 `gSongCard()`，放在 `#songs` 裡的 `#gmy`（`display:contents`，`renderMyG()` 只重畫這一塊）。
     - 樂譜：PDF 用 pdf.js（cdnjs 3.11.174，`loadPdfJs()` 延遲載入）在瀏覽器裡畫成 1400px 寬 JPEG，照片縮到 1400px，最多 `GF_PAGES`＝30 頁；筆記存在 `pr_sheet_notes` 的 `my:<id>`（`notesKey`），換樂譜會清掉。
     - 音檔：每個最多 `GF_MAX_MB`＝30 MB，按「▶ 載入音檔播放器」才讀檔，用原本的 `player()`（track 的 `url` 播放、`src`＝`my:<檔案 id>` 當段落循環的 key）。
-    - YouTube：`ytBox()` 加 `ytTools()`（速度 25%–200%、A-B 循環）。
+    - YouTube：`ytBox()` 加 `ytTools(yt, g)`（速度 25%–200%，YouTube 只吃它支援的速度，設完會讀回實際值；A-B 循環）。有原曲速度和 `ytStart`（第 1 小節的秒數，表單填或按影片下「把現在的位置設為第 1 小節」）就照 4/4 推算小節。`.yt-tools` 也有 `_ctl`，跟 `player()` 同一組介面，所以「播放音檔」面板找 `#songs .player, #songs .yt-tools`；同一張卡兩個都有時，後面的音檔播放器優先（按「載入音檔播放器」之前是影片）。預備拍數完才 `playVideo()`，影片要緩衝一下，會比音檔晚一點出聲。
     - 檔案不在 `pr_` 快照裡：存在 IndexedDB `pr_gfiles`（`gfDB`），登入時也上傳到私有 bucket `gsongs`，路徑 `<uid>/<檔案 id>`（`cloud:true`）；別台裝置第一次打開時下載一次存進 IndexedDB。上傳失敗就只存在這台。登出選「從這台裝置清除」會清 `pr_gfiles`；刪除會員前 `gfClearCloud()`。
     - 正式專案 2026-10-31 已套用（在 SQL Editor 執行，migration 清單裡沒有；每位會員最多 300 個檔案），重建時執行：
     ```sql

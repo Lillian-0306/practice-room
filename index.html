@@ -3218,7 +3218,7 @@ function sheetNotes(s,sheet,pages){
   renderTools();syncShow();renderBoxes();
 }
 /* ---------- guitar: songs people add (樂譜、音檔、YouTube) ---------- */
-// pr_my_gsongs: [{id, title, by, bpm, chords:[…], yt, pages:[{id, w, h, cloud}], audio:[{id, label, type, cloud}]}]
+// pr_my_gsongs: [{id, title, by, bpm, chords:[…], yt, ytStart (seconds where bar 1 begins, or null), pages:[{id, w, h, cloud}], audio:[{id, label, type, cloud}]}]
 // Only the person who added a song sees it (full edition only). The list syncs with the other pr_ data; the files
 // do not: they are kept in IndexedDB on this device (pr_gfiles) and, signed in, also in the member's own folder of
 // the private Storage bucket "gsongs" (<uid>/<file id>, policies in HANDOFF.md). cloud marks a file that made it up;
@@ -3305,18 +3305,30 @@ const gfOk=f=>f&&typeof f.id==="string";
 let myGSongs=(v=>Array.isArray(v)?v:[])(load("pr_my_gsongs",[])).filter(o=>o&&o.id&&o.title)
   .map(o=>Object.assign(o,{pages:(o.pages||[]).filter(gfOk),audio:(o.audio||[]).filter(gfOk),chords:Array.isArray(o.chords)?o.chords:[]}));
 const saveMyGSongs=()=>save("pr_my_gsongs",myGSongs);
-const myGSong=o=>({my:true,src:o,title:o.title,by:o.by||"自己加的歌",chords:o.chords,bpm:o.bpm||0,yt:o.yt||null,notesKey:"my:"+o.id,
+const myGSong=o=>({my:true,src:o,title:o.title,by:o.by||"自己加的歌",chords:o.chords,bpm:o.bpm||0,yt:o.yt||null,ytStart:typeof o.ytStart==="number"?o.ytStart:null,notesKey:"my:"+o.id,
   pages:o.pages.length?o.pages:null,myAudio:o.audio,
   meta:[o.bpm&&"♩="+o.bpm,o.pages.length&&"譜 "+o.pages.length+" 頁",o.audio.length&&"音檔 "+o.audio.length+" 個",o.yt&&"YouTube 影片"].filter(Boolean)});
 const parseChords=v=>v.split(/[\s,，、]+/).filter(Boolean).map(c=>c[0].toUpperCase()+c.slice(1)).slice(0,16);
 // stop what a card plays before it is taken off the page (a detached <audio> keeps playing)
-function gStop(root){root.querySelectorAll(".player").forEach(p=>{const au=p.querySelector("audio");if(au)au.pause();if(p._metro&&p._metro.on())p._metro.toggle()})}
-// speed and A-B loop for a YouTube video in a guitar song card (needs the IFrame API; a plain embed has neither)
-function ytTools(yt){
+function gStop(root){root.querySelectorAll(".player").forEach(p=>{const au=p.querySelector("audio");if(au)au.pause();if(p._metro&&p._metro.on())p._metro.toggle()});
+  root.querySelectorAll(".yt-tools").forEach(t=>t._ctl.stop())}
+// 0:09.15 — a time to the hundredth of a second, as typed into the form
+const fmtSec=t=>{const x=(t%60).toFixed(2).replace(/\.?0+$/,"");return Math.floor(t/60)+":"+(t%60<10?"0":"")+x};
+// speed and A-B loop for a YouTube video in a guitar song card (needs the IFrame API; a plain embed has neither).
+// g: {bpm, start (where bar 1 begins, in seconds), onStart(t) saves a new start}. With bpm and start the video gets
+// a 4/4 bar grid worked out from the tempo; box._ctl (same shape as player()'s) lets the floating 播放音檔 panel drive it.
+function ytTools(yt,g){
+  g=g||{};
   const box=el("div","yt-tools"),spd=el("div","row"),ab=el("div","row"),info=el("p","note");
-  let rate=1,A=null,B=null,iv=0;
+  let rate=1,A=null,B=null,iv=0,P=null,ciTimers=[],ciText="",ciSeek=0;
   const fmt=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
-  const withP=fn=>yt.player().then(p=>{if(p)fn(p);else info.textContent="這支影片只能用簡易播放器，不能調速度和循環。"});
+  // the player once it exists (the thumbnail may have been tapped directly, without these tools)
+  const got=p=>{if(p&&!P){P=p;p.addEventListener("onStateChange",e=>{
+    // playing during the count-in: right after our seek it is the seek resuming playback (hold it), later it is you pressing play
+    if(e.data===1&&ciTimers.length){if(Date.now()-ciSeek<1500)p.pauseVideo();else cancelCI()}
+    document.dispatchEvent(new Event("ytstate"))})}return p};
+  const cur=()=>{if(!P){const m=yt.current();if(m)m.then(got)}return P};
+  const withP=fn=>yt.player().then(got).then(p=>{if(p)fn(p);else info.textContent="這支影片只能用簡易播放器，不能調速度和循環。"});
   const val=el("b","spd-val"),minus=el("button","pill spd-step","−"),plus=el("button","pill spd-step","＋");
   minus.setAttribute("aria-label","慢一點");plus.setAttribute("aria-label","快一點");
   const presets=[0.5,0.75,1].map(r=>{const b=el("button","pill",r===1?"原速":Math.round(r*100)+"%");b.dataset.r=r;b.onclick=()=>setRate(r);return b});
@@ -3326,27 +3338,79 @@ function ytTools(yt){
     withP(p=>{p.setPlaybackRate(rate);setTimeout(()=>{const x=p.getPlaybackRate();if(x&&Math.abs(x-rate)>0.001){rate=x;showRate()}},300)})};
   minus.onclick=()=>setRate(rate-0.05);plus.onclick=()=>setRate(rate+0.05);
   spd.append(el("span","lbl","速度"),minus,val,plus,...presets);showRate();
+  // bars: 4/4 from the tempo, starting at g.start; the last bar ends with the video
+  const grid=()=>{const p=cur(),d=p&&p.getDuration();if(!g.bpm||g.start==null||!d)return null;
+    const len=240/g.bpm;return {len,n:Math.max(1,Math.ceil((d-g.start)/len-0.01))}};
+  const barT=n=>g.start+(n-1)*240/g.bpm;
+  const barAt=t=>{const G=grid();if(!G||t<g.start-0.05)return null;const n=Math.max(1,Math.min(G.n,Math.floor((t-g.start+0.05)/G.len)+1));
+    return {n,beat:Math.max(1,Math.min(4,Math.floor((t-barT(n))/G.len*4)+1))}};
+  const clampBar=v=>{const G=grid();return Math.max(1,Math.min(G?G.n:1,Math.round(+v)||1))};
+  const barRange=(a,b)=>{const x=barAt(a+0.06),y=barAt(b-0.06);return x&&y?(x.n===y.n?"第 "+x.n+" 小節":"第 "+x.n+"–"+y.n+" 小節"):""};
+  const loopText=()=>(barRange(A,B)?barRange(A,B)+"（"+fmt(A)+" – "+fmt(B)+"）":fmt(A)+" – "+fmt(B));
+  // seek to bar n and play, with four count-in clicks first when that option is on. The video needs a moment
+  // to start after the last click, so the count-in is close but not as tight as with an audio file.
+  const cancelCI=()=>{ciTimers.forEach(clearTimeout);ciTimers=[];ciText=""};
+  function startAt(n,kind){
+    const p=cur();if(!p)return;cancelCI();
+    if(!ciPref[kind]){p.seekTo(barT(n),true);p.playVideo();return}
+    ciSeek=Date.now();p.pauseVideo();p.seekTo(barT(n),true);
+    const c=audio(),beat=240/g.bpm/4/rate,t0=c.currentTime+0.3;
+    for(let k=0;k<4;k++){const t=t0+k*beat;
+      ciTimers.push(setTimeout(()=>{playSnd(MSOUNDS[songSnd],t,k?1:2,k,songVol);
+        ciTimers.push(setTimeout(()=>{ciText="預備拍 "+"●".repeat(k+1)+"○".repeat(3-k)},Math.max(0,(t-c.currentTime)*1000)))},
+        Math.max(0,(t-c.currentTime-0.08)*1000)))}
+    ciTimers.push(setTimeout(()=>{ciTimers=[];ciText="";p.playVideo()},Math.max(0,(t0+4*beat-c.currentTime)*1000)));
+  }
   const aB=el("button","pill","設 A 點"),bB=el("button","pill","設 B 點"),off=el("button","pill","取消循環");
   const showAB=()=>{off.hidden=A==null;bB.disabled=A==null;
-    info.textContent=A==null?"播放時按「設 A 點」「設 B 點」，就會在這段之間重複播放。":B==null?"A 點 "+fmt(A)+"，再按「設 B 點」。":"循環中："+fmt(A)+" → "+fmt(B)};
+    info.textContent=A==null?"播放時按「設 A 點」「設 B 點」，就會在這段之間重複播放。":B==null?"A 點 "+fmt(A)+"，再按「設 B 點」。":"循環中："+loopText()};
   const run=p=>{clearInterval(iv);if(A==null||B==null)return;
-    iv=setInterval(()=>{if(!box.isConnected){clearInterval(iv);return}try{if(p.getCurrentTime()>=B)p.seekTo(A,true)}catch(e){}},200)};
+    iv=setInterval(()=>{if(!box.isConnected){clearInterval(iv);return}try{if(!ciTimers.length&&p.getCurrentTime()>=B)p.seekTo(A,true)}catch(e){}},200)};
   aB.onclick=()=>withP(p=>{A=p.getCurrentTime();if(B!=null&&B<=A+0.3)B=null;showAB();run(p)});
   bB.onclick=()=>withP(p=>{const t=p.getCurrentTime();if(t<=A+0.3){info.textContent="B 點要在 A 點後面，請播到後面一點再按。";return}
     B=t;showAB();run(p);p.seekTo(A,true);p.playVideo()});
   off.onclick=()=>{A=B=null;clearInterval(iv);showAB()};
   ab.append(el("span","lbl","循環"),aB,bB,off);showAB();
-  box.append(spd,ab,info);return box;
+  box.append(spd,ab,info);
+  // songs people add: mark where bar 1 starts
+  if(g.onStart){
+    const row=el("div","row"),mk=el("button","pill","把現在的位置設為第 1 小節"),bn=el("p","note");
+    const showBar=()=>{mk.hidden=!g.bpm;
+      bn.textContent=!g.bpm?"填了原曲速度（✎ 編輯歌曲），就能用小節跳轉和小節循環。"
+        :g.start==null?"播到第 1 小節的第一拍時按一下，右下角「播放音檔」就能跳到第幾小節、用小節循環（照 ♩="+g.bpm+"、4/4 拍推算）。"
+        :"第 1 小節從 "+fmtSec(g.start)+" 開始，照 ♩="+g.bpm+"、4/4 拍推算；速度不穩的段落，小節位置會有偏差。"};
+    mk.onclick=()=>withP(p=>{g.start=Math.round(p.getCurrentTime()*100)/100;g.onStart(g.start);showBar()});
+    row.append(el("span","lbl","小節"),mk);box.append(row,bn);showBar();
+  }
+  box._ctl={
+    playing:()=>{const p=cur();return ciTimers.length>0||!!p&&[1,3].includes(p.getPlayerState())},
+    toggle:()=>{if(ciTimers.length){cancelCI();return}withP(p=>p.getPlayerState()===1?p.pauseVideo():p.playVideo())},
+    stop:()=>{cancelCI();clearInterval(iv);const p=cur();if(p)try{p.pauseVideo()}catch(e){}},
+    jump:n=>{if(grid())startAt(clampBar(n),"jump")},
+    bars:()=>{const G=grid();return G?G.n:0},
+    now:()=>{if(ciText)return ciText;const p=cur();if(!p||!grid())return "";const b=barAt(p.getCurrentTime());return b?"第 "+b.n+" 小節第 "+b.beat+" 拍":"第 1 小節之前"},
+    time:()=>{const p=cur(),d=p&&p.getDuration();return p?fmt(p.getCurrentTime()||0)+" / "+(d?fmt(d):"--:--"):"0:00 / --:--"},
+    label:()=>"YouTube 影片",
+    tempo:()=>({text:g.bpm?"♩="+Math.round(g.bpm*rate):Math.round(rate*100)+"%",sub:"",orig:Math.abs(rate-1)<0.004}),
+    ratio:()=>rate,setRatio:r=>setRate(r),origSpeed:()=>setRate(1),
+    loopBars:(a,b)=>{const p=cur();if(!p||!grid())return [a,b];a=clampBar(a);b=clampBar(b);if(b<a)[a,b]=[b,a];
+      A=barT(a);B=Math.min(barT(b+1),p.getDuration());showAB();run(p);startAt(a,"loop");return [a,b]},
+    loopInfo:()=>A!=null&&B!=null?"循環 "+loopText():"",
+    clearLoop:()=>off.onclick(),
+    saved:()=>[],playSaved:()=>{}
+  };
+  return box;
 }
 function gSongForm(o){
   const f=el("form","my-form");f.noValidate=true;
   const fld=(lab,hint,input)=>{const l=el("label");l.append(lab);if(hint)l.append(el("small","",hint));l.append(input);return l};
-  const title=el("input"),by=el("input"),bpm=el("input"),ch=el("input"),url=el("input"),sheetIn=el("input"),audIn=el("input"),err=el("p","err"),prog=el("p","note");
+  const title=el("input"),by=el("input"),bpm=el("input"),ch=el("input"),url=el("input"),bar1=el("input"),sheetIn=el("input"),audIn=el("input"),err=el("p","err"),prog=el("p","note");
   title.maxLength=40;by.maxLength=40;bpm.type="number";bpm.min=30;bpm.max=240;bpm.inputMode="numeric";bpm.placeholder="例如 96";
-  ch.maxLength=120;ch.placeholder="例如 C G Am F";url.inputMode="url";url.placeholder="https://www.youtube.com/watch?v=…";
+  ch.maxLength=120;ch.placeholder="例如 C G Am F";bar1.maxLength=10;bar1.inputMode="decimal";bar1.placeholder="例如 0:12.5";url.inputMode="url";url.placeholder="https://www.youtube.com/watch?v=…";
   sheetIn.type="file";sheetIn.accept="application/pdf,image/*";sheetIn.multiple=true;
   audIn.type="file";audIn.accept="audio/*";audIn.multiple=true;prog.setAttribute("role","status");
-  if(o){title.value=o.title;by.value=o.by||"";if(o.bpm)bpm.value=o.bpm;ch.value=o.chords.join(" ");if(o.yt)url.value="https://www.youtube.com/watch?v="+o.yt}
+  if(o){title.value=o.title;by.value=o.by||"";if(o.bpm)bpm.value=o.bpm;ch.value=o.chords.join(" ");if(o.yt)url.value="https://www.youtube.com/watch?v="+o.yt;
+    if(typeof o.ytStart==="number")bar1.value=fmtSec(o.ytStart)}
   // audio already kept: × takes one away (removed for good when saved)
   const keep=o?o.audio.slice():[],audList=el("div","tag-list");
   const drawAud=()=>{audList.innerHTML="";keep.forEach((a,i)=>{const c=el("span","tag-chip",a.label),x=el("button","","×");x.type="button";
@@ -3368,6 +3432,7 @@ function gSongForm(o){
     fld("音檔","（mp3 等，可以放好幾個版本；每個最多 "+GF_MAX_MB+" MB）",audIn),audList,
     fld("YouTube 連結","（可以不填）",url),ytNote,
     fld("原曲速度","（BPM，可以不填；填了播放速度會用 ♩= 顯示）",bpm),
+    fld("影片的第 1 小節從幾秒開始","（可以不填；填了原曲速度和這格，就能照小節跳轉、循環影片。也可以之後在影片下面按「把現在的位置設為第 1 小節」）",bar1),
     fld("用到的和弦","（可以不填，用空格隔開）",ch),prog,err,btns);
   cancel.onclick=renderMyG;
   f.onsubmit=async e=>{
@@ -3376,6 +3441,8 @@ function gSongForm(o){
     if(!t){err.textContent="請填歌名。";title.focus();return}
     if(yt===null){err.textContent="看不出是哪支 YouTube 影片，請貼上影片的網址，或把這格清空。";url.focus();return}
     if(b&&(b<30||b>240)){err.textContent="原曲速度請填 30 到 240 之間的數字。";bpm.focus();return}
+    const m1=bar1.value.trim().match(/^(?:(\d+)[:：])?(\d+(?:\.\d+)?)$/),start=m1?Math.round(((+m1[1]||0)*60+ +m1[2])*100)/100:null;
+    if(bar1.value.trim()&&!m1){err.textContent="第 1 小節的時間請寫成「分:秒」或秒數，例如 0:12.5 或 12.5。";bar1.focus();return}
     const big=aFiles.find(x=>x.size>GF_MAX_MB*1048576);
     if(big){err.textContent="「"+big.name+"」超過 "+GF_MAX_MB+" MB，請先壓縮或剪短。";return}
     if(!sFiles.length&&!(o&&o.pages.length)&&!aFiles.length&&!keep.length&&!yt){err.textContent="樂譜、音檔、YouTube 連結至少要放一樣。";return}
@@ -3400,7 +3467,7 @@ function gSongForm(o){
     }
     if(gone.length){gfDel(gone);const lo=load("pr_loops",{});gone.forEach(a=>delete lo["my:"+a.id]);save("pr_loops",lo)}
     if(o&&sFiles.length&&snAll["my:"+id]){delete snAll["my:"+id];snSave()} // the notes were drawn on the old pages
-    const rec={id,title:t,by:by.value.trim(),bpm:b,chords:parseChords(ch.value),yt:yt||"",pages,audio};
+    const rec={id,title:t,by:by.value.trim(),bpm:b,chords:parseChords(ch.value),yt:yt||"",ytStart:yt?start:null,pages,audio};
     if(o)Object.assign(o,rec);else myGSongs.push(o=rec);
     saveMyGSongs();renderMyG();
     const card=$("#gmy").children[myGSongs.indexOf(o)];
@@ -3470,7 +3537,8 @@ function gSongCard(s){
   };
   open.onclick=toggle;
   card.append(el("h3","",s.title),el("p","by",s.by),meta);
-  if(s.yt){const yt=ytBox(s.yt,s.title);card.append(el("span","grp-label","YouTube 影片"),yt.el,ytTools(yt))}
+  if(s.yt){const yt=ytBox(s.yt,s.title);card.append(el("span","grp-label","YouTube 影片"),yt.el,
+    ytTools(yt,s.my?{bpm:s.bpm,start:s.ytStart,onStart:t=>{s.src.ytStart=t;saveMyGSongs()}}:{bpm:s.bpm}))}
   // Chords sit inside the player box, under the loop, so practice tools stay together
   const chordSec=s.chords.length?foldSection("chords","用到的和弦（點一下看按法）",chords,cp):null;
   if(s.audio){const p=player(s.audio,s.bpm);p.append(chordSec);card.append(el("span","grp-label",s.audioNote||"示範音檔"),p)}
@@ -3681,7 +3749,8 @@ renderSongs();
         jump=$("#apJump"),inp=$("#apBar"),spd=$("#apSpeed"),ci=panel.querySelector('input[data-ci="jump"]'),
         loopBox=$("#apLoop"),la=$("#apLA"),lb=$("#apLB"),lci=panel.querySelector('input[data-ci="loop"]'),lstat=$("#apLStat"),linfo=$("#apLInfo"),saved=$("#apSaved");
   let savedKey="";
-  const players=()=>[...document.querySelectorAll("#songs .player")].filter(p=>p._ctl);
+  // audio players and YouTube videos (their .yt-tools); in a card with both the audio comes later, so it wins
+  const players=()=>[...document.querySelectorAll("#songs .player, #songs .yt-tools")].filter(p=>p._ctl);
   function target(){
     const ps=players(),run=ps.find(p=>p._ctl.playing());if(run)return run;
     let pick=ps[0]||null;
@@ -3704,10 +3773,10 @@ renderSongs();
     const n=c.bars();jump.hidden=!n;if(n){inp.max=n;if(+inp.value>n)inp.value=n}
     ci.checked=ciPref.jump;
     // loop: bar range (when the track has a bar grid), what is looping now, and the saved sections
-    const sv=c.saved();loopBox.hidden=!n&&!sv.length;
+    const sv=c.saved(),li=c.loopInfo();loopBox.hidden=!n&&!sv.length&&!li;
     la.parentNode.hidden=!n;lci.parentNode.hidden=!n;if(n){la.max=lb.max=n}
     lci.checked=ciPref.loop;
-    const li=c.loopInfo();lstat.hidden=!li;linfo.textContent=li;
+    lstat.hidden=!li;linfo.textContent=li;
     const key=JSON.stringify(sv.map(L=>[L.n,L.s]));if(key!==savedKey){savedKey=key; // rebuild only when the list changes (render runs 4× a second; a rebuilt button would count as a click outside)
       saved.innerHTML="";sv.forEach((L,i)=>{const b=el("button");b.type="button";b.setAttribute("aria-pressed",String(L.on));
         b.append(L.n,el("small","",L.s));b.onclick=()=>{const p=target();if(p){p._ctl.playSaved(i);setTimeout(render,50)}};saved.append(b)})}
@@ -3745,7 +3814,7 @@ renderSongs();
   document.addEventListener("click",e=>{if(!panel.hidden&&!box.contains(e.target))setOpen(false)});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
   // the running dot while the panel is closed
-  document.addEventListener("play",render,true);document.addEventListener("pause",render,true);
+  document.addEventListener("play",render,true);document.addEventListener("pause",render,true);document.addEventListener("ytstate",render);
   new MutationObserver(()=>{if(box.hidden)setOpen(false)}).observe(box,{attributes:true,attributeFilter:["hidden"]});
   render();
 })();
@@ -5741,6 +5810,11 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-31.2",title:"播放音檔也能控制 YouTube 影片",items:[
+    ["只有影片也能用","自己加的歌只放 YouTube 連結也沒關係：滑到這首歌，右下角「播放音檔」就能播放、暫停、調速度、看循環；同一首有音檔的話還是控制音檔。"],
+    ["照小節練影片","填了原曲速度，再在影片下面按「把現在的位置設為第 1 小節」（或在編輯歌曲時填秒數），就能跳到第幾小節、用小節循環，也能先數 4 拍預備拍。小節是照速度推算的，速度不穩的段落會有偏差。"],
+    ["速度","YouTube 只接受它支援的幾種速度，調到中間的值時會自動對到最接近的一種。"]
+  ]},
   {v:"2026-10-31.1",title:"吉他專案可以放自己的歌",items:[
     ["＋ 新增歌曲","吉他 › 專案最下面多了「＋ 新增歌曲」：可以上傳自己的樂譜（PDF 或照片）、音檔，或貼 YouTube 連結，變成跟其他歌一樣的練習卡片。只有你自己看得到。"],
     ["樂譜和音檔","樂譜一樣可以畫筆記、框段落、自動捲譜；音檔用原本的播放器，可以調速度、A-B 循環、存段落，好幾個版本可以切換。"],
