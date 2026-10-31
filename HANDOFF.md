@@ -4,7 +4,7 @@
 互動式學習網頁，分兩大板塊：**吉他學習**與**歌唱學習**。繁體中文（zh-Hant），主要在手機 Chrome 使用。
 
 ## 目前狀態
-- 單一檔案 `index.html`（HTML + CSS + JS 全部內嵌，無建置流程、無相依套件）。
+- 單一檔案 `index.html`（HTML + CSS + JS 全部內嵌，無建置流程、無相依套件）。JS 以 `/* ---------- 區塊名 ---------- */` 分段，`grep -n "^/\* ----------" index.html` 列出各區塊位置。
 - 唯一外部資源：Google Fonts（Noto Sans TC、Noto Serif TC），有備援字型。
 - 正式網址（Vercel）：https://practice-room-one.vercel.app 。Vercel 專案已連結 GitHub 倉庫，推送到 main 會自動發布（約一分鐘）；也可用 Vercel CLI `vercel --prod` 從本機發布。`.vercelignore` 只上傳 index.html、sheets/、songs/、mp3、pdf。網頁裡的正式網址常數是 `SITE`。
 - **同學版**（給吉他班同學用）：https://practice-room-one.vercel.app/class 。同一份 `index.html`，`vercel.json` 把 `/class` 改寫到 index.html（`trailingSlash:false` 讓 `/class/` 轉回 `/class`，相對路徑的樂譜與音檔才找得到）。`<head>` 的小 script 判斷網址後設定 `html[data-edition="class"]`，JS 常數 `CLASS`：只顯示吉他「專案」（隱藏吉他／歌唱切換與子分頁，側欄只列專案歌曲），標題改為「讚頌吉他班」，且不寫入 `pr_guitar_sub`。本機測試用 `http://localhost:8000/class`（`.claude/serve.js` 有同樣的改寫）或 `?class`。新增到 `SONGS` 的歌會同時出現在同學版。
@@ -242,7 +242,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
     - 音檔：每個最多 `GF_MAX_MB`＝30 MB，按「▶ 載入音檔播放器」才讀檔，用原本的 `player()`（track 的 `url` 播放、`src`＝`my:<檔案 id>` 當段落循環的 key）。
     - YouTube：`ytBox()` 加 `ytTools()`（速度 25%–200%、A-B 循環）。
     - 檔案不在 `pr_` 快照裡：存在 IndexedDB `pr_gfiles`（`gfDB`），登入時也上傳到私有 bucket `gsongs`，路徑 `<uid>/<檔案 id>`（`cloud:true`）；別台裝置第一次打開時下載一次存進 IndexedDB。上傳失敗就只存在這台。登出選「從這台裝置清除」會清 `pr_gfiles`；刪除會員前 `gfClearCloud()`。
-    - 正式專案要在 SQL Editor 執行（每位會員最多 300 個檔案）：
+    - 正式專案 2026-10-31 已套用（在 SQL Editor 執行，migration 清單裡沒有；每位會員最多 300 個檔案），重建時執行：
     ```sql
     insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
     values ('gsongs', 'gsongs', false, 31457280, array['image/jpeg','audio/*']);

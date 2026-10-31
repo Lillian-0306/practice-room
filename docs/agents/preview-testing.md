@@ -32,6 +32,13 @@ navigator.mediaDevices.getUserMedia=async()=>{const c=new AudioContext(),d=c.cre
 window.__set=f=>{__f=f;__oscs.forEach(([o,k])=>o.frequency.value=f*k)};
 ```
 
+- **Upload a file** (a project file into an `<input type=file>`, then submit the form):
+
+```js
+const f=new File([await (await fetch(encodeURIComponent('勇悍行1003.mp3'))).blob()],'x.mp3',{type:'audio/mpeg'});
+const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;
+```
+
 - **Hear what played** (pitches as Hz, in order):
 
 ```js
