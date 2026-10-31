@@ -885,6 +885,8 @@ section.panel[hidden]{display:none}
 .vol-row input{flex:1;min-width:0;max-width:260px}
 .vol-row output{font-size:.85rem;color:var(--muted);min-width:3.2em;font-variant-numeric:tabular-nums}
 .mf-more{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.mf-sync{margin-top:8px;line-height:1.35}
+.mf-syncn{margin:2px 0 0;font-size:.78rem;color:var(--muted)}
 .mf-lbl{font-size:.78rem;color:var(--muted);margin:10px 0 6px}
 .mf-snds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .mf-snds .pill{min-height:34px;padding:4px 0;font-size:.82rem;justify-content:center}
@@ -1248,6 +1250,8 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
         <div class="as-ends" aria-hidden="true"><span>慢</span><span>快</span></div>
       </div>
     </div>
+    <label class="ci-chk mf-sync" id="mfSyncL" hidden><input type="checkbox" id="mfSync" data-msync>跟著音樂打拍子（按開始會從第 1 小節一起播）</label>
+    <p class="mf-syncn" id="mfSyncN" hidden>速度跟著播放速度走，要改請調播放速度。</p>
     <div class="mf-more">
       <div class="as-speed"><label for="mfVol">音量<b id="mfVolV">100%</b></label><input type="range" id="mfVol" min="0" max="150" step="5" value="100" data-svol></div>
       <div class="mf-lbl" id="mfSndL">音色</div>
@@ -2700,6 +2704,89 @@ function foldSection(kind,label,...content){
     document.querySelectorAll('.fold-h[data-kind="'+kind+'"]').forEach(b=>b._set(c))};
   wrap.append(btn,body);return wrap;
 }
+// 跟著音樂 (pr_metro_sync): song metronomes put their clicks on the music's own beats; shared by all songs
+let pmSyncPref=!!load("pr_metro_sync",false);
+function setMetroSync(v){
+  pmSyncPref=v;save("pr_metro_sync",v);
+  document.querySelectorAll("input[data-msync]").forEach(x=>x.checked=v);
+  document.dispatchEvent(new CustomEvent("msync"));
+}
+// The metronome in a song card (audio player or YouTube video). follow(bpm) sets it to the music's tempo at the
+// current playback speed. src is the music: {time, rate, running, bars, barT(n), start1, pause}. With 跟著音樂 on
+// and a bar grid (bars() > 0) the clicks fall on the grid's beats (4 per bar, so 漸慢 and loops are followed)
+// instead of keeping their own time: ▶ starts the music from bar 1 (after the 預備拍 when that is on) unless it
+// is already playing, a paused music pauses the clicks, and ■ stops both. start1() returns when (audio clock) the
+// music starts, so bar 1's downbeat is played then: the music only reports that it is playing a moment later.
+function songMetro(src){
+  const row=el("div","row"),btn=el("button","pill","開始"),tempo=el("span","note pm-tempo"),range=el("input"),meters=el("div","row"),dots=el("div","beats pm-beats");
+  dots.setAttribute("aria-hidden","true");btn.setAttribute("aria-pressed",false);
+  let on=false,T=null,next=0,tick=0,meter=2,timers=[],val=80,last=-1,mode=false;
+  const notify=()=>document.dispatchEvent(new CustomEvent("pmchange")); // keeps the floating button in step
+  const synced=()=>pmSyncPref&&src.bars()>0;
+  function draw(){const m=METERS[synced()?2:meter];dots.innerHTML="";
+    for(let i=0;i<m.beats;i++)dots.append(el("i",i===0||(m.acc||[]).includes(i)?"acc":""))}
+  function show(){const s=synced();tempo.textContent=(s?"跟著音樂 ":"")+"♩="+val;range.value=val;range.disabled=s;meters.hidden=s;
+    range.setAttribute("aria-valuetext","♩="+val);if(dots.childElementCount!==METERS[s?2:meter].beats)draw()}
+  const set=v=>{val=Math.max(30,Math.min(240,Math.round(v)));show();notify()};
+  range.type="range";range.min=30;range.max=240;range.step=1;range.setAttribute("aria-label","節拍器速度");
+  range.addEventListener("input",()=>set(+range.value));
+  const light=(k,t)=>{const c=audio(),id=setTimeout(()=>{timers=timers.filter(x=>x!==id);
+    if(on)[...dots.children].forEach((d,i)=>d.classList.toggle("on",i===k))},Math.max(0,(t-c.currentTime)*1000));timers.push(id)};
+  // keeps its own time
+  function own(){
+    const c=audio();if(next<c.currentTime)next=c.currentTime+0.02;
+    while(next<c.currentTime+LOOKAHEAD){
+      const m=METERS[meter],beat=tick%m.beats,t=next;
+      playSnd(MSOUNDS[songSnd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat,songVol);light(beat,t);
+      next+=60/val;tick++;
+    }
+  }
+  // follows the music: the grid's beats between the last one played and a little ahead, put on the audio clock
+  function withMusic(){
+    if(!src.running())return;
+    const c=audio(),m=src.time(),r=src.rate()||1,until=m+LOOKAHEAD*r,n=src.bars();
+    // a jump (loop, seek, 跳到) or the start: carry on from here; a beat just missed (the music reports
+    // that it is playing a moment late, often just after bar 1's downbeat) still sounds, right away
+    if(m<last-0.2||m>last+2)last=m-0.12;
+    let b=1;while(b<n&&src.barT(b+1)<=last)b++;
+    for(;b<=n;b++){const s=src.barT(b),e=src.barT(b+1);if(s>until)break;
+      for(let k=0;k<4;k++){const t=s+k*(e-s)/4;if(t<=last||t>until)continue;
+        const at=c.currentTime+Math.max(0,(t-m)/r);playSnd(MSOUNDS[songSnd],at,k?1:2,k,songVol);light(k,at);last=t}}
+  }
+  const run=()=>{clearInterval(T);timers.forEach(clearTimeout);timers=[];const f=mode?withMusic:own;f();T=setInterval(f,TICK_MS)};
+  function stop(){
+    clearInterval(T);T=null;timers.forEach(clearTimeout);timers=[];
+    if(on&&mode)src.pause();on=false;
+    btn.textContent="開始";btn.setAttribute("aria-pressed",false);[...dots.children].forEach(d=>d.classList.remove("on"));
+    if(songMetroOff===stop)songMetroOff=null;
+    notify();
+  }
+  function start(){
+    stopMetro();stopPlayer(); // also stops any other song's metronome
+    on=true;tick=0;last=-1;next=audio().currentTime+0.06;songMetroOff=stop;mode=synced();
+    btn.textContent="停止";btn.setAttribute("aria-pressed",true);
+    if(mode&&!src.running()){const at=src.start1();
+      if(at!=null){const t=Math.max(at,audio().currentTime);playSnd(MSOUNDS[songSnd],t,2,0,songVol);light(0,t);last=src.barT(1)}}
+    run();notify();
+  }
+  btn.onclick=()=>on?stop():start();
+  // 跟著音樂 switched (here or in another card) while running: change how the clicks are timed, the music carries on
+  const onSync=()=>{if(!row.isConnected){document.removeEventListener("msync",onSync);return}
+    show();draw();if(on&&mode!==synced()){mode=synced();tick=0;last=-1;next=audio().currentTime+0.06;run()}};
+  document.addEventListener("msync",onSync);
+  METERS.forEach((m,i)=>{const b=el("button","pill",m.n);b.setAttribute("aria-pressed",i===meter);
+    b.onclick=()=>{meter=i;tick=0;draw();meters.querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i))};meters.append(b)});
+  row.append(btn,tempo);
+  const snds=el("div","row");
+  MSOUNDS.forEach((s,i)=>{const b=el("button","pill",s.n);b.dataset.snd=i;b.setAttribute("aria-pressed",i===songSnd);
+    b.onclick=()=>{setSongSnd(i);if(!on)songPreview(songVol)}; // short preview when stopped
+    snds.append(b)});
+  const sync=el("label","ci-chk"),si=el("input");si.type="checkbox";si.dataset.msync="";si.checked=pmSyncPref;
+  si.onchange=()=>setMetroSync(si.checked);sync.append(si,"跟著音樂打拍子（按開始會從第 1 小節一起播）");
+  set(val);draw();
+  return {els:[row,sync,range,meters,snds,songVolRow("row vol-row"),dots],follow:set,
+    api:{on:()=>on,bpm:()=>val,set,toggle:()=>on?stop():start(),synced,canSync:()=>src.bars()>0}};
+}
 // Audio player with practice speed and an A-B loop. `src` is a file name, or a list of
 // {src, label} tracks that share one player and are switched with pills above it.
 // With `bpm` (the recording’s original tempo) the speed is set and shown in BPM; pitch stays the same.
@@ -2756,47 +2843,10 @@ function player(src,bpm){
   minus.onclick=()=>setRatio(base()?(Math.round(base()*ratio)-1)/base():ratio-0.05);
   plus.onclick=()=>setRatio(base()?(Math.round(base()*ratio)+1)/base():ratio+0.05);
   range.addEventListener("input",()=>setRatio(+range.value));
-  const pmRow=el("div","row"),pmBtn=el("button","pill","開始"),pmTempo=el("span","note pm-tempo"),pmRange=el("input"),pmMeters=el("div","row"),pmDots=el("div","beats pm-beats");
-  pmDots.setAttribute("aria-hidden","true");pmBtn.setAttribute("aria-pressed",false);
-  let pmOn=false,pmT=null,pmNext=0,pmTick=0,pmMeter=2,pmTimers=[];
-  const pmNotify=()=>document.dispatchEvent(new CustomEvent("pmchange")); // keeps the floating button in step
-  let pmVal=80;const pmBpm=()=>pmVal;
-  const pmSet=v=>{pmVal=Math.max(30,Math.min(240,Math.round(v)));pmTempo.textContent="♩="+pmVal;pmRange.value=pmVal;pmRange.setAttribute("aria-valuetext",pmTempo.textContent);pmNotify()};
-  function pmShow(){pmSet((base()||80)*ratio)} // follow the playback speed whenever it changes
-  pmRange.type="range";pmRange.min=30;pmRange.max=240;pmRange.step=1;pmRange.setAttribute("aria-label","節拍器速度");
-  pmRange.addEventListener("input",()=>pmSet(+pmRange.value));
-  function pmDraw(){const m=METERS[pmMeter];pmDots.innerHTML="";
-    for(let i=0;i<m.beats;i++)pmDots.append(el("i",i===0||(m.acc||[]).includes(i)?"acc":""))}
-  function pmSchedule(){
-    const c=audio();if(pmNext<c.currentTime)pmNext=c.currentTime+0.02;
-    while(pmNext<c.currentTime+LOOKAHEAD){
-      const m=METERS[pmMeter],beat=pmTick%m.beats,t=pmNext;
-      playSnd(MSOUNDS[songSnd],t,beat===0?2:(m.acc||[]).includes(beat)?1:m.weak?0:1,beat,songVol);
-      const id=setTimeout(()=>{pmTimers=pmTimers.filter(x=>x!==id);
-        if(pmOn)[...pmDots.children].forEach((d,i)=>d.classList.toggle("on",i===beat))},Math.max(0,(t-c.currentTime)*1000));
-      pmTimers.push(id);pmNext+=60/pmBpm();pmTick++;
-    }
-  }
-  function pmStop(){
-    if(pmT)clearInterval(pmT);pmT=null;pmTimers.forEach(clearTimeout);pmTimers=[];pmOn=false;
-    pmBtn.textContent="開始";pmBtn.setAttribute("aria-pressed",false);[...pmDots.children].forEach(d=>d.classList.remove("on"));
-    if(songMetroOff===pmStop)songMetroOff=null;
-    pmNotify();
-  }
-  function pmStart(){
-    stopMetro();stopPlayer(); // also stops any other song's metronome
-    const c=audio();pmOn=true;pmTick=0;pmNext=c.currentTime+0.06;songMetroOff=pmStop;
-    pmBtn.textContent="停止";pmBtn.setAttribute("aria-pressed",true);pmSchedule();pmT=setInterval(pmSchedule,TICK_MS);pmNotify();
-  }
-  pmBtn.onclick=()=>pmOn?pmStop():pmStart();
-  box._metro={on:()=>pmOn,bpm:()=>pmVal,set:pmSet,toggle:()=>pmOn?pmStop():pmStart()};
-  METERS.forEach((m,i)=>{const b=el("button","pill",m.n);b.setAttribute("aria-pressed",i===pmMeter);
-    b.onclick=()=>{pmMeter=i;pmTick=0;pmDraw();pmMeters.querySelectorAll(".pill").forEach((x,j)=>x.setAttribute("aria-pressed",j===i))};pmMeters.append(b)});
-  pmRow.append(pmBtn,pmTempo);pmDraw();
-  const pmSnds=el("div","row");
-  MSOUNDS.forEach((s,i)=>{const b=el("button","pill",s.n);b.dataset.snd=i;b.setAttribute("aria-pressed",i===songSnd);
-    b.onclick=()=>{setSongSnd(i);if(!pmOn)songPreview(songVol)}; // short preview when stopped
-    pmSnds.append(b)});
+  const metro=songMetro({time:()=>au.currentTime,rate:()=>ratio,running:()=>!au.paused&&!au.seeking,
+    bars:()=>cur.bars?cur.bars.n:0,barT:n=>barT(n),start1:()=>startAt(1,"jump"),pause:()=>{cancelCI();au.pause()}});
+  box._metro=metro.api;
+  function pmShow(){metro.follow((base()||80)*ratio)} // follow the playback speed whenever it changes
   const dial=el("div","row spd-dial");dial.append(minus,val,plus,sub);
   speeds.append(dial,range,presets);showSpeed();
   let A=null,B=null;
@@ -2854,16 +2904,21 @@ function player(src,bpm){
     i.onchange=()=>{ciPref[kind]=i.checked;save("pr_countin",ciPref);
       document.querySelectorAll('input[data-ci="'+kind+'"]').forEach(x=>x.checked=i.checked)};
     l.append(i,"先數 4 拍預備拍");return l};
-  // seek to bar n and play, with four count-in clicks first when that option is on
+  // seek to bar n and play, with four count-in clicks first when that option is on;
+  // returns when (audio clock) the music starts, or null while the file still has to load
   function startAt(n,kind){
-    cancelCI();au.pause();au.currentTime=barT(n);
-    if(!ciPref[kind]){au.play();return}
+    cancelCI();au.pause();
+    // not loaded yet (preload none): a seek would not stick, so load first
+    if(au.readyState<1){au.addEventListener("loadedmetadata",()=>startAt(n,kind),{once:true});au.preload="auto";au.load();return null}
+    au.currentTime=barT(n);
+    if(!ciPref[kind]){au.play();return audio().currentTime}
     const c=audio(),beat=(barT(n+1)-barT(n))/4/ratio,t0=c.currentTime+0.15;
     for(let k=0;k<4;k++){const t=t0+k*beat;
       ciTimers.push(setTimeout(()=>{playSnd(MSOUNDS[songSnd],t,k?1:2,k,songVol);
         ciTimers.push(setTimeout(()=>{nowEl.textContent="預備拍 "+"●".repeat(k+1)+"○".repeat(3-k)},Math.max(0,(t-c.currentTime)*1000)))},
         Math.max(0,(t-c.currentTime-0.08)*1000)))}
     ciTimers.push(setTimeout(()=>{ciTimers=[];ciOwn=true;au.play();ciOwn=false},Math.max(0,(t0+4*beat-c.currentTime)*1000)));
+    return t0+4*beat;
   }
   au.addEventListener("play",()=>{if(!ciOwn)cancelCI()}); // pressing play yourself skips the count-in
   jGo.onclick=()=>{const n=clampBar(jIn.value);jIn.value=n;startAt(n,"jump")};
@@ -2908,7 +2963,7 @@ function player(src,bpm){
   };
   const barSec=foldSection("bars","小節跳轉",jumpRow,nowRow,barNote);
   renderLoops();
-  box.append(au,speeds,barSec,foldSection("metro","節拍器",pmRow,pmRange,pmMeters,pmSnds,songVolRow("row vol-row"),pmDots),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
+  box.append(au,speeds,barSec,foldSection("metro","節拍器",...metro.els),foldSection("loop","段落循環（A-B 重複播放）",loop,bloopRow,saveRow,list));
   syncBars();
   return box;
 }
@@ -3320,7 +3375,7 @@ const fmtSec=t=>{const x=(t%60).toFixed(2).replace(/\.?0+$/,"");return Math.floo
 function ytTools(yt,g){
   g=g||{};
   const box=el("div","yt-tools"),spd=el("div","row"),ab=el("div","row"),info=el("p","note");
-  let rate=1,A=null,B=null,iv=0,P=null,ciTimers=[],ciText="",ciSeek=0;
+  let rate=1,A=null,B=null,iv=0,P=null,ciTimers=[],ciText="",ciSeek=0,metro=null;
   const fmt=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
   // the player once it exists (the thumbnail may have been tapped directly, without these tools)
   const got=p=>{if(p&&!P){P=p;p.addEventListener("onStateChange",e=>{
@@ -3328,11 +3383,13 @@ function ytTools(yt,g){
     if(e.data===1&&ciTimers.length){if(Date.now()-ciSeek<1500)p.pauseVideo();else cancelCI()}
     document.dispatchEvent(new Event("ytstate"))})}return p};
   const cur=()=>{if(!P){const m=yt.current();if(m)m.then(got)}return P};
+  yt.onReady=p=>{got(p);document.dispatchEvent(new Event("ytstate"))}; // the floating panels can show bars as soon as it loads
   const withP=fn=>yt.player().then(got).then(p=>{if(p)fn(p);else info.textContent="這支影片只能用簡易播放器，不能調速度和循環。"});
   const val=el("b","spd-val"),minus=el("button","pill spd-step","−"),plus=el("button","pill spd-step","＋");
   minus.setAttribute("aria-label","慢一點");plus.setAttribute("aria-label","快一點");
   const presets=[0.5,0.75,1].map(r=>{const b=el("button","pill",r===1?"原速":Math.round(r*100)+"%");b.dataset.r=r;b.onclick=()=>setRate(r);return b});
-  const showRate=()=>{val.textContent=Math.round(rate*100)+"%";presets.forEach(b=>b.setAttribute("aria-pressed",Math.abs(+b.dataset.r-rate)<0.001))};
+  const showRate=()=>{val.textContent=Math.round(rate*100)+"%";presets.forEach(b=>b.setAttribute("aria-pressed",Math.abs(+b.dataset.r-rate)<0.001));
+    if(metro)metro.follow((g.bpm||80)*rate)};
   // YouTube may round the speed to one it supports: show what it really took
   const setRate=r=>{rate=Math.round(Math.max(0.25,Math.min(2,r))*100)/100;showRate();
     withP(p=>{p.setPlaybackRate(rate);setTimeout(()=>{const x=p.getPlaybackRate();if(x&&Math.abs(x-rate)>0.001){rate=x;showRate()}},300)})};
@@ -3351,8 +3408,8 @@ function ytTools(yt,g){
   // to start after the last click, so the count-in is close but not as tight as with an audio file.
   const cancelCI=()=>{ciTimers.forEach(clearTimeout);ciTimers=[];ciText=""};
   function startAt(n,kind){
-    const p=cur();if(!p)return;cancelCI();
-    if(!ciPref[kind]){p.seekTo(barT(n),true);p.playVideo();return}
+    const p=cur();if(!p)return null;cancelCI();
+    if(!ciPref[kind]){p.seekTo(barT(n),true);p.playVideo();return audio().currentTime}
     ciSeek=Date.now();p.pauseVideo();p.seekTo(barT(n),true);
     const c=audio(),beat=240/g.bpm/4/rate,t0=c.currentTime+0.3;
     for(let k=0;k<4;k++){const t=t0+k*beat;
@@ -3360,6 +3417,7 @@ function ytTools(yt,g){
         ciTimers.push(setTimeout(()=>{ciText="預備拍 "+"●".repeat(k+1)+"○".repeat(3-k)},Math.max(0,(t-c.currentTime)*1000)))},
         Math.max(0,(t-c.currentTime-0.08)*1000)))}
     ciTimers.push(setTimeout(()=>{ciTimers=[];ciText="";p.playVideo()},Math.max(0,(t0+4*beat-c.currentTime)*1000)));
+    return t0+4*beat;
   }
   const aB=el("button","pill","設 A 點"),bB=el("button","pill","設 B 點"),off=el("button","pill","取消循環");
   const showAB=()=>{off.hidden=A==null;bB.disabled=A==null;
@@ -3382,10 +3440,17 @@ function ytTools(yt,g){
     mk.onclick=()=>withP(p=>{g.start=Math.round(p.getCurrentTime()*100)/100;g.onStart(g.start);showBar()});
     row.append(el("span","lbl","小節"),mk);box.append(row,bn);showBar();
   }
+  // YouTube reports "playing" about half a second late; the time moving on (a small step, not a seek) counts too
+  let rT=-1;
+  const moving=p=>{const t=p.getCurrentTime(),d=t-rT;rT=t;return p.getPlayerState()===1||(d>0&&d<0.2)};
+  metro=songMetro({time:()=>{const p=cur();return p?p.getCurrentTime():0},rate:()=>rate,running:()=>{const p=cur();return !!p&&moving(p)},
+    bars:()=>{const G=grid();return G?G.n:0},barT,start1:()=>grid()?startAt(1,"jump"):null,pause:()=>{cancelCI();const p=cur();if(p)p.pauseVideo()}});
+  box._metro=metro.api;showRate();
+  box.append(foldSection("metro","節拍器",...metro.els));
   box._ctl={
     playing:()=>{const p=cur();return ciTimers.length>0||!!p&&[1,3].includes(p.getPlayerState())},
     toggle:()=>{if(ciTimers.length){cancelCI();return}withP(p=>p.getPlayerState()===1?p.pauseVideo():p.playVideo())},
-    stop:()=>{cancelCI();clearInterval(iv);const p=cur();if(p)try{p.pauseVideo()}catch(e){}},
+    stop:()=>{if(metro.api.on())metro.api.toggle();cancelCI();clearInterval(iv);const p=cur();if(p)try{p.pauseVideo()}catch(e){}},
     jump:n=>{if(grid())startAt(clampBar(n),"jump")},
     bars:()=>{const G=grid();return G?G.n:0},
     now:()=>{if(ciText)return ciText;const p=cur();if(!p||!grid())return "";const b=barAt(p.getCurrentTime());return b?"第 "+b.n+" 小節第 "+b.beat+" 拍":"第 1 小節之前"},
@@ -3698,7 +3763,7 @@ renderSongs();
 // otherwise the song at mid-screen. Shown and hidden together with the auto-scroll button.
 (function(){
   const box=$("#aScroll"),fab=$("#mfFab"),panel=$("#mfPanel"),play=$("#mfPlay"),range=$("#mfRange"),lv=$("#mfLv"),song=$("#mfSong");
-  const players=()=>[...document.querySelectorAll("#songs .player")].filter(p=>p._metro);
+  const players=()=>[...document.querySelectorAll("#songs .player, #songs .yt-tools")].filter(p=>p._metro); // YouTube videos too
   function target(){
     const ps=players(),run=ps.find(p=>p._metro.on());if(run)return run;
     let pick=ps[0]||null;
@@ -3709,14 +3774,17 @@ renderSongs();
     const p=target(),on=!!p&&p._metro.on();
     fab.classList.toggle("running",players().some(x=>x._metro.on()));
     fab.setAttribute("aria-label",on?"節拍器（播放中）":"節拍器");
-    play.disabled=range.disabled=!p;play.setAttribute("aria-pressed",String(on));
+    play.disabled=!p;range.disabled=!p||p._metro.synced();play.setAttribute("aria-pressed",String(on));
     const l=on?"暫停節拍器":"開始節拍器";play.setAttribute("aria-label",l);play.title=l;
+    $("#mfSyncL").hidden=!p||!p._metro.canSync();$("#mfSync").checked=pmSyncPref;
     song.textContent=p?"「"+p.closest(".song").querySelector("h3").textContent.split(/\s*\+\s*/)[0]+"」":"";
     if(p){range.value=p._metro.bpm();lv.textContent="♩="+p._metro.bpm();range.setAttribute("aria-valuetext",lv.textContent)}
+    $("#mfSyncN").hidden=!p||!p._metro.synced();
     $("#mfVol").value=songVol;$("#mfVolV").textContent=volTxt(songVol);
   }
   play.onclick=()=>{const p=target();if(p)p._metro.toggle()};
   range.addEventListener("input",()=>{const p=target();if(p)p._metro.set(+range.value)});
+  $("#mfSync").onchange=e=>setMetroSync(e.target.checked);document.addEventListener("msync",render);document.addEventListener("ytstate",render);
   // 音量 / 音色 are shared by every song's metronome and the count-in
   const vol=$("#mfVol");vol.value=songVol;$("#mfVolV").textContent=volTxt(songVol);
   vol.addEventListener("input",()=>{setSongVol(+vol.value);$("#mfVolV").textContent=volTxt(songVol)});
@@ -3851,7 +3919,7 @@ function ytBox(id,title){
     const wrap=el("div","video"),host=el("div");wrap.append(host);box.replaceWith(wrap);
     made=loadYT().then(()=>new Promise(res=>{
       const p=new YT.Player(host,{videoId:id,host:"https://www.youtube-nocookie.com",
-        playerVars:{autoplay:autoplay?1:0,rel:0,playsinline:1},events:{onReady:()=>res(p),onStateChange:e=>{if(e.data===1)ytLast={p,title}}}});
+        playerVars:{autoplay:autoplay?1:0,rel:0,playsinline:1},events:{onReady:()=>{res(p);if(api.onReady)api.onReady(p)},onStateChange:e=>{if(e.data===1)ytLast={p,title}}}});
     })).catch(()=>{ // API blocked: fall back to a plain embed
       const f=el("iframe");f.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0&playsinline=1";
       f.title=title;f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;
@@ -3860,7 +3928,8 @@ function ytBox(id,title){
     return made;
   };
   box.onclick=()=>make(true);
-  return {el:box,player:()=>make(false),current:()=>made}; // current: the player if already created, else null
+  // current: the player if already created, else null; onReady(p), when set, hears when the player is ready
+  const api={el:box,player:()=>make(false),current:()=>made};return api;
 }
 
 /* ---------- singing: lyrics that follow the video ---------- */
@@ -5810,6 +5879,13 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-11-01.2",title:"節拍器跟著音樂打拍子",items:[
+    ["跟著音樂打拍子","歌曲的節拍器（卡片裡和右下角）多了「跟著音樂打拍子」：勾起來按開始，音樂會從第 1 小節開始播，節拍器的拍子跟著音樂走；有預備拍的話先數 4 拍再一起開始。調慢速度、跳小節、循環時拍子都會跟著對齊，暫停音樂拍子也會停。"],
+    ["YouTube 也有節拍器","只有 YouTube 連結的歌也有節拍器了，右下角「節拍器」也能控制。設好第 1 小節（影片下面的按鈕）就能跟著影片打拍子。"]
+  ]},
+  {v:"2026-11-01.1",class:true,title:"節拍器跟著音樂打拍子",items:[
+    ["跟著音樂打拍子","歌曲的節拍器（卡片裡和右下角）多了「跟著音樂打拍子」：勾起來按開始，音檔會從第 1 小節開始播，節拍器的拍子跟著音樂走；有預備拍的話先數 4 拍再一起開始。調慢速度、跳小節、循環時拍子都會跟著對齊，暫停音樂拍子也會停。"]
+  ]},
   {v:"2026-10-31.2",title:"播放音檔也能控制 YouTube 影片",items:[
     ["只有影片也能用","自己加的歌只放 YouTube 連結也沒關係：滑到這首歌，右下角「播放音檔」就能播放、暫停、調速度、看循環；同一首有音檔的話還是控制音檔。"],
     ["照小節練影片","填了原曲速度，再在影片下面按「把現在的位置設為第 1 小節」（或在編輯歌曲時填秒數），就能跳到第幾小節、用小節循環，也能先數 4 拍預備拍。小節是照速度推算的，速度不穩的段落會有偏差。"],
