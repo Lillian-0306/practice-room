@@ -237,6 +237,30 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
     create policy "rec own delete" on storage.objects for delete to authenticated
       using (bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid()::text));
     ```
+  - **吉他專案自己加的歌**（只有完整版、只有自己看得到）：吉他 › 專案最下面「＋ 新增歌曲」（`gSongForm()`），歌單存在 `pr_my_gsongs`（`[{id, title, by, bpm, chords, yt, pages:[{id, w, h, cloud}], audio:[{id, label, type, cloud}]}]`，跟其他 `pr_` 一起同步），卡片和內建歌曲共用 `gSongCard()`，放在 `#songs` 裡的 `#gmy`（`display:contents`，`renderMyG()` 只重畫這一塊）。
+    - 樂譜：PDF 用 pdf.js（cdnjs 3.11.174，`loadPdfJs()` 延遲載入）在瀏覽器裡畫成 1400px 寬 JPEG，照片縮到 1400px，最多 `GF_PAGES`＝30 頁；筆記存在 `pr_sheet_notes` 的 `my:<id>`（`notesKey`），換樂譜會清掉。
+    - 音檔：每個最多 `GF_MAX_MB`＝30 MB，按「▶ 載入音檔播放器」才讀檔，用原本的 `player()`（track 的 `url` 播放、`src`＝`my:<檔案 id>` 當段落循環的 key）。
+    - YouTube：`ytBox()` 加 `ytTools()`（速度 25%–200%、A-B 循環）。
+    - 檔案不在 `pr_` 快照裡：存在 IndexedDB `pr_gfiles`（`gfDB`），登入時也上傳到私有 bucket `gsongs`，路徑 `<uid>/<檔案 id>`（`cloud:true`）；別台裝置第一次打開時下載一次存進 IndexedDB。上傳失敗就只存在這台。登出選「從這台裝置清除」會清 `pr_gfiles`；刪除會員前 `gfClearCloud()`。
+    - 正式專案要在 SQL Editor 執行（每位會員最多 300 個檔案）：
+    ```sql
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('gsongs', 'gsongs', false, 31457280, array['image/jpeg','audio/*']);
+    create or replace function public.gsong_count() returns int language sql stable security invoker set search_path = '' as $$
+      select count(*)::int from storage.objects
+      where bucket_id = 'gsongs' and (storage.foldername(name))[1] = (select auth.uid()::text)
+    $$;
+    revoke execute on function public.gsong_count() from public, anon;
+    grant execute on function public.gsong_count() to authenticated;
+    create policy "gsong own read" on storage.objects for select to authenticated
+      using (bucket_id = 'gsongs' and (storage.foldername(name))[1] = (select auth.uid()::text));
+    create policy "gsong own insert" on storage.objects for insert to authenticated
+      with check (bucket_id = 'gsongs' and (storage.foldername(name))[1] = (select auth.uid()::text) and public.gsong_count() < 300);
+    create policy "gsong own update" on storage.objects for update to authenticated
+      using (bucket_id = 'gsongs' and (storage.foldername(name))[1] = (select auth.uid()::text));
+    create policy "gsong own delete" on storage.objects for delete to authenticated
+      using (bucket_id = 'gsongs' and (storage.foldername(name))[1] = (select auth.uid()::text));
+    ```
   - Authentication › Sign In / Providers › Email：保持啟用，**關閉 Confirm email**（內建寄信服務只寄給專案成員、每小時 2 封，不能給一般會員用）。
   - Project Settings › API Keys：網頁用 **Publishable key**（`sb_publishable_…`）填進 `SUPA_KEY`；Secret key 和舊的 service_role 絕對不能放進網頁。舊的 anon key 預計 2026 年底停用。
   - 免費方案：一週沒活動專案會暫停（要到後台恢復），沒有自動備份。檔案空間 1 GB、流量每月 10 GB（5 GB 有快取＋5 GB 沒快取），錄音約每分鐘 0.5–1 MB。

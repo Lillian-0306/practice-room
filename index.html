@@ -526,6 +526,12 @@ section.panel[hidden]{display:none}
 .mk-legend b{color:var(--accent)}
 /* songs people add themselves */
 .add-song{align-self:flex-start}
+#gmy{display:contents}
+.g-load{align-self:flex-start}
+.song>p.note:empty{display:none}
+.yt-tools{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}
+.yt-tools .note{margin:0}
+.my-form input[type=file]{padding:6px 8px}
 .my-form{display:flex;flex-direction:column;gap:12px;border:1.5px dashed var(--accent);border-radius:12px;padding:16px}
 .my-form h3{font-size:1.1rem}
 .my-form label{display:flex;flex-direction:column;gap:4px;font-size:.88rem;font-weight:700;color:var(--muted)}
@@ -2697,12 +2703,13 @@ function foldSection(kind,label,...content){
 // Audio player with practice speed and an A-B loop. `src` is a file name, or a list of
 // {src, label} tracks that share one player and are switched with pills above it.
 // With `bpm` (the recording’s original tempo) the speed is set and shown in BPM; pitch stays the same.
+// A track with `url` (an uploaded file) plays from there; its `src` is then only the key for its saved loops.
 function player(src,bpm){
   const box=el("div","player"),au=el("audio"),speeds=el("div","spd"),loop=el("div","row"),info=el("span","note");
   const tracks=Array.isArray(src)?src:[{src}];
   // file names may contain "#", so encode them before using them as URLs
   let ratio=1; // playback speed, kept when switching tracks
-  const use=t=>{au.src=encodeURIComponent(t.src);au.playbackRate=au.defaultPlaybackRate=ratio};
+  const use=t=>{au.src=t.url||encodeURIComponent(t.src);au.playbackRate=au.defaultPlaybackRate=ratio};
   au.preservesPitch=true;
   au.controls=true;au.preload="none";use(tracks[0]);
   if(tracks.length>1){
@@ -2966,7 +2973,7 @@ function loadJsPdf(){
   return jsPdfReady;
 }
 function sheetNotes(s,sheet,pages){
-  const data=snAll[s.title]||(snAll[s.title]={});data.ink=data.ink||{};data.boxes=data.boxes||[];
+  const nk=s.notesKey||s.title,data=snAll[nk]||(snAll[nk]={});data.ink=data.ink||{};data.boxes=data.boxes||[];
   let mode="view",col=0,size=1,tcol=0,tsize=1;const hist=[],redo=[]; // {i page, st stroke, kind add|edit|del}
   const bar=el("div","sn-bar"),modes=el("div","sn-row"),tools=el("div","sn-row"),more=el("div","sn-row"),boxList=el("div","sn-boxes");
   modes.setAttribute("role","group");modes.setAttribute("aria-label","樂譜工具");
@@ -3210,68 +3217,308 @@ function sheetNotes(s,sheet,pages){
   });
   renderTools();syncShow();renderBoxes();
 }
+/* ---------- guitar: songs people add (樂譜、音檔、YouTube) ---------- */
+// pr_my_gsongs: [{id, title, by, bpm, chords:[…], yt, pages:[{id, w, h, cloud}], audio:[{id, label, type, cloud}]}]
+// Only the person who added a song sees it (full edition only). The list syncs with the other pr_ data; the files
+// do not: they are kept in IndexedDB on this device (pr_gfiles) and, signed in, also in the member's own folder of
+// the private Storage bucket "gsongs" (<uid>/<file id>, policies in HANDOFF.md). cloud marks a file that made it up;
+// a cloud file missing on this device is downloaded once and kept in IndexedDB.
+// A sheet is stored as page images: PDFs are drawn to 1400px-wide JPEGs in the browser (pdf.js) when added.
+const GF_MAX_MB=30,GF_PAGES=30,GF_W=1400;
+const gfDB=(()=>{
+  let p=null;
+  const open=()=>p||(p=new Promise((res,rej)=>{
+    if(!window.indexedDB){rej(new Error("no indexedDB"));return}
+    const r=indexedDB.open("pr_gfiles",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("files",{keyPath:"id"});
+    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+  }));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{
+    const t=db.transaction("files",mode),q=fn(t.objectStore("files"));
+    t.oncomplete=()=>res(q&&q.result);t.onerror=t.onabort=()=>rej(t.error);
+  }));
+  return {get:id=>tx("readonly",s=>s.get(id)),put:r=>tx("readwrite",s=>s.put(r)),del:id=>tx("readwrite",s=>s.delete(id)),clear:()=>tx("readwrite",s=>s.clear())};
+})();
+const gfBucket=()=>recCloud.sb.storage.from("gsongs"),gfPath=id=>recCloud.uid+"/"+id,gfUrls={};
+// keeps a file on this device and, signed in, sends it up; resolves with whether it reached the cloud
+async function gfPut(id,blob){
+  await gfDB.put({id,blob});
+  if(!recCloud)return false;
+  const {error}=await gfBucket().upload(gfPath(id),blob,{contentType:blob.type,upsert:true});
+  if(error)console.warn(error);
+  return !error;
+}
+// a URL for a stored file, or null when it is only on another device (or in the cloud while signed out)
+async function gfUrl(f){
+  if(gfUrls[f.id])return gfUrls[f.id];
+  const r=await gfDB.get(f.id).catch(()=>null);let blob=r&&r.blob;
+  if(!blob&&f.cloud&&recCloud){
+    const {data,error}=await gfBucket().download(gfPath(f.id));
+    if(error)console.warn(error);else{blob=data;gfDB.put({id:f.id,blob}).catch(()=>{})}
+  }
+  return blob?(gfUrls[f.id]=URL.createObjectURL(blob)):null;
+}
+async function gfDel(files){
+  files.forEach(f=>{gfDB.del(f.id).catch(()=>{});if(gfUrls[f.id]){URL.revokeObjectURL(gfUrls[f.id]);delete gfUrls[f.id]}});
+  const up=files.filter(f=>f.cloud);
+  if(up.length&&recCloud){const {error}=await gfBucket().remove(up.map(f=>gfPath(f.id)));if(error)console.warn(error)}
+}
+// 從這台裝置清除 / a member deleting themselves
+const gfClearLocal=()=>gfDB.clear().catch(()=>{});
+async function gfClearCloud(){
+  const {data,error}=await gfBucket().list(recCloud.uid,{limit:1000});
+  if(error){if(/not found/i.test(error.message))return;throw error}
+  if(data.length){const {error:e}=await gfBucket().remove(data.map(f=>gfPath(f.name)));if(e)throw e}
+}
+let pdfJsReady=null;
+function loadPdfJs(){
+  const base="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  return pdfJsReady||(pdfJsReady=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src=base+"pdf.min.js";
+    sc.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc=base+"pdf.worker.min.js";res(pdfjsLib)};
+    sc.onerror=()=>{pdfJsReady=null;rej(new Error("pdf.js"))};document.head.append(sc)}));
+}
+const cvJpeg=cv=>new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("toBlob")),"image/jpeg",0.85));
+// PDFs and photos → page images {blob, w, h} on a white background; tell(text) reports progress
+async function sheetPages(files,tell){
+  const out=[];
+  const draw=async(w,h,paint)=>{const cv=el("canvas");cv.width=w;cv.height=h;const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,w,h);
+    await paint(g);out.push({blob:await cvJpeg(cv),w,h})};
+  for(const file of files){
+    if(out.length>=GF_PAGES)break;
+    if(file.type==="application/pdf"||/\.pdf$/i.test(file.name)){
+      const lib=await loadPdfJs(),doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;
+      for(let i=1;i<=doc.numPages&&out.length<GF_PAGES;i++){
+        tell("正在轉換「"+file.name+"」第 "+i+" / "+doc.numPages+" 頁…");
+        const pg=await doc.getPage(i),v=pg.getViewport({scale:GF_W/pg.getViewport({scale:1}).width});
+        await draw(GF_W,Math.round(v.height),g=>pg.render({canvasContext:g,viewport:v}).promise);
+      }
+      doc.destroy();
+    }else{
+      tell("正在處理「"+file.name+"」…");
+      const img=await createImageBitmap(file),k=Math.min(1,GF_W/img.width),w=Math.round(img.width*k),h=Math.round(img.height*k);
+      await draw(w,h,g=>g.drawImage(img,0,0,w,h));
+    }
+  }
+  return out;
+}
+const gfOk=f=>f&&typeof f.id==="string";
+let myGSongs=(v=>Array.isArray(v)?v:[])(load("pr_my_gsongs",[])).filter(o=>o&&o.id&&o.title)
+  .map(o=>Object.assign(o,{pages:(o.pages||[]).filter(gfOk),audio:(o.audio||[]).filter(gfOk),chords:Array.isArray(o.chords)?o.chords:[]}));
+const saveMyGSongs=()=>save("pr_my_gsongs",myGSongs);
+const myGSong=o=>({my:true,src:o,title:o.title,by:o.by||"自己加的歌",chords:o.chords,bpm:o.bpm||0,yt:o.yt||null,notesKey:"my:"+o.id,
+  pages:o.pages.length?o.pages:null,myAudio:o.audio,
+  meta:[o.bpm&&"♩="+o.bpm,o.pages.length&&"譜 "+o.pages.length+" 頁",o.audio.length&&"音檔 "+o.audio.length+" 個",o.yt&&"YouTube 影片"].filter(Boolean)});
+const parseChords=v=>v.split(/[\s,，、]+/).filter(Boolean).map(c=>c[0].toUpperCase()+c.slice(1)).slice(0,16);
+// stop what a card plays before it is taken off the page (a detached <audio> keeps playing)
+function gStop(root){root.querySelectorAll(".player").forEach(p=>{const au=p.querySelector("audio");if(au)au.pause();if(p._metro&&p._metro.on())p._metro.toggle()})}
+// speed and A-B loop for a YouTube video in a guitar song card (needs the IFrame API; a plain embed has neither)
+function ytTools(yt){
+  const box=el("div","yt-tools"),spd=el("div","row"),ab=el("div","row"),info=el("p","note");
+  let rate=1,A=null,B=null,iv=0;
+  const fmt=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
+  const withP=fn=>yt.player().then(p=>{if(p)fn(p);else info.textContent="這支影片只能用簡易播放器，不能調速度和循環。"});
+  const val=el("b","spd-val"),minus=el("button","pill spd-step","−"),plus=el("button","pill spd-step","＋");
+  minus.setAttribute("aria-label","慢一點");plus.setAttribute("aria-label","快一點");
+  const presets=[0.5,0.75,1].map(r=>{const b=el("button","pill",r===1?"原速":Math.round(r*100)+"%");b.dataset.r=r;b.onclick=()=>setRate(r);return b});
+  const showRate=()=>{val.textContent=Math.round(rate*100)+"%";presets.forEach(b=>b.setAttribute("aria-pressed",Math.abs(+b.dataset.r-rate)<0.001))};
+  // YouTube may round the speed to one it supports: show what it really took
+  const setRate=r=>{rate=Math.round(Math.max(0.25,Math.min(2,r))*100)/100;showRate();
+    withP(p=>{p.setPlaybackRate(rate);setTimeout(()=>{const x=p.getPlaybackRate();if(x&&Math.abs(x-rate)>0.001){rate=x;showRate()}},300)})};
+  minus.onclick=()=>setRate(rate-0.05);plus.onclick=()=>setRate(rate+0.05);
+  spd.append(el("span","lbl","速度"),minus,val,plus,...presets);showRate();
+  const aB=el("button","pill","設 A 點"),bB=el("button","pill","設 B 點"),off=el("button","pill","取消循環");
+  const showAB=()=>{off.hidden=A==null;bB.disabled=A==null;
+    info.textContent=A==null?"播放時按「設 A 點」「設 B 點」，就會在這段之間重複播放。":B==null?"A 點 "+fmt(A)+"，再按「設 B 點」。":"循環中："+fmt(A)+" → "+fmt(B)};
+  const run=p=>{clearInterval(iv);if(A==null||B==null)return;
+    iv=setInterval(()=>{if(!box.isConnected){clearInterval(iv);return}try{if(p.getCurrentTime()>=B)p.seekTo(A,true)}catch(e){}},200)};
+  aB.onclick=()=>withP(p=>{A=p.getCurrentTime();if(B!=null&&B<=A+0.3)B=null;showAB();run(p)});
+  bB.onclick=()=>withP(p=>{const t=p.getCurrentTime();if(t<=A+0.3){info.textContent="B 點要在 A 點後面，請播到後面一點再按。";return}
+    B=t;showAB();run(p);p.seekTo(A,true);p.playVideo()});
+  off.onclick=()=>{A=B=null;clearInterval(iv);showAB()};
+  ab.append(el("span","lbl","循環"),aB,bB,off);showAB();
+  box.append(spd,ab,info);return box;
+}
+function gSongForm(o){
+  const f=el("form","my-form");f.noValidate=true;
+  const fld=(lab,hint,input)=>{const l=el("label");l.append(lab);if(hint)l.append(el("small","",hint));l.append(input);return l};
+  const title=el("input"),by=el("input"),bpm=el("input"),ch=el("input"),url=el("input"),sheetIn=el("input"),audIn=el("input"),err=el("p","err"),prog=el("p","note");
+  title.maxLength=40;by.maxLength=40;bpm.type="number";bpm.min=30;bpm.max=240;bpm.inputMode="numeric";bpm.placeholder="例如 96";
+  ch.maxLength=120;ch.placeholder="例如 C G Am F";url.inputMode="url";url.placeholder="https://www.youtube.com/watch?v=…";
+  sheetIn.type="file";sheetIn.accept="application/pdf,image/*";sheetIn.multiple=true;
+  audIn.type="file";audIn.accept="audio/*";audIn.multiple=true;prog.setAttribute("role","status");
+  if(o){title.value=o.title;by.value=o.by||"";if(o.bpm)bpm.value=o.bpm;ch.value=o.chords.join(" ");if(o.yt)url.value="https://www.youtube.com/watch?v="+o.yt}
+  // audio already kept: × takes one away (removed for good when saved)
+  const keep=o?o.audio.slice():[],audList=el("div","tag-list");
+  const drawAud=()=>{audList.innerHTML="";keep.forEach((a,i)=>{const c=el("span","tag-chip",a.label),x=el("button","","×");x.type="button";
+    x.setAttribute("aria-label","移除音檔「"+a.label+"」");x.onclick=()=>{keep.splice(i,1);drawAud()};c.append(x);audList.append(c)})};
+  drawAud();
+  // a pasted YouTube link fills an empty 歌名 from the video title (same lookup as 歌唱 › 專案)
+  const ytNote=el("p","yt-info");let lastId=o&&o.yt,tm=0;
+  url.addEventListener("input",()=>{clearTimeout(tm);tm=setTimeout(()=>{
+    const id=ytId(url.value);if(!id||id===lastId)return;lastId=id;
+    ytInfo(id).then(({raw,author})=>{if(ytId(url.value)!==id)return;ytNote.textContent="影片標題：「"+raw+"」";
+      const p=parseYtTitle(raw,author);if(p.title&&!title.value.trim()){title.value=p.title.slice(0,40);ytNote.textContent+="。已填入歌名，不對可以自己改。"}},()=>{});
+  },400)});
+  const save_=el("button","btn",o?"儲存":"加入歌曲"),cancel=el("button","btn ghost","取消"),btns=el("div","row");
+  cancel.type="button";btns.append(save_,cancel);
+  f.append(el("h3","",o?"編輯歌曲":"新增歌曲"),
+    el("p","note",recCloud?"樂譜和音檔會存到你的會員空間，只有你看得到，換裝置登入也能用。":"樂譜和音檔存在這台裝置，只有你看得到。登入會員的話會存到雲端，換裝置也能用。"),
+    fld("歌名",null,title),fld("編曲／演唱者","（可以不填）",by),
+    fld("樂譜",o&&o.pages.length?"（目前 "+o.pages.length+" 頁；選了新的檔案會換掉整份樂譜，樂譜上的筆記也會清掉）":"（PDF 或照片，可以一次選好幾個，照順序排；最多 "+GF_PAGES+" 頁）",sheetIn),
+    fld("音檔","（mp3 等，可以放好幾個版本；每個最多 "+GF_MAX_MB+" MB）",audIn),audList,
+    fld("YouTube 連結","（可以不填）",url),ytNote,
+    fld("原曲速度","（BPM，可以不填；填了播放速度會用 ♩= 顯示）",bpm),
+    fld("用到的和弦","（可以不填，用空格隔開）",ch),prog,err,btns);
+  cancel.onclick=renderMyG;
+  f.onsubmit=async e=>{
+    e.preventDefault();if(save_.disabled)return;err.textContent="";
+    const t=title.value.trim(),yt=url.value.trim()?ytId(url.value):"",b=Math.round(+bpm.value)||0,sFiles=[...sheetIn.files],aFiles=[...audIn.files];
+    if(!t){err.textContent="請填歌名。";title.focus();return}
+    if(yt===null){err.textContent="看不出是哪支 YouTube 影片，請貼上影片的網址，或把這格清空。";url.focus();return}
+    if(b&&(b<30||b>240)){err.textContent="原曲速度請填 30 到 240 之間的數字。";bpm.focus();return}
+    const big=aFiles.find(x=>x.size>GF_MAX_MB*1048576);
+    if(big){err.textContent="「"+big.name+"」超過 "+GF_MAX_MB+" MB，請先壓縮或剪短。";return}
+    if(!sFiles.length&&!(o&&o.pages.length)&&!aFiles.length&&!keep.length&&!yt){err.textContent="樂譜、音檔、YouTube 連結至少要放一樣。";return}
+    save_.disabled=cancel.disabled=true;
+    const tell=x=>{prog.textContent=x},id=o?o.id:Date.now().toString(36),fid=()=>id+"-"+Math.random().toString(36).slice(2,8);
+    const added=[],gone=o?o.audio.filter(a=>!keep.includes(a)):[];let pages=o?o.pages:[],audio=keep.slice(),missed=0;
+    const put=async(f2,blob)=>{added.push(f2);f2.cloud=await gfPut(f2.id,blob);if(recCloud&&!f2.cloud)missed++;return f2};
+    try{
+      if(sFiles.length){
+        const imgs=await sheetPages(sFiles,tell),np=[];
+        for(let i=0;i<imgs.length;i++){tell("正在儲存樂譜第 "+(i+1)+" / "+imgs.length+" 頁…");np.push(await put({id:fid(),w:imgs[i].w,h:imgs[i].h},imgs[i].blob))}
+        if(o)gone.push(...o.pages);pages=np;
+      }
+      for(const x of aFiles){
+        tell("正在儲存音檔「"+x.name+"」…");
+        const blob=x.type?x:new Blob([x],{type:"audio/mpeg"});
+        audio.push(await put({id:fid(),label:x.name.replace(/\.[^.]+$/,"").slice(0,30)||"音檔",type:blob.type},blob));
+      }
+    }catch(ex){
+      console.warn(ex);gfDel(added);save_.disabled=cancel.disabled=false;tell("");
+      err.textContent=/pdf\.js/.test(ex.message)?"載入 PDF 工具失敗，請檢查網路再試一次。":"有檔案處理失敗，請確認是 PDF、圖片或音檔再試一次。（"+ex.message+"）";return;
+    }
+    if(gone.length){gfDel(gone);const lo=load("pr_loops",{});gone.forEach(a=>delete lo["my:"+a.id]);save("pr_loops",lo)}
+    if(o&&sFiles.length&&snAll["my:"+id]){delete snAll["my:"+id];snSave()} // the notes were drawn on the old pages
+    const rec={id,title:t,by:by.value.trim(),bpm:b,chords:parseChords(ch.value),yt:yt||"",pages,audio};
+    if(o)Object.assign(o,rec);else myGSongs.push(o=rec);
+    saveMyGSongs();renderMyG();
+    const card=$("#gmy").children[myGSongs.indexOf(o)];
+    if(card){card.scrollIntoView({block:"start"});
+      if(missed)card.querySelector(".meta").after(el("p","note","有 "+missed+" 個檔案沒能存到雲端（可能是空間滿了或網路不穩），先存在這台裝置，其他裝置暫時看不到。"))}
+  };
+  return f;
+}
+function gSongCard(s){
+  const card=el("article","song"),meta=el("div","meta"),chords=el("div","row chords");
+  s.meta.forEach(m=>meta.append(el("span","",m)));
+  // tapping a chord shows its diagram right inside the card
+  const cp=el("div","song-chord"),csvg=document.createElementNS(svgNS,"svg"),cinfo=el("div"),cname=el("div","chord-name"),cnote=el("p","note"),cbtns=el("div","row");
+  cp.hidden=true;csvg.setAttribute("viewBox","0 0 240 270");csvg.setAttribute("class","chord-svg");csvg.setAttribute("role","img");
+  let cur=null;
+  const down=el("button","btn","刷下"),arp=el("button","btn ghost","逐弦彈"),hide=el("button","btn ghost","收起");
+  down.onclick=()=>strum(cur,"D",0,0,csvg);arp.onclick=()=>arpeggio(cur,csvg);
+  hide.onclick=()=>{cp.hidden=true;chords.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed","false"))};
+  cbtns.append(down,arp,hide);cinfo.append(cname,cnote,cbtns);cp.append(csvg,cinfo);
+  s.chords.forEach(c=>{
+    // chords missing from the CH library are shown as plain labels
+    if(!CH[c]){const t=el("span","pill pill-off",c);t.title="和弦庫還沒有這個和弦";chords.append(t);return}
+    const b=el("button","pill",c);b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{
+      cur=c;renderChord(csvg,c);csvg.setAttribute("aria-label",c+" 和弦指法圖");
+      cname.textContent=c;cnote.textContent=CH[c].n;cp.hidden=false;
+      chords.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
+      strum(c,"D",0,0,csvg);
+    };
+    chords.append(b);
+  });
+  // Sheet pages are images shown inline; the original PDF is linked from GitHub Pages
+  // (the artifact copy can't hold the 22 MB file). Songs people add load their pages from storage.
+  const actions=el("div","row"),open=el("button","btn","開啟樂譜"),sheet=el("div","sheet"),miss=el("p","note");
+  sheet.hidden=true;
+  if(s.file){const pdf=el("a","note","下載原始 PDF");pdf.href=SITE+encodeURIComponent(s.file);pdf.target="_blank";pdf.rel="noopener";actions.append(open,pdf)}
+  else actions.append(open);
+  if(!CLASS)actions.append(el("span","prac-live")); // 練習計時 running: shown next to the buttons
+  const toggle=async()=>{
+    if(!sheet.childElementCount){
+      let pages=s.pages;
+      if(s.my){
+        open.disabled=true;open.textContent="載入樂譜中…";
+        pages=(await Promise.all(s.pages.map(p=>gfUrl(p).then(url=>url&&{url,w:p.w,h:p.h},()=>null)))).filter(Boolean);
+        open.disabled=false;open.textContent="開啟樂譜";
+        const n=s.pages.length-pages.length;
+        miss.textContent=!n?"":recCloud?"有 "+n+" 頁只存在上傳的那台裝置。":"有 "+n+" 頁在雲端或其他裝置上，登入會員才看得到。";
+        if(!pages.length)return;
+      }
+      const pgs=[];
+      pages.forEach((p,i)=>{
+        const src=p.url||p,fig=el("figure"),img=el("img");
+        img.src=src;img.alt=s.title+" 樂譜第 "+(i+1)+" 頁";img.loading=i?"lazy":"eager";img.width=p.w||1400;img.height=p.h||1980;
+        const big=el("a");big.href=src;big.target="_blank";big.rel="noopener";big.append(img);
+        const wrap=el("div","sn-page"),cv=el("canvas");wrap.append(big,cv);
+        fig.append(wrap,el("figcaption","","第 "+(i+1)+" / "+pages.length+" 頁"));sheet.append(fig);
+        pgs.push({wrap,cv,src});
+      });
+      sheetNotes(s,sheet,pgs);
+      const close=el("button","btn ghost","收起樂譜");close.onclick=()=>{toggle();open.scrollIntoView({block:"center"})};
+      sheet.append(close);
+    }
+    sheet.hidden=!sheet.hidden;
+    open.textContent=sheet.hidden?"開啟樂譜":"收起樂譜";
+    if(!sheet.hidden)sheet.scrollIntoView({behavior:"smooth",block:"start"});
+    if(!sheet.hidden)pracAsk();
+  };
+  open.onclick=toggle;
+  card.append(el("h3","",s.title),el("p","by",s.by),meta);
+  if(s.yt){const yt=ytBox(s.yt,s.title);card.append(el("span","grp-label","YouTube 影片"),yt.el,ytTools(yt))}
+  // Chords sit inside the player box, under the loop, so practice tools stay together
+  const chordSec=s.chords.length?foldSection("chords","用到的和弦（點一下看按法）",chords,cp):null;
+  if(s.audio){const p=player(s.audio,s.bpm);p.append(chordSec);card.append(el("span","grp-label",s.audioNote||"示範音檔"),p)}
+  else if(s.myAudio&&s.myAudio.length){
+    // like the YouTube thumbnail: the files are fetched only when the player is wanted
+    const go=el("button","btn ghost g-load","▶ 載入音檔播放器"),note=el("p","note");
+    go.onclick=async()=>{
+      go.disabled=true;go.textContent="載入中…";
+      const tracks=(await Promise.all(s.myAudio.map(a=>gfUrl(a).then(url=>url&&{src:"my:"+a.id,label:a.label,url},()=>null)))).filter(Boolean);
+      const n=s.myAudio.length-tracks.length;
+      note.textContent=!n?"":recCloud?"有 "+n+" 個音檔只存在上傳的那台裝置。":"有 "+n+" 個音檔在雲端或其他裝置上，登入會員才聽得到。";
+      if(!tracks.length){go.disabled=false;go.textContent="▶ 載入音檔播放器";return}
+      const p=player(tracks,s.bpm);if(chordSec)p.append(chordSec);go.replaceWith(p);
+      p.querySelector("audio").play().catch(()=>{});
+    };
+    card.append(el("span","grp-label","音檔"),go,note);if(chordSec)card.append(chordSec);
+  }
+  else if(chordSec)card.append(chordSec);
+  if(s.pages)card.append(actions,miss,sheet);
+  if(s.my){
+    const tools=el("div","row song-tools"),ed=el("button","pill","✎ 編輯歌曲"),del=el("button","pill","× 刪除");
+    ed.onclick=()=>{gStop(card);const f=gSongForm(s.src);card.replaceWith(f);f.querySelector("input").focus()};
+    del.onclick=()=>{
+      const cancel=el("button","btn ghost","取消"),ok=el("button","btn danger","確認刪除");
+      const dl=sheetDialog("刪除歌曲","要刪除「"+s.title+"」嗎？",[el("p","","樂譜、音檔、樂譜上的筆記和存好的段落都會一起刪掉，刪除後無法復原。")],[cancel,ok]);
+      cancel.onclick=dl.close;
+      ok.onclick=()=>{dl.close();gStop(card);const o=s.src;myGSongs=myGSongs.filter(x=>x!==o);saveMyGSongs();gfDel([...o.pages,...o.audio]);
+        if(snAll[s.notesKey]){delete snAll[s.notesKey];snSave()}
+        const lo=load("pr_loops",{});o.audio.forEach(a=>delete lo["my:"+a.id]);save("pr_loops",lo);renderMyG()};
+    };
+    tools.append(ed,del);card.append(tools);
+  }
+  return card;
+}
+// the songs people add sit in #gmy (display: contents) after the built-in ones, so "#songs .song" finds both
+function renderMyG(){
+  const box=$("#gmy");gStop(box);box.innerHTML="";
+  myGSongs.forEach(o=>box.append(gSongCard(myGSong(o))));
+  const add=el("button","btn ghost add-song","＋ 新增歌曲");
+  add.onclick=()=>{const f=gSongForm(null);add.replaceWith(f);f.querySelector("input").focus()};
+  box.append(add);
+  if(navReady){buildNav();navSync()}
+}
 function renderSongs(){
   const box=$("#songs");box.innerHTML="";
-  if(!SONGS.length){const e=el("div","empty");e.append(el("b","","還沒有樂譜"),"之後上傳的樂譜會出現在這裡。");box.append(e);return}
-  SONGS.forEach(s=>{
-    const card=el("article","song"),meta=el("div","meta"),chords=el("div","row chords");
-    s.meta.forEach(m=>meta.append(el("span","",m)));
-    // tapping a chord shows its diagram right inside the card
-    const cp=el("div","song-chord"),csvg=document.createElementNS(svgNS,"svg"),cinfo=el("div"),cname=el("div","chord-name"),cnote=el("p","note"),cbtns=el("div","row");
-    cp.hidden=true;csvg.setAttribute("viewBox","0 0 240 270");csvg.setAttribute("class","chord-svg");csvg.setAttribute("role","img");
-    let cur=null;
-    const down=el("button","btn","刷下"),arp=el("button","btn ghost","逐弦彈"),hide=el("button","btn ghost","收起");
-    down.onclick=()=>strum(cur,"D",0,0,csvg);arp.onclick=()=>arpeggio(cur,csvg);
-    hide.onclick=()=>{cp.hidden=true;chords.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed","false"))};
-    cbtns.append(down,arp,hide);cinfo.append(cname,cnote,cbtns);cp.append(csvg,cinfo);
-    s.chords.forEach(c=>{
-      // chords missing from the CH library are shown as plain labels
-      if(!CH[c]){const t=el("span","pill pill-off",c);t.title="和弦庫還沒有這個和弦";chords.append(t);return}
-      const b=el("button","pill",c);b.setAttribute("aria-pressed","false");
-      b.onclick=()=>{
-        cur=c;renderChord(csvg,c);csvg.setAttribute("aria-label",c+" 和弦指法圖");
-        cname.textContent=c;cnote.textContent=CH[c].n;cp.hidden=false;
-        chords.querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed",x===b));
-        strum(c,"D",0,0,csvg);
-      };
-      chords.append(b);
-    });
-    // Sheet pages are images shown inline; the original PDF is linked from GitHub Pages
-    // (the artifact copy can't hold the 22 MB file).
-    const actions=el("div","row"),open=el("button","btn","開啟樂譜"),sheet=el("div","sheet");
-    sheet.hidden=true;
-    if(s.file){const pdf=el("a","note","下載原始 PDF");pdf.href=SITE+encodeURIComponent(s.file);pdf.target="_blank";pdf.rel="noopener";actions.append(open,pdf)}
-    else actions.append(open);
-    if(!CLASS)actions.append(el("span","prac-live")); // 練習計時 running: shown next to the buttons
-    const toggle=()=>{
-      if(!sheet.childElementCount){
-        const pgs=[];
-        s.pages.forEach((src,i)=>{
-          const fig=el("figure"),img=el("img");
-          img.src=src;img.alt=s.title+" 樂譜第 "+(i+1)+" 頁";img.loading=i?"lazy":"eager";img.width=1400;img.height=1980;
-          const big=el("a");big.href=src;big.target="_blank";big.rel="noopener";big.append(img);
-          const wrap=el("div","sn-page"),cv=el("canvas");wrap.append(big,cv);
-          fig.append(wrap,el("figcaption","","第 "+(i+1)+" / "+s.pages.length+" 頁"));sheet.append(fig);
-          pgs.push({wrap,cv,src});
-        });
-        sheetNotes(s,sheet,pgs);
-        const close=el("button","btn ghost","收起樂譜");close.onclick=()=>{toggle();open.scrollIntoView({block:"center"})};
-        sheet.append(close);
-      }
-      sheet.hidden=!sheet.hidden;
-      open.textContent=sheet.hidden?"開啟樂譜":"收起樂譜";
-      if(!sheet.hidden)sheet.scrollIntoView({behavior:"smooth",block:"start"});
-      if(!sheet.hidden)pracAsk();
-    };
-    open.onclick=toggle;
-    card.append(el("h3","",s.title),el("p","by",s.by),meta);
-    // Chords sit inside the player box, under the loop, so practice tools stay together
-    const chordSec=foldSection("chords","用到的和弦（點一下看按法）",chords,cp);
-    if(s.audio){const p=player(s.audio,s.bpm);p.append(chordSec);card.append(el("span","grp-label",s.audioNote||"示範音檔"),p)}
-    else card.append(chordSec);
-    if(s.pages)card.append(actions,sheet);
-    box.append(card);
-  });
+  if(!SONGS.length&&CLASS){const e=el("div","empty");e.append(el("b","","還沒有樂譜"),"之後上傳的樂譜會出現在這裡。");box.append(e);return}
+  SONGS.forEach(s=>box.append(gSongCard(s)));
+  if(!CLASS){const my=el("div");my.id="gmy";box.append(my);renderMyG()}
 }
 renderSongs();
 
@@ -5494,6 +5741,12 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-10-31.1",title:"吉他專案可以放自己的歌",items:[
+    ["＋ 新增歌曲","吉他 › 專案最下面多了「＋ 新增歌曲」：可以上傳自己的樂譜（PDF 或照片）、音檔，或貼 YouTube 連結，變成跟其他歌一樣的練習卡片。只有你自己看得到。"],
+    ["樂譜和音檔","樂譜一樣可以畫筆記、框段落、自動捲譜；音檔用原本的播放器，可以調速度、A-B 循環、存段落，好幾個版本可以切換。"],
+    ["YouTube 也能練","貼 YouTube 連結的歌，影片下面可以調慢速度、設 A、B 點重複播同一段。"],
+    ["存在哪裡","沒登入時檔案存在這台裝置；登入會員會存到雲端，換手機或電腦登入也看得到。"]
+  ]},
   {v:"2026-10-20.7",title:"黑鍵長度修正",items:[
     ["黑鍵不會忽長忽短","聽音辨唱名沒勾「在琴鍵上顯示對應的按鍵」時，黑鍵會變得比較短；現在不管勾不勾，黑鍵都一樣長，剛好停在唱名上方。"]
   ]},
@@ -5833,7 +6086,7 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     clearTimeout(timer);
     await sb.auth.signOut({scope:"local"});
     ["prsync_uid","prsync_at","prsync_dirty"].forEach(k=>LS.set(k,null));state="";paused=false;
-    if(wipe){prKeys().forEach(k=>LS.set(k,null));await recClearLocal();location.reload()}
+    if(wipe){prKeys().forEach(k=>LS.set(k,null));await recClearLocal();await gfClearLocal();location.reload()}
   }
   function meDialog(){
     const now=el("button","btn","立即同步"),out=el("button","btn ghost","登出"),close=el("button","btn ghost","關閉"),st=el("p","rn-meta",state),del=el("button","acct-del","刪除會員");
@@ -5868,14 +6121,14 @@ const SUPA_URL="https://dfggqpukvgxdoojayjxc.supabase.co",SUPA_KEY="sb_publishab
     const inp=el("input","acct-confirm"),go=el("button","btn danger","永久刪除"),cancel=el("button","btn ghost","取消"),msg=el("p","note");
     inp.type="text";inp.placeholder="輸入「刪除」";inp.setAttribute("aria-label","輸入「刪除」確認");inp.autocomplete="off";go.disabled=true;msg.setAttribute("role","status");
     const dl=sheetDialog("會員","永久刪除會員？",[
-      el("p","","會員 "+(user.email||"")+" 和雲端資料（包括雲端上的錄音）會永久刪除，無法復原。這台裝置上的練習資料會留著，網站會回到沒登入的狀態。"),
+      el("p","","會員 "+(user.email||"")+" 和雲端資料（包括雲端上的錄音、自己加的樂譜和音檔）會永久刪除，無法復原。這台裝置上的練習資料會留著，網站會回到沒登入的狀態。"),
       el("p","","確定的話，在下面輸入「刪除」兩個字。"),inp,msg],[go,cancel]);
     cancel.onclick=dl.close;
     inp.oninput=()=>{go.disabled=inp.value.trim()!=="刪除"};
     go.onclick=async()=>{
       go.disabled=true;msg.textContent="刪除中…";
       // the recordings are files, not rows, so they are not removed with the member: delete them first
-      try{await recClearCloud()}catch(e){console.warn(e);go.disabled=false;msg.textContent="刪除雲端錄音失敗，請稍後再試。（"+e.message+"）";return}
+      try{await recClearCloud();await gfClearCloud()}catch(e){console.warn(e);go.disabled=false;msg.textContent="刪除雲端錄音或樂譜失敗，請稍後再試。（"+e.message+"）";return}
       const {error}=await sb.rpc("delete_me");
       if(error){console.warn(error);go.disabled=false;msg.textContent="刪除失敗，請稍後再試。（"+error.message+"）";return}
       // the member is gone, so the server may refuse a normal sign-out: drop the saved session ourselves
