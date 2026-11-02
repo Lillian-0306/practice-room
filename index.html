@@ -887,6 +887,7 @@ section.panel[hidden]{display:none}
 .mf-more{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .mf-sync{margin-top:8px;line-height:1.35}
 .mf-syncn{margin:2px 0 0;font-size:.78rem;color:var(--muted)}
+@media (hover:none){.ap-keys{display:none}}
 .mf-lbl{font-size:.78rem;color:var(--muted);margin:10px 0 6px}
 .mf-snds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .mf-snds .pill{min-height:34px;padding:4px 0;font-size:.82rem;justify-content:center}
@@ -1215,6 +1216,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
       </button>
       <div class="ap-info"><b id="apTime">0:00 / --:--</b><span id="apNow"></span></div>
     </div>
+    <p class="mf-syncn ap-keys">鍵盤 0～9：跳到整首的 0%～90%（0 是開頭）</p>
     <div class="ap-jump ap-speed" id="apSpeed">
       <span class="ap-sub">播放速度</span>
       <div class="ap-jrow"><b class="ap-bpm" id="apBpm">♩=70</b><span class="ap-pct" id="apPct"></span><button class="ap-go ap-orig" id="apOrig" type="button">原速</button></div>
@@ -2948,6 +2950,9 @@ function player(src,bpm){
     playing:()=>!au.paused||ciTimers.length>0,
     toggle:()=>{if(ciTimers.length){cancelCI();showNow();return}au.paused?au.play():au.pause()},
     jump:n=>{if(cur.bars)startAt(clampBar(n),"jump")},
+    // number keys: f of the way through (0 = the start); keeps playing or paused as it was
+    seek:f=>{cancelCI();const go=()=>{au.currentTime=f*au.duration;showNow()};
+      if(au.readyState>=1)go();else{au.addEventListener("loadedmetadata",go,{once:true});au.preload="auto";au.load()}},
     bars:()=>cur.bars?cur.bars.n:0,
     now:()=>nowEl.textContent.replace(/^現在：/,""),
     time:()=>fmt(au.currentTime)+" / "+(isFinite(au.duration)?fmt(au.duration):"--:--"),
@@ -3452,6 +3457,7 @@ function ytTools(yt,g){
     toggle:()=>{if(ciTimers.length){cancelCI();return}withP(p=>p.getPlayerState()===1?p.pauseVideo():p.playVideo())},
     stop:()=>{if(metro.api.on())metro.api.toggle();cancelCI();clearInterval(iv);const p=cur();if(p)try{p.pauseVideo()}catch(e){}},
     jump:n=>{if(grid())startAt(clampBar(n),"jump")},
+    seek:f=>{const p=cur(),d=p&&p.getDuration();if(!d)return;cancelCI();p.seekTo(f*d,true)},
     bars:()=>{const G=grid();return G?G.n:0},
     now:()=>{if(ciText)return ciText;const p=cur();if(!p||!grid())return "";const b=barAt(p.getCurrentTime());return b?"第 "+b.n+" 小節第 "+b.beat+" 拍":"第 1 小節之前"},
     time:()=>{const p=cur(),d=p&&p.getDuration();return p?fmt(p.getCurrentTime()||0)+" / "+(d?fmt(d):"--:--"):"0:00 / --:--"},
@@ -3881,6 +3887,13 @@ renderSongs();
   $("#apClose").onclick=()=>{setOpen(false);fab.focus()};
   document.addEventListener("click",e=>{if(!panel.hidden&&!box.contains(e.target))setOpen(false)});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
+  // 0–9 on the keyboard (top row or keypad): jump to 0%–90% of the track, while the songs are on screen
+  document.addEventListener("keydown",e=>{
+    const m=/^(?:Digit|Numpad)(\d)$/.exec(e.code);
+    if(!m||e.repeat||e.ctrlKey||e.metaKey||e.altKey||box.hidden||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||"")||e.target.isContentEditable||document.querySelector("dialog[open]"))return;
+    const p=target();if(!p||!p._ctl.seek)return;
+    e.preventDefault();p._ctl.seek(m[1]/10);setTimeout(render,50);
+  });
   // the running dot while the panel is closed
   document.addEventListener("play",render,true);document.addEventListener("pause",render,true);document.addEventListener("ytstate",render);
   new MutationObserver(()=>{if(box.hidden)setOpen(false)}).observe(box,{attributes:true,attributeFilter:["hidden"]});
@@ -5879,6 +5892,12 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-11-02.2",title:"用數字鍵跳轉",items:[
+    ["數字鍵跳轉","在吉他專案的歌曲頁，按鍵盤的 0～9 就能跳到整首的 0%～90%（0 是開頭，5 是一半）。音檔和 YouTube 影片都可以，跳的是右下角「播放音檔」顯示的那一首；原本在播就繼續播，暫停就停在那裡。"]
+  ]},
+  {v:"2026-11-02.1",class:true,title:"用數字鍵跳轉",items:[
+    ["數字鍵跳轉","在歌曲頁按鍵盤的 0～9 就能跳到整首的 0%～90%（0 是開頭，5 是一半），跳的是右下角「播放音檔」顯示的那一首；原本在播就繼續播，暫停就停在那裡。"]
+  ]},
   {v:"2026-11-01.2",title:"節拍器跟著音樂打拍子",items:[
     ["跟著音樂打拍子","歌曲的節拍器（卡片裡和右下角）多了「跟著音樂打拍子」：勾起來按開始，音樂會從第 1 小節開始播，節拍器的拍子跟著音樂走；有預備拍的話先數 4 拍再一起開始。調慢速度、跳小節、循環時拍子都會跟著對齊，暫停音樂拍子也會停。"],
     ["YouTube 也有節拍器","只有 YouTube 連結的歌也有節拍器了，右下角「節拍器」也能控制。設好第 1 小節（影片下面的按鈕）就能跟著影片打拍子。"]
