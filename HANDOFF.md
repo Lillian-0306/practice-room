@@ -188,6 +188,7 @@ localhost 屬於安全環境，`getUserMedia` 可正常跳出麥克風詢問。�
   - 登入方式：Email＋密碼，Supabase 關閉 Confirm email，所以完全不寄信（見 ADR-0003）；忘記密碼由管理員在 Authentication › Users 重設。
   - 登入後除了外觀設定（`pr_theme`、`pr_style`，每台裝置各自保留，見 `DEVICE`）以外的所有 `pr_` 鍵以一筆 JSON 存在 `user_data` 表（每位會員一筆），`save(k,v)` 會呼叫 `syncHook(k)`（外觀設定不觸發），修改 4 秒後自動上傳，切到背景也會上傳；回到分頁時檢查雲端是否較新（會先詢問再重新整理）。
   - 同步記錄用 `prsync_uid`／`prsync_at`／`prsync_dirty`，登入狀態存在 `prsync_auth`（都不是 `pr_` 開頭，不會進備份或雲端）。
+  - 「要保留哪一份練習資料」對話框可勾「以後在這台裝置都用我選的這份」，存在 `prsync_auto`（`cloud`／`mine`，只在這台裝置）；之後兩邊都改過時 `reconcile()` 直接套用不再問。「會員」對話框顯示目前的選擇和「改回每次都問」；登出或換成別的會員登入會清掉。只管兩邊都改過的情況，回到分頁時的「其他裝置更新了練習資料」照舊會問。
   - 只有一邊改過就以那邊為準；兩邊都改過、或第一次在已有資料的裝置登入，會跳出「要保留哪一份」讓使用者選。
   - 登出（`outDialog`）可選「資料留在這台裝置」或「從這台裝置清除」，先同步未上傳的修改，用 `signOut({scope:"local"})` 只登出這台。
   - 刪除會員（`deleteDialog`，要輸入「刪除」）呼叫資料庫函式 `delete_me()`，`user_data` 跟著 cascade 刪除，這台裝置的練習資料保留。
