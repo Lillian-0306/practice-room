@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>彈唱練習室 — 吉他與歌唱互動學習</title>
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon.ico?v=2" sizes="32x32">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class\b/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 美麗花季"}</script>
 <script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t);var s=JSON.parse(localStorage.getItem("pr_style")||"null");if(s==="paper"||s==="neon"||s==="soft"||s==="studio"||s==="score")document.documentElement.dataset.style=s}catch(e){}</script>
@@ -6155,17 +6155,20 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
-  {v:"2026-11-11.4",title:"全新的介面：首頁、底部分頁列、兩種新風格",items:[
+  {v:"2026-11-11.5",title:"全新的介面：首頁、底部分頁列、兩種新風格",items:[
     ["新的首頁","打開網站會先到「首頁」：兩個大色塊進吉他或歌唱，下面是最常用的工具（調音、節拍器、和弦圖、呼吸練習、音高偵測、每日暖聲）和正在練的歌，點一下就到。離開首頁後重新整理，會回到你原本在的地方。"],
     ["手機底部分頁列","手機和平板的畫面底部多了一列：首頁、吉他、歌唱、選單，單手就能換頁；原本右下角的選單按鈕收進這一列。電腦左邊的清單最上面也多了「首頁」。"],
     ["右上角按鈕收起來了","手機上右上角只留深色模式和「⋯」，使用說明、網頁風格、資料備份、會員都在「⋯」裡，標題不會再被擠成兩行。"],
     ["新的預設外觀「色塊」","粗框、實心色塊、粗體字，底色換成暖白，吉他還是琥珀色、歌唱還是藍色。原本的「簡約」由它取代。"],
     ["多兩種網頁風格","調色盤裡多了「暖白工作室」（白卡片、柔和陰影）和「樂譜本」（襯線大標題、細線分隔、工具有編號）；復古紙本、霓虹舞台、圓潤可愛都還在。"]
   ]},
-  {v:"2026-11-11.3",class:true,title:"全新的介面和兩種新風格",items:[
+  {v:"2026-11-11.4",class:true,title:"全新的介面和兩種新風格",items:[
     ["新的預設外觀「色塊」","粗框、實心色塊、粗體字，底色換成暖白。原本的「簡約」由它取代。"],
     ["多兩種網頁風格","調色盤裡多了「暖白工作室」和「樂譜本」；復古紙本、霓虹舞台、圓潤可愛都還在。"],
     ["右上角按鈕收起來了","手機上右上角只留深色模式和「⋯」，使用說明、網頁風格、會員都在「⋯」裡。"]
+  ]},
+  {v:"2026-11-11.3",class:true,title:"分頁小圖示不用清快取",items:[
+    ["分頁小圖示","之前打開過網站的瀏覽器，可能還記得「這個網站沒有小圖示」而一直顯示地球；現在一般重新整理就會換成吉他，不用清快取或重開瀏覽器。"]
   ]},
   {v:"2026-11-11.2",class:true,title:"小圖示真的換上了",items:[
     ["分頁小圖示","上一版說的吉他小圖示其實沒有放上網站，分頁還是顯示預設的地球；現在修好了，分頁和書籤都會顯示琥珀色的吉他。"],
