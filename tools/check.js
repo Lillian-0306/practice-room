@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks index.html before a commit: every inline <script> parses, and RELEASES (the 版本公告) is well formed.
+// Checks index.html before a commit: every inline <script> parses, RELEASES (the 版本公告) is well formed, and root files it links to get deployed.
 // Run: node tools/check.js   (the pre-commit hook in tools/hooks runs it too)
 const fs = require("fs"), path = require("path"), vm = require("vm");
 const file = path.join(__dirname, "..", "index.html");
@@ -41,6 +41,16 @@ else {
       if ("class" in r && r.class !== true) errors.push(`${where}: class is either true or left out`);
     });
   }
+}
+
+// 3. every root file the page links to (href="/favicon.svg") is let through by .vercelignore, which drops everything else from the deploy
+const root = path.join(__dirname, "..");
+const allowed = fs.readFileSync(path.join(root, ".vercelignore"), "utf8").split(/\r?\n/)
+  .filter(l => l.startsWith("!")).map(l => new RegExp("^" + l.slice(1).replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*") + "$"));
+for (const m of html.matchAll(/\b(?:href|src)="\/([^"?#\/]+)[^"]*"/g)) {
+  const name = m[1], where = `line ${lineAt(m.index)}: /${name}`;
+  if (!fs.existsSync(path.join(root, name))) errors.push(`${where} is not in the repo`);
+  else if (!allowed.some(re => re.test(name))) errors.push(`${where} is not deployed: add !${name} to .vercelignore`);
 }
 
 if (errors.length) { console.error("check failed:\n- " + errors.join("\n- ")); process.exit(1); }

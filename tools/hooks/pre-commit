@@ -1,10 +1,12 @@
 #!/bin/sh
 # Enabled with: git config core.hooksPath tools/hooks
-# Checks the staged index.html, not the working copy.
+# Checks the staged index.html and .vercelignore, not the working copy (staged top-level names become empty placeholders).
 tmp=$(mktemp -d) || exit 1
 mkdir -p "$tmp/tools"
 cp tools/check.js "$tmp/tools/check.js"
 git show :index.html > "$tmp/index.html" || { rm -rf "$tmp"; exit 1; }
+git show :.vercelignore > "$tmp/.vercelignore" || { rm -rf "$tmp"; exit 1; }
+git ls-files -z | tr '\0' '\n' | sed 's#/.*##' | sort -u | while IFS= read -r f; do [ -e "$tmp/$f" ] || : > "$tmp/$f"; done
 node "$tmp/tools/check.js"; status=$?
 rm -rf "$tmp"
 exit $status
