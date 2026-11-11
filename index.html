@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>彈唱練習室 — 吉他與歌唱互動學習</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <script>/* 同學版：/class（本機測試可用 ?class）只顯示吉他專案 */if(["/class","/class/"].indexOf(location.pathname)>=0||/[?&]class\b/.test(location.search)){document.documentElement.dataset.edition="class";document.title="讚頌吉他班 — 美麗花季"}</script>
 <script>try{var t=localStorage.getItem("pr_theme");if(t==="\"light\""||t==="\"dark\"")document.documentElement.dataset.theme=JSON.parse(t);var s=JSON.parse(localStorage.getItem("pr_style")||"null");if(s==="paper"||s==="neon"||s==="soft")document.documentElement.dataset.style=s}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5892,6 +5893,9 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-11-11.1",class:true,title:"網站有自己的小圖示了",items:[
+    ["分頁小圖示","瀏覽器分頁和書籤上會出現一把琥珀色的吉他小圖示，開了很多分頁時一眼就找得到。電腦或瀏覽器是深色模式時，圖示會自動換成比較亮的顏色。"]
+  ]},
   {v:"2026-11-08.2",title:"會員同步可以記住選擇",items:[
     ["記住要用哪一份資料","會員同步問「要保留哪一份練習資料」時，多了一個勾勾「以後在這台裝置都用我選的這份，不再問」。勾起來再按「用雲端的資料」，之後換裝置就會直接用雲端的，不用每次按。想改回每次都問，點右上角的「會員」按「改回每次都問」；登出也會改回來。"]
   ]},
