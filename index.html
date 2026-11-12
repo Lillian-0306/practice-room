@@ -97,6 +97,7 @@ p{margin:0}
   .nav-resize::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:2px;background:transparent;transition:background .15s}
   .nav-resize:hover::after,.nav-resize:focus-visible::after,body.nav-resizing .nav-resize::after{background:var(--accent)}
   .nav-resize:focus-visible{outline:none}
+  .nav-resize:focus-visible::after{left:2px;width:6px;border-radius:3px}
   body.nav-resizing{transition:none;user-select:none;cursor:col-resize}
   body.nav-collapsed .nav-resize{display:none}
   .sidenav{transition:transform .25s ease,visibility 0s}
@@ -220,16 +221,19 @@ p{margin:0}
 
 /* ===== 圓潤可愛 · candy shop ===== */
 :root[data-style="soft"]{
+  --gtr-pop-on:#3A1D00;
   --bg:#FFF6EF; --surface:#FFFFFF; --ink:#3D2F44; --muted:#7D6C85; --line:#F2E2E8;
   --gtr:#E07A26; --gtr-soft:#FFE6D1; --gtr-on:#FFFFFF; --voc:#7B5BE8; --voc-soft:#ECE6FF; --voc-on:#FFFFFF; --ok:#2E9C6A; --warn:#DD5B57;
   --dot:rgba(224,122,38,.16); --blob1:rgba(255,183,148,.35); --blob2:rgba(184,160,255,.3);
   --sans:"Huninn","Noto Sans TC",sans-serif; --serif:"Huninn","Noto Sans TC",sans-serif; --num:"Fredoka","Huninn",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root[data-style="soft"]:not([data-theme="light"]){
+  --gtr-pop-on:var(--gtr-on);
   --bg:#211A27; --surface:#2C2433; --ink:#FBF0F7; --muted:#C7B5CC; --line:#41364A;
   --gtr:#FFAA62; --gtr-soft:#4A2E18; --gtr-on:#2A1500; --voc:#B7A2FF; --voc-soft:#342A57; --voc-on:#170F35; --ok:#72DCA8; --warn:#FF8E88;
   --dot:rgba(183,162,255,.12); --blob1:rgba(255,170,98,.14); --blob2:rgba(183,162,255,.16);}}
 :root[data-style="soft"][data-theme="dark"]{
+  --gtr-pop-on:var(--gtr-on);
   --bg:#211A27; --surface:#2C2433; --ink:#FBF0F7; --muted:#C7B5CC; --line:#41364A;
   --gtr:#FFAA62; --gtr-soft:#4A2E18; --gtr-on:#2A1500; --voc:#B7A2FF; --voc-soft:#342A57; --voc-on:#170F35; --ok:#72DCA8; --warn:#FF8E88;
   --dot:rgba(183,162,255,.12); --blob1:rgba(255,170,98,.14); --blob2:rgba(183,162,255,.16);}
@@ -272,8 +276,8 @@ p{margin:0}
   --edge:#1C1917; --lift:0 5px 0 var(--edge); --gtr-pop:#F7B02B; --gtr-pop-on:#1F1400; --voc-pop:#3454D1; --voc-pop-on:#FFFFFF;
   --serif:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
 }
-@media (prefers-color-scheme:dark){:root:not([data-style]):not([data-theme="light"]){--edge:#000; --voc-pop:#5B78F0}}
-:root:not([data-style])[data-theme="dark"]{--edge:#000; --voc-pop:#5B78F0}
+@media (prefers-color-scheme:dark){:root:not([data-style]):not([data-theme="light"]){--edge:#000}}
+:root:not([data-style])[data-theme="dark"]{--edge:#000}
 :root:not([data-style]) h1{letter-spacing:-.01em}
 :root:not([data-style]) h2{font-weight:900;font-size:1.4rem}
 :root:not([data-style]) .theme-btn{border:2px solid var(--edge);border-radius:14px;box-shadow:0 3px 0 var(--edge);transition:transform .08s,box-shadow .08s}
@@ -410,6 +414,7 @@ body[data-home] .modes,body[data-home] .lead,body[data-home] .wrap>.panel,body[d
 .tile b{font-family:var(--serif);font-size:1.15rem;font-weight:900;line-height:1.3}
 .tile.big b{font-size:2.2rem;line-height:1.2}
 .tile span{font-size:.84rem;opacity:.82}
+.tile.big span{opacity:1}
 .home-songs{margin-top:30px;display:flex;flex-direction:column;gap:10px}
 .home-songs[hidden]{display:none}
 .home-songs h3{font-size:1.2rem}
@@ -886,6 +891,11 @@ section.panel[hidden]{display:none}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pill{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;min-height:40px;font-weight:500}
 .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+/* 手指點的目標至少 44px 高 */
+@media (pointer:coarse),(max-width:759px){
+  .pill,.fold-h,.lyr-line,.tour-nav .tour-skip,.tour-nav .btn{min-height:44px!important}
+  .song-fold{width:44px;height:44px}
+}
 .btn{border:0;background:var(--accent);color:var(--accent-on);border-radius:10px;padding:10px 18px;min-height:44px;font-weight:700}
 .btn.ghost{background:var(--accent-soft);color:var(--ink)}
 .btn:active{transform:translateY(1px)}
@@ -1326,7 +1336,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 @keyframes tour-pulse{50%{box-shadow:0 0 0 6px var(--accent),0 0 0 9999px rgba(10,8,20,.72)}}
 .tour-spot.none{top:50%!important;left:50%!important;width:0!important;height:0!important;box-shadow:0 0 0 9999px rgba(10,8,20,.72)}
 .tour-card{position:fixed;width:min(340px,calc(100vw - 32px));pointer-events:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:16px 16px 12px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
-.tour-card:focus{outline:none}
+.tour-card:focus:not(:focus-visible){outline:none}
 .tour-card.center{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px))}
 .tour-step{font-size:.75rem;font-weight:700;color:var(--accent);letter-spacing:.06em}
 .tour-card h2{font-size:1.15rem;margin:2px 0 6px}
@@ -4153,7 +4163,7 @@ const lyrKey=song=>song.my?"my:"+song.id:song.title;
 // 歌詞標記 (pr_lyric_marks: {song: {line: {c:[[from, to, colour]], u:[[from, to]], s:[[after char, text]]}}}),
 // character positions count code points; a mark at s position p sits after character p-1
 // The tags are shared by all songs and can be renamed, recoloured, added and deleted (pr_mk_tags: {c:[{id, n, bg}], s:[{t, n}]})
-const MK_DEF={c:[{id:"g",n:"有力",bg:"#1E9E78"},{id:"y",n:"溫柔",bg:"#F2C230"},{id:"b",n:"哭腔",bg:"#2F7FD8"},{id:"o",n:"重音",bg:"#EE8A2E"}],
+const MK_DEF={c:[{id:"g",n:"有力",bg:"#1E9E78"},{id:"y",n:"溫柔",bg:"#F2C230"},{id:"b",n:"哭腔",bg:"#2A72C4"},{id:"o",n:"重音",bg:"#EE8A2E"}],
   s:[{t:"⤴",n:"滑上去"},{t:"⤵",n:"滑下來"},{t:"～",n:"拉長音"},{t:"/",n:"換氣"},{t:"(V)",n:"抖音"},{t:"🔁",n:"轉音"}]};
 const HEX=/^#[0-9a-fA-F]{6}$/;
 let mkTags=(v=>v&&Array.isArray(v.c)&&Array.isArray(v.s)&&v.c.every(c=>c&&c.id&&typeof c.n==="string"&&HEX.test(c.bg))&&v.s.every(s=>s&&s.t&&typeof s.n==="string")?v:JSON.parse(JSON.stringify(MK_DEF)))(load("pr_mk_tags",null));
@@ -6155,6 +6165,16 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-11-12.2",title:"手機上更好按、字更清楚",items:[
+    ["按鈕變大了","手機和平板上，小膠囊按鈕、歌詞的每一行、「跟唱比對」這類收合標題、歌曲右上角的收合鈕，都加高到好按的大小，不容易按到隔壁。"],
+    ["首頁色塊的小字更清楚","首頁「吉他」「歌唱」大色塊下面那行小字加深了；深色模式的歌唱色塊、「霓虹舞台」和「圓潤可愛」風格原本偏淡，現在都看得清楚。"],
+    ["歌詞標記的藍色加深一點","預設的「哭腔」藍色標記稍微加深，上面的白字更好讀（你自己改過的標籤顏色不會動）。"],
+    ["鍵盤操作看得到位置","用鍵盤選到選單寬度的拖曳條或導覽說明卡時，會有明顯的框線。"]
+  ]},
+  {v:"2026-11-12.1",class:true,title:"手機上更好按",items:[
+    ["按鈕變大了","手機和平板上，小膠囊按鈕和歌曲右上角的收合鈕都加高到好按的大小，不容易按到隔壁。"],
+    ["鍵盤操作看得到位置","用鍵盤選到選單寬度的拖曳條或導覽說明卡時，會有明顯的框線。"]
+  ]},
   {v:"2026-11-11.5",title:"全新的介面：首頁、底部分頁列、兩種新風格",items:[
     ["新的首頁","打開網站會先到「首頁」：兩個大色塊進吉他或歌唱，下面是最常用的工具（調音、節拍器、和弦圖、呼吸練習、音高偵測、每日暖聲）和正在練的歌，點一下就到。離開首頁後重新整理，會回到你原本在的地方。"],
     ["手機底部分頁列","手機和平板的畫面底部多了一列：首頁、吉他、歌唱、選單，單手就能換頁；原本右下角的選單按鈕收進這一列。電腦左邊的清單最上面也多了「首頁」。"],
