@@ -397,7 +397,7 @@ p{margin:0}
 /* ---- 首頁 (home dashboard), phone bottom bar, folded header buttons ---- */
 :root{--bbar:0px}
 .home[hidden]{display:none}
-body[data-home] .modes,body[data-home] .lead,body[data-home] .wrap>.panel,body[data-home] .ascroll{display:none}
+body[data-home] .modes,body[data-home] .lead,body[data-home] .wrap>.panel{display:none}
 .home-hi{margin:22px 0 18px}
 .home-hi h2{font-size:1.9rem}
 .home-hi p{color:var(--muted);margin-top:4px}
@@ -795,7 +795,7 @@ section.panel[hidden]{display:none}
 @media (hover:hover){.sn-ic[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;pointer-events:none;z-index:7;
   background:var(--ink);color:var(--bg);font-size:.78rem;font-weight:700;padding:4px 8px;border-radius:6px}}
 .sn-sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1.5px var(--line);padding:0}
-.sn-sw[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--accent)}
+.sn-sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink);transform:scale(1.18)}
 .sn-hint{font-size:.82rem;color:var(--muted)}
 .sn-tin{position:absolute;z-index:3;margin:0;padding:0 2px;border:1.5px dashed var(--accent);border-radius:4px;background:rgba(255,255,255,.92);
   font-weight:700;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.25;resize:none;overflow:hidden;white-space:pre;outline:none}
@@ -895,6 +895,8 @@ section.panel[hidden]{display:none}
 @media (pointer:coarse),(max-width:759px){
   .pill,.fold-h,.lyr-line,.tour-nav .tour-skip,.tour-nav .btn{min-height:44px!important}
   .song-fold{width:44px;height:44px}
+  /* 樂譜筆記工具列會黏在畫面上方，維持精簡才不會擋住譜 */
+  .sn-bar .pill,.sheet>.sn-row .pill{min-height:36px!important}
 }
 .btn{border:0;background:var(--accent);color:var(--accent-on);border-radius:10px;padding:10px 18px;min-height:44px;font-weight:700}
 .btn.ghost{background:var(--accent-soft);color:var(--ink)}
@@ -3963,9 +3965,10 @@ renderSongs();
   };
   // visible only while 吉他 › 專案 is on screen
   const gtr=$("#guitar"),proj=$("#g-projects");
-  function sync(){const v=!gtr.hidden&&!proj.hidden;box.hidden=!v;if(!v){if(on)stop();armed=false;setOpen(false)}}
+  function sync(){const v=!document.body.hasAttribute("data-home")&&!gtr.hidden&&!proj.hidden;box.hidden=!v;if(!v){if(on)stop();armed=false;setOpen(false)}}
   const mo=new MutationObserver(sync);
   [gtr,proj].forEach(n=>mo.observe(n,{attributes:true,attributeFilter:["hidden"]}));
+  mo.observe(document.body,{attributes:true,attributeFilter:["data-home"]});
   // a sheet opened or closed in a song card
   new MutationObserver(()=>{if(!panel.hidden)refreshTop()}).observe($("#songs"),{subtree:true,attributes:true,attributeFilter:["hidden"]});
   showLv();sync();
@@ -4951,8 +4954,8 @@ const recV=(function(){
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);fab.focus()}});
   // visible only while 歌唱 › 專案 is on screen; leaving stops a recording
   const sing=$("#singing"),proj=$("#s-projects");
-  function sync(){const v=!CLASS&&!sing.hidden&&!proj.hidden;box.hidden=!v;if(!v){r.stop();setOpen(false)}}
-  const mo=new MutationObserver(sync);[sing,proj].forEach(n=>mo.observe(n,{attributes:true,attributeFilter:["hidden"]}));
+  function sync(){const v=!CLASS&&!document.body.hasAttribute("data-home")&&!sing.hidden&&!proj.hidden;box.hidden=!v;if(!v){r.stop();setOpen(false)}}
+  const mo=new MutationObserver(sync);[sing,proj].forEach(n=>mo.observe(n,{attributes:true,attributeFilter:["hidden"]}));mo.observe(document.body,{attributes:true,attributeFilter:["data-home"]});
   sync();
   return r;
 })();
@@ -6165,6 +6168,15 @@ artFromUrl(); // a shared #art=… link opens that article
 // guitar 專案, so 讚頌吉他班 shows it too.
 // First-time visitors (no pr_ keys yet) skip it.
 const RELEASES=[
+  {v:"2026-11-13.2",title:"畫記樂譜時看得出選了哪個顏色",items:[
+    ["選到的顏色有粗黑框","樂譜筆記裡選畫筆或文字顏色時，選到的那一顆會放大並加上深色粗框，在手機上也一眼看得出來。之前換了暖色底之後，選取框和底色太接近。"],
+    ["樂譜筆記工具列變回精簡","手機上「細／中／粗」這類按鈕昨天被放大，工具列變高會擋住譜，現在改回原本的大小。"],
+    ["回首頁會收起右下角的浮動按鈕","回到首頁時，自動捲譜會停下來，播放音檔和節拍器的面板會收起；鍵盤數字鍵也不會在首頁誤跳音檔。音樂本身會繼續播，回到專案就能控制。"]
+  ]},
+  {v:"2026-11-13.1",class:true,title:"畫記樂譜時看得出選了哪個顏色",items:[
+    ["選到的顏色有粗黑框","樂譜筆記裡選畫筆或文字顏色時，選到的那一顆會放大並加上深色粗框，在手機上也一眼看得出來。"],
+    ["樂譜筆記工具列變回精簡","手機上「細／中／粗」這類按鈕昨天被放大，工具列變高會擋住譜，現在改回原本的大小。"]
+  ]},
   {v:"2026-11-12.2",title:"手機上更好按、字更清楚",items:[
     ["按鈕變大了","手機和平板上，小膠囊按鈕、歌詞的每一行、「跟唱比對」這類收合標題、歌曲右上角的收合鈕，都加高到好按的大小，不容易按到隔壁。"],
     ["首頁色塊的小字更清楚","首頁「吉他」「歌唱」大色塊下面那行小字加深了；深色模式的歌唱色塊、「霓虹舞台」和「圓潤可愛」風格原本偏淡，現在都看得清楚。"],
